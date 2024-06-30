@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% import "bootstrap_wtf.html" as wtf %}
+
+{% block content %}
+    <p>This is the Run Table page</p>
+    <h2>Table Goes Here</h2>
+    <table class="table table-hover">
+        <tr>
+            {% for col in cols %}
+                {% include '_run_header.html' %}
+            {% endfor %}
+        </tr>
+        {% for run in runs %}
+            {% include '_run.html' %}
+        {% endfor %}
+    </table>
+{% endblock %}
