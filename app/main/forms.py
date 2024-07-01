@@ -31,3 +31,9 @@ class MessageForm(FlaskForm):
     message = TextAreaField(_l('Message'), validators=[
         DataRequired(), Length(min=1, max=140)])
     submit = SubmitField(_l('Submit'))
+
+class RunEditForm(FlaskForm):
+    submit_plus_cone = SubmitField(_l('+1\nCone'))
+    submit_minus_cone = SubmitField(_l('-1\nCone'))
+    submit_plus_oc = SubmitField(_l('+1\nOff Course'))
+    submit_minus_oc = SubmitField(_l('-1\nOff Course'))
