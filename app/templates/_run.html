@@ -1,5 +1,11 @@
 <tr>
     <td>
+        <!-- Checkbox here, not sure if this is the correct way to do it. How do we validate which one was checked? -->
+        {% if cb %}
+            {{ wtf.quick_form(cb) }}
+        {% endif %}
+    </td>
+    <td>
         {{ run.id }}
     </td>
     <td>

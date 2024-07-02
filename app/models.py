@@ -10,6 +10,32 @@ from flask import current_app, url_for
 from app import db
 
 
+# Eventually this database should have the following columns
+# Not all of them will be displayed on the site
+
+# id: unique indentifier, primary key
+# team_name: varchar128
+# tag: varchar128
+# car_number: int
+# startline_scan_timestamp: varchar128
+# finishline_scan_timestamp: varchar128
+
+#CarReg Database
+#id
+#tag
+#car_number
+#team_name
+
+# Leaderboard Database
+#  place
+#  run_number
+#  car_number
+#  team_name
+#  raw_time
+#  adjusted_time
+
+
+
 class RunOrder(db.Model):
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
     team_name: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
