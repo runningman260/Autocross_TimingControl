@@ -6,11 +6,14 @@ from app.models import RunOrder
 from config import Config
 import csv
 import time
+import os
+
+basedir = os.path.abspath(os.path.dirname(__file__))
 
 
 class TestConfig(Config):
     TESTING = True
-    SQLALCHEMY_DATABASE_URI = 'sqlite://'
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'app.db')
     ELASTICSEARCH_URL = None
 
 
