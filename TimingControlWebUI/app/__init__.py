@@ -35,8 +35,7 @@ def create_app(config_class=Config):
     db.init_app(app)
     migrate.init_app(app, db)
     with app.app_context():
-        #models.TopLaps.__table__.args = {'autoload_with': db.engine, 'info': {'is_view': True}}
-        models.TopLaps.__table__ = sa.Table('top_runs', db.metadata, autoload_with=db.engine, info={'is_view': True})
+        models.TopLaps.__table__ = sa.Table('top_runs', db.metadata, autoload_with=db.engine, info={'is_view': True}) #I have no idea if this does a damn thing
     #login.init_app(app)
     mail.init_app(app)
     moment.init_app(app)
@@ -87,8 +86,5 @@ def create_app(config_class=Config):
 
     return app
 
-def create_top_laps_view():
-    global top_laps_view
-    top_laps_view = sa.Table('top_laps', db.metadata, autoload_with=db.engine, info={'is_view': True})
 
 from app import models

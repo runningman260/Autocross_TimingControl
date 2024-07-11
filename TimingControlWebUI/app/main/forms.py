@@ -38,5 +38,5 @@ class RunEditForm(FlaskForm):
     submit_minus_oc = SubmitField(_l('-1\nOff Course'))
     
 
-class RunSelectForm(FlaskForm):
-    enabled = BooleanField("") # Not sure if this is right
+# class RunSelectForm(FlaskForm):
+#     enabled = BooleanField("") # Not sure if this is right

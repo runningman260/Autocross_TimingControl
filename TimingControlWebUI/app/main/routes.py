@@ -27,27 +27,21 @@ def runtable():
                 if run.adjusted_time==0.0: #placeholder
                     run.adjusted_time=run.raw_time
                 if 'submit_plus_cone' in request.form:
-                    run.cones+=1  # Assuming 'cones' is the field you want to increment
-                    run.adjusted_time+=1
+                    run.cones+=1 
+                    run.adjusted_time+=1#should not assume current adjusted time is correct, should be recalculated every time
                 elif 'submit_minus_cone' in request.form:
-                    run.cones-=1  # Ensure cones doesn't go below 0 if necessary
+                    run.cones-=1  # Ensure cones doesn't go below 0
                     run.adjusted_time-=1
                 elif 'submit_plus_oc' in request.form:
-                    run.off_courses+=1  # Assuming 'off_courses' is the field you want to increment
+                    run.off_courses+=1  
                     run.adjusted_time+=5
                 elif 'submit_minus_oc' in request.form:
-                    run.off_courses-=1  # Ensure off_courses doesn't go below 0 if necessary
+                    run.off_courses-=1  # Ensure off_courses doesn't go below 0
                     run.adjusted_time-=5
                 db.session.commit()
-        # Redirect or render template as needed
-    #cb = RunSelectForm()
-    #Need on-submit for each of the buttons
-    #if form.validate_on_submit():
-        # Four different "submits" that get handled independantly. 
-        #submit_plus_cone
-        #submit_minus_cone
-        #submit_plus_oc
-        #submit_minus_oc
+            #flash?
+            #somehow return via ajax and keep current pageview/selections
+            #add deselect all button
     query = sa.select(RunOrder)
     runs = db.session.scalars(query).all()
     inst = sa.inspect(RunOrder)                                 # To get headers, should probs be in the model code
