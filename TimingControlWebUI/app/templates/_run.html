@@ -1,9 +1,10 @@
 <tr>
     <td>
-        <!-- Checkbox here, not sure if this is the correct way to do it. How do we validate which one was checked? -->
+        <!-- Checkbox here, not sure if this is the correct way to do it. How do we validate which one was checked?
         {% if cb %}
             {{ wtf.quick_form(cb) }}
-        {% endif %}
+        {% endif %} -->
+        <input type="checkbox" id="run_{{ run.id }}" name="selected_runs" value="{{ run.id }}-{{run.tag}}">
     </td>
     <td>
         {{ run.id }}
@@ -21,10 +22,14 @@
         {{ run.car_number }}
     </td>
     <td>
-        {{ run.cones }}
+        {% if run.cones != 0 %}
+            {{ run.cones }}
+        {% endif %}
     </td>
     <td>
-        {{ run.off_courses }}
+        {% if run.off_courses != 0 %}
+            {{ run.off_courses }}
+        {% endif %}
     </td>
     <td>
         {{ run.raw_time }}

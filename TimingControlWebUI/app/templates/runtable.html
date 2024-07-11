@@ -3,23 +3,29 @@
 
 {% block content %}
     <h2>Table Goes Here</h2>
-    <div class="row align-items-start">
-        <div class="col">
-            <table class="table table-hover">
-                <tr>
-                    {% for col in cols %}
-                        {% include '_run_header.html' %}
+    {% if form %}
+    <form method="POST" action="/runtable">
+        {{ form.hidden_tag() }}
+        <div class="row align-items-start">
+            <div class="col">
+                <table class="table table-hover">
+                    <tr>
+                        {% for col in cols %}
+                            {% include '_run_header.html' %}
+                        {% endfor %}
+                    </tr>
+                    {% for run in runs %}
+                        {% include '_run.html' %}
                     {% endfor %}
-                </tr>
-                {% for run in runs %}
-                    {% include '_run.html' %}
-                {% endfor %}
-            </table>
+                </table>
+            </div>
+            <div class="col-sm-1" align="center">
+                    {{ wtf.quick_form(form) }}
+            </div>
         </div>
-        <div class="col-sm-1" align="center">
-            {% if form %}
-                {{ wtf.quick_form(form) }}
-            {% endif %}
-        </div>
-    </div>
+    </form>
+    {% endif %}
+    <script>
+
+    </script>
 {% endblock %}

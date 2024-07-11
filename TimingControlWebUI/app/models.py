@@ -8,8 +8,9 @@ import sqlalchemy as sa
 import sqlalchemy.orm as so
 from flask import current_app, url_for
 from app import db
+from sqlalchemy.ext.declarative import declarative_base
 
-
+Base = declarative_base()
 # Eventually this database should have the following columns
 # Not all of them will be displayed on the site
 
@@ -42,10 +43,10 @@ class RunOrder(db.Model):
     location: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
     tag: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
     car_number: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
-    cones: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
-    off_courses: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
-    raw_time: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
-    adjusted_time: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    cones: so.Mapped[int] = so.mapped_column(sa.Integer, index=True)
+    off_courses: so.Mapped[int] = so.mapped_column(sa.Integer, index=True)
+    raw_time: so.Mapped[float] = so.mapped_column(sa.Numeric(5,2), index=True)
+    adjusted_time: so.Mapped[float] = so.mapped_column(sa.Numeric(5,2), index=True)
     
     def __repr__(self):
         return '<RunOrder {}>'.format(self.id)
@@ -53,3 +54,22 @@ class RunOrder(db.Model):
     # This is dumb, need to find a better way
     def print_row(self):
         return '{}; {}; {}; {}; {}; {}; {}; {}; {};'.format(self.id, self.team_name, self.location, self.tag, self.car_number, self.cones, self.off_courses, self.raw_time, self.adjusted_time)
+
+
+
+class TopLaps(db.Model):
+    __tablename__ = 'top_runs'
+    __table_args__ = {'info': {'is_view': True}}
+    
+    # Assuming 'id' is a column in your view. You need to define at least one column manually,
+    # typically the primary key or a column you'll frequently query against.
+    #id = db.Column(db.Integer, primary_key=True)
+    id: so.Mapped[int] = so.mapped_column(primary_key=True)
+    team_name: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    location: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    tag: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    car_number: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    cones: so.Mapped[int] = so.mapped_column(sa.Integer, index=True)
+    off_courses: so.Mapped[int] = so.mapped_column(sa.Integer, index=True)
+    raw_time: so.Mapped[float] = so.mapped_column(sa.Numeric(5,2), index=True)
+    adjusted_time: so.Mapped[float] = so.mapped_column(sa.Numeric(5,2), index=True)

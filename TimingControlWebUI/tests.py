@@ -16,6 +16,15 @@ class TestConfig(Config):
     SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'app.db')
     ELASTICSEARCH_URL = None
 
+def float_input(s):
+    
+    try:
+        x = float(s)
+        return x
+    except ValueError:
+        return 0
+
+
 
 class UserModelCase(unittest.TestCase):
     def setUp(self):
@@ -26,17 +35,19 @@ class UserModelCase(unittest.TestCase):
 
     def tearDown(self):
         db.session.remove()
-        db.drop_all()
+        #db.drop_all()
         self.app_context.pop()
 
+
+
     def test_periodically_add_runs(self):
-        time_between_runs = 30 # seconods
+        time_between_runs = .01 # seconods
         with open('team_entry_data.csv') as csvfile:
             readCSV = csv.reader(csvfile, delimiter=',')
             next(readCSV, None)  # skip the headers
             for row in readCSV:
                 print("Inserting: " + str(row))
-                r = RunOrder(team_name=row[0], location=row[1], tag=row[2], car_number=row[3], cones=row[4], off_courses=row[5], raw_time=row[6], adjusted_time=row[7])
+                r = RunOrder(team_name=row[0], location=row[1], tag=row[2], car_number=row[3], cones=row[4], off_courses=row[5], raw_time=row[6], adjusted_time=float_input(row[7]))
                 db.session.add(r)
                 db.session.commit()
                 print(RunOrder.query.order_by(RunOrder.id.desc()).first().print_row())
@@ -44,3 +55,4 @@ class UserModelCase(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)
+

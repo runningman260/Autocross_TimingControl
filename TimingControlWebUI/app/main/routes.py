@@ -5,7 +5,7 @@ from flask_babel import _, get_locale
 import sqlalchemy as sa
 from app import db
 from app.main.forms import EmptyForm, PostForm, SearchForm, RunEditForm, RunSelectForm
-from app.models import RunOrder
+from app.models import RunOrder, TopLaps
 from app.main import bp
 
 @bp.route('/', methods=['GET', 'POST'])
@@ -13,7 +13,34 @@ from app.main import bp
 @bp.route('/runtable', methods=['GET', 'POST'])
 def runtable():
     form = RunEditForm()
-    cb = RunSelectForm()
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            selected_runs = request.form.getlist('selected_runs')
+            for checkbox_id in selected_runs:
+                run_id=checkbox_id.split("-")
+                run = db.session.query(RunOrder).filter_by(id=run_id[0], tag=run_id[1]).first()
+                #why does python make me do this
+                if isinstance(run.cones, str):
+                    run.cones = int(0)
+                if isinstance(run.off_courses, str):
+                    run.off_courses = int(0)
+                if run.adjusted_time==0.0: #placeholder
+                    run.adjusted_time=run.raw_time
+                if 'submit_plus_cone' in request.form:
+                    run.cones+=1  # Assuming 'cones' is the field you want to increment
+                    run.adjusted_time+=1
+                elif 'submit_minus_cone' in request.form:
+                    run.cones-=1  # Ensure cones doesn't go below 0 if necessary
+                    run.adjusted_time-=1
+                elif 'submit_plus_oc' in request.form:
+                    run.off_courses+=1  # Assuming 'off_courses' is the field you want to increment
+                    run.adjusted_time+=5
+                elif 'submit_minus_oc' in request.form:
+                    run.off_courses-=1  # Ensure off_courses doesn't go below 0 if necessary
+                    run.adjusted_time-=5
+                db.session.commit()
+        # Redirect or render template as needed
+    #cb = RunSelectForm()
     #Need on-submit for each of the buttons
     #if form.validate_on_submit():
         # Four different "submits" that get handled independantly. 
@@ -28,4 +55,16 @@ def runtable():
     cols.insert(0, "Select")                                    # Add column header for the checkboxes
     page = request.args.get('page', 1, type=int)
     
-    return render_template('runtable.html', title='Run Table', runs=runs, cols=cols, form=form, cb=cb)
+    return render_template('runtable.html', title='Run Table', runs=runs, cols=cols, form=form)
+
+
+@bp.route('/toplaps', methods=['GET', 'POST'])
+def toplaps():
+    
+    query = sa.select(TopLaps)
+    runs = db.session.scalars(query).all()
+    inst = sa.inspect(TopLaps)                                 # To get headers, should probs be in the model code
+    cols = [c_attr.key for c_attr in inst.mapper.column_attrs]  # To get headers, should probs be in the model code                                  # Add column header for the checkboxes
+    page = request.args.get('page', 1, type=int)
+    
+    return render_template('toplaps.html', title='Top Laps', runs=runs, cols=cols)

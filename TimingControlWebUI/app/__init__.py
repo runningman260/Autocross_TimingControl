@@ -12,7 +12,7 @@ from elasticsearch import Elasticsearch
 from redis import Redis
 import rq
 from config import Config
-
+import sqlalchemy as sa
 
 def get_locale():
     return request.accept_languages.best_match(current_app.config['LANGUAGES'])
@@ -34,6 +34,9 @@ def create_app(config_class=Config):
 
     db.init_app(app)
     migrate.init_app(app, db)
+    with app.app_context():
+        #models.TopLaps.__table__.args = {'autoload_with': db.engine, 'info': {'is_view': True}}
+        models.TopLaps.__table__ = sa.Table('top_runs', db.metadata, autoload_with=db.engine, info={'is_view': True})
     #login.init_app(app)
     mail.init_app(app)
     moment.init_app(app)
@@ -45,6 +48,7 @@ def create_app(config_class=Config):
 
     from app.main import bp as main_bp
     app.register_blueprint(main_bp)
+
 
     if not app.debug and not app.testing:
         if app.config['MAIL_SERVER']:
@@ -83,5 +87,8 @@ def create_app(config_class=Config):
 
     return app
 
+def create_top_laps_view():
+    global top_laps_view
+    top_laps_view = sa.Table('top_laps', db.metadata, autoload_with=db.engine, info={'is_view': True})
 
 from app import models
