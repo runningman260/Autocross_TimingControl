@@ -4,7 +4,7 @@ from flask import render_template, flash, redirect, url_for, request, g, \
 from flask_babel import _, get_locale
 import sqlalchemy as sa
 from app import db
-from app.main.forms import EmptyForm, PostForm, SearchForm, RunEditForm, RunSelectForm
+from app.main.forms import EmptyForm, PostForm, SearchForm, RunEditForm
 from app.models import RunOrder, TopLaps
 from app.main import bp
 
