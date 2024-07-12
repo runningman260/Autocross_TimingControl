@@ -8,6 +8,14 @@ from app.main.forms import EmptyForm, PostForm, SearchForm, RunEditForm
 from app.models import RunOrder, TopLaps
 from app.main import bp
 
+def calculateAdjustedTime(run):
+    # I hate that this is at the top here
+    run.adjusted_time = run.raw_time
+    run.adjusted_time += run.cones
+    run.adjusted_time += run.off_courses * 5
+    return run
+
+
 @bp.route('/', methods=['GET', 'POST'])
 ### Nick Start
 @bp.route('/runtable', methods=['GET', 'POST'])
@@ -28,16 +36,16 @@ def runtable():
                     run.adjusted_time=run.raw_time
                 if 'submit_plus_cone' in request.form:
                     run.cones+=1 
-                    run.adjusted_time+=1#should not assume current adjusted time is correct, should be recalculated every time
                 elif 'submit_minus_cone' in request.form:
-                    run.cones-=1  # Ensure cones doesn't go below 0
-                    run.adjusted_time-=1
+                    if run.cones>0:
+                        run.cones-=1  # Ensure cones doesn't go below 0
                 elif 'submit_plus_oc' in request.form:
                     run.off_courses+=1  
-                    run.adjusted_time+=5
                 elif 'submit_minus_oc' in request.form:
-                    run.off_courses-=1  # Ensure off_courses doesn't go below 0
-                    run.adjusted_time-=5
+                    if run.off_courses>0:
+                        run.off_courses-=1  # Ensure off_courses doesn't go below 0\
+                
+                run = calculateAdjustedTime(run)
                 db.session.commit()
             #flash?
             #somehow return via ajax and keep current pageview/selections
