@@ -19,7 +19,7 @@ def runtable():
             for checkbox_id in selected_runs:
                 run_id=checkbox_id.split("-")
                 run = db.session.query(RunOrder).filter_by(id=run_id[0], tag=run_id[1]).first()
-                #why does python make me do this to load uninitialized integer fields?
+                #why does python make me do this
                 if isinstance(run.cones, str):
                     run.cones = int(0)
                 if isinstance(run.off_courses, str):
@@ -62,14 +62,3 @@ def toplaps():
     page = request.args.get('page', 1, type=int)
     
     return render_template('toplaps.html', title='Top Laps', runs=runs, cols=cols)
-
-@bp.route('/fixdata', methods=['GET', 'POST']) #this is a temporary function to fill in adjusted times for runs that were missing them
-def fixdata():
-    query = sa.select(RunOrder)
-    runs = db.session.scalars(query).all()
-    for run in runs:
-        if run.adjusted_time == 0.0:
-            run.adjusted_time = run.raw_time
-        db.session.commit()
-
-    return redirect(url_for('main.runtable'))
