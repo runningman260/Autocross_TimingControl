@@ -19,13 +19,16 @@
                     {% endfor %}
                 </table>
             </div>
-            <div class="col-sm-1" align="center">
-                    {{ wtf.quick_form(form) }}
-            </div>
+
         </div>
+        <div class="row">
+            <div class="bottom-fixed">
+                <div class="col-lg" align="center">
+                        {{ wtf.quick_form(form) }}
+                        <input class="btn btn-dark mb-3" id="deselect" name="deselect" type="reset" value="Deselect All">
+                </div>
+            </div>
     </form>
     {% endif %}
-    <script>
 
-    </script>
 {% endblock %}
