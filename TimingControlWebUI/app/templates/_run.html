@@ -1,9 +1,5 @@
-<tr>
+<tr name="run_row" id="{{run.id}}">
     <td>
-        <!-- Checkbox here, not sure if this is the correct way to do it. How do we validate which one was checked?
-        {% if cb %}
-            {{ wtf.quick_form(cb) }}
-        {% endif %} -->
         <input type="checkbox" id="run_{{ run.id }}" name="selected_runs" value="{{ run.id }}-{{run.tag}}">
     </td>
     <td>

@@ -23,11 +23,36 @@
         </div>
         <div class="row">
             <div class="bottom-fixed">
-                <div class="col-lg" align="center">
-                        {{ wtf.quick_form(form) }}
-                        <input class="btn btn-dark mb-3" id="deselect" name="deselect" type="reset" value="Deselect All">
+                <div class="col-lg d-flex flex-wrap justify-content-center align-items-center">
+                    <button class="btn btn-default cone mb-2 mx-1 btn-lg flex-fill" id="submit_plus_cone" name="submit_plus_cone" type="submit">
+                        <i class="bi bi-plus-lg"></i><i class="bi bi-cone-striped"></i><br> Cone
+                    </button>
+                    
+                    <button class="btn btn-default cone mb-2 mx-1 btn-lg flex-fill" id="submit_minus_cone" name="submit_minus_cone" type="submit">
+                        <i class="bi bi-dash-lg"></i> <i class="bi bi-cone-striped"></i><br>Cone
+                    </button>
+                    <button class="btn btn-danger mb-2 mx-1 btn-lg flex-fill" id="submit_plus_dnf" name="submit_plus_dnf" type="submit">
+                        <i class="bi bi-plus-lg"></i><br> DNF
+                    </button>
+                    
+                    <button class="btn btn-danger mb-2 mx-1 btn-lg flex-fill" id="submit_minus_dnf" name="submit_minus_dnf" type="submit">
+                        <i class="bi bi-dash-lg"></i><br> DNF
+                    </button>                    
+                    <button class="btn btn-info mb-2 mx-1 btn-lg flex-fill" id="submit_plus_oc" name="submit_plus_oc" type="submit">
+                        <i class="bi bi-plus-lg"></i><br> Off Course
+                    </button>
+                    
+                    <button class="btn btn-info mb-2 mx-1 btn-lg flex-fill" id="submit_minus_oc" name="submit_minus_oc" type="submit">
+                        <i class="bi bi-dash-lg"></i><br> Off Course
+                    </button>
+        
+                    <button class="btn btn-dark mb-2 btn-lg mx-1 flex-fill" id="deselect" name="deselect" type="reset">
+                        Deselect<br/>All
+                    </button>
+                    <a class="btn btn-success mb-2 btn-lg mx-1 flex-fill" href="{{ url_for('main.runtable') }}"><i class="bi bi-arrow-clockwise"></i><br> Refresh</a>
                 </div>
             </div>
+        </div>
     </form>
     {% endif %}
 

@@ -49,8 +49,7 @@ def runtable():
                 db.session.commit()
             #flash?
             #somehow return via ajax and keep current pageview/selections
-            #add deselect all button
-    query = sa.select(RunOrder)
+    query = sa.select(RunOrder).order_by(-RunOrder.id)
     runs = db.session.scalars(query).all()
     inst = sa.inspect(RunOrder)                                 # To get headers, should probs be in the model code
     cols = [c_attr.key for c_attr in inst.mapper.column_attrs]  # To get headers, should probs be in the model code
