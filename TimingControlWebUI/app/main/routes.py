@@ -70,6 +70,10 @@ def fixdata():
     for run in runs:
         if run.adjusted_time == 0.0:
             run.adjusted_time = run.raw_time
+        if isinstance(run.cones, str):
+            run.cones = int(0)
+        if isinstance(run.off_courses, str):
+            run.off_courses = int(0)    
         db.session.commit()
 
     return redirect(url_for('main.runtable'))
