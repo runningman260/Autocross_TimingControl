@@ -36,6 +36,8 @@ class RunEditForm(FlaskForm):
     submit_minus_cone = SubmitField(_l('-1\nCone'))
     submit_plus_oc = SubmitField(_l('+1\nOff Course'))
     submit_minus_oc = SubmitField(_l('-1\nOff Course'))
+    submit_plus_dnf = SubmitField(_l('-1\nDNF'))
+    submit_minus_dnf = SubmitField(_l('-1\nDNF'))
     
 
 # class RunSelectForm(FlaskForm):

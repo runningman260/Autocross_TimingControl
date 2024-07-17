@@ -43,8 +43,9 @@ class RunOrder(db.Model):
     location: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
     tag: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
     car_number: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
-    cones: so.Mapped[int] = so.mapped_column(sa.Integer, index=True)
-    off_courses: so.Mapped[int] = so.mapped_column(sa.Integer, index=True)
+    cones: so.Mapped[int] = so.mapped_column(sa.Integer, nullable=True) 
+    off_courses: so.Mapped[int] = so.mapped_column(sa.Integer, nullable=True)
+    dnfs: so.Mapped[int] = so.mapped_column(sa.Integer, nullable=True)
     raw_time: so.Mapped[float] = so.mapped_column(sa.Numeric(5,2), index=True)
     adjusted_time: so.Mapped[float] = so.mapped_column(sa.Numeric(5,2), index=True)
     
@@ -69,7 +70,9 @@ class TopLaps(db.Model):
     location: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
     tag: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
     car_number: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
-    cones: so.Mapped[int] = so.mapped_column(sa.Integer, index=True)
-    off_courses: so.Mapped[int] = so.mapped_column(sa.Integer, index=True)
+    cones: so.Mapped[int] = so.mapped_column(sa.Integer, nullable=True) 
+    off_courses: so.Mapped[int] = so.mapped_column(sa.Integer, nullable=True)
+    dnfs: so.Mapped[int] = so.mapped_column(sa.Integer, nullable=True)
     raw_time: so.Mapped[float] = so.mapped_column(sa.Numeric(5,2), index=True)
     adjusted_time: so.Mapped[float] = so.mapped_column(sa.Numeric(5,2), index=True)
+    

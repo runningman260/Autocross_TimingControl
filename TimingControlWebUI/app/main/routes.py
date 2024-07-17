@@ -13,6 +13,8 @@ def calculateAdjustedTime(run):
     run.adjusted_time = run.raw_time
     run.adjusted_time += run.cones
     run.adjusted_time += run.off_courses * 5
+    if run.dnfs > 0:
+        run.adjusted_time = 0.0
     return run
 
 
@@ -44,6 +46,11 @@ def runtable():
                 elif 'submit_minus_oc' in request.form:
                     if run.off_courses>0:
                         run.off_courses-=1  # Ensure off_courses doesn't go below 0\
+                elif 'submit_plus_dnf' in request.form:
+                    run.dnfs+=1  
+                elif 'submit_minus_dnf' in request.form:
+                    if run.dnfs>0:
+                        run.dnfs-=1  # Ensure off_courses doesn't go below 0\
                 
                 run = calculateAdjustedTime(run)
                 db.session.commit()
@@ -80,7 +87,8 @@ def fixdata():
         if isinstance(run.cones, str):
             run.cones = int(0)
         if isinstance(run.off_courses, str):
-            run.off_courses = int(0)    
+            run.off_courses = int(0)  
+        run = calculateAdjustedTime(run)  
         db.session.commit()
 
     return redirect(url_for('main.runtable'))

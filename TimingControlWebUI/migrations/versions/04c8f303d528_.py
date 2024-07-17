@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 6467838fa36a
+Revision ID: 04c8f303d528
 Revises: 
-Create Date: 2024-07-11 00:22:02.133952
+Create Date: 2024-07-16 21:28:07.563998
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '6467838fa36a'
+revision = '04c8f303d528'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -24,8 +24,9 @@ def upgrade():
     sa.Column('location', sa.String(length=128), nullable=False),
     sa.Column('tag', sa.String(length=128), nullable=False),
     sa.Column('car_number', sa.String(length=128), nullable=False),
-    sa.Column('cones', sa.Integer(), nullable=False),
-    sa.Column('off_courses', sa.Integer(), nullable=False),
+    sa.Column('cones', sa.Integer(), nullable=True),
+    sa.Column('off_courses', sa.Integer(), nullable=True),
+    sa.Column('dnfs', sa.Integer(), nullable=True),
     sa.Column('raw_time', sa.Numeric(precision=5, scale=2), nullable=False),
     sa.Column('adjusted_time', sa.Numeric(precision=5, scale=2), nullable=False),
     sa.PrimaryKeyConstraint('id')
@@ -33,9 +34,7 @@ def upgrade():
     with op.batch_alter_table('run_order', schema=None) as batch_op:
         batch_op.create_index(batch_op.f('ix_run_order_adjusted_time'), ['adjusted_time'], unique=False)
         batch_op.create_index(batch_op.f('ix_run_order_car_number'), ['car_number'], unique=False)
-        batch_op.create_index(batch_op.f('ix_run_order_cones'), ['cones'], unique=False)
         batch_op.create_index(batch_op.f('ix_run_order_location'), ['location'], unique=False)
-        batch_op.create_index(batch_op.f('ix_run_order_off_courses'), ['off_courses'], unique=False)
         batch_op.create_index(batch_op.f('ix_run_order_raw_time'), ['raw_time'], unique=False)
         batch_op.create_index(batch_op.f('ix_run_order_tag'), ['tag'], unique=False)
         batch_op.create_index(batch_op.f('ix_run_order_team_name'), ['team_name'], unique=False)
@@ -46,8 +45,9 @@ def upgrade():
     sa.Column('location', sa.String(length=128), nullable=False),
     sa.Column('tag', sa.String(length=128), nullable=False),
     sa.Column('car_number', sa.String(length=128), nullable=False),
-    sa.Column('cones', sa.Integer(), nullable=False),
-    sa.Column('off_courses', sa.Integer(), nullable=False),
+    sa.Column('cones', sa.Integer(), nullable=True),
+    sa.Column('off_courses', sa.Integer(), nullable=True),
+    sa.Column('dnfs', sa.Integer(), nullable=True),
     sa.Column('raw_time', sa.Numeric(precision=5, scale=2), nullable=False),
     sa.Column('adjusted_time', sa.Numeric(precision=5, scale=2), nullable=False),
     sa.PrimaryKeyConstraint('id'),
@@ -56,9 +56,7 @@ def upgrade():
     with op.batch_alter_table('top_runs', schema=None) as batch_op:
         batch_op.create_index(batch_op.f('ix_top_runs_adjusted_time'), ['adjusted_time'], unique=False)
         batch_op.create_index(batch_op.f('ix_top_runs_car_number'), ['car_number'], unique=False)
-        batch_op.create_index(batch_op.f('ix_top_runs_cones'), ['cones'], unique=False)
         batch_op.create_index(batch_op.f('ix_top_runs_location'), ['location'], unique=False)
-        batch_op.create_index(batch_op.f('ix_top_runs_off_courses'), ['off_courses'], unique=False)
         batch_op.create_index(batch_op.f('ix_top_runs_raw_time'), ['raw_time'], unique=False)
         batch_op.create_index(batch_op.f('ix_top_runs_tag'), ['tag'], unique=False)
         batch_op.create_index(batch_op.f('ix_top_runs_team_name'), ['team_name'], unique=False)
@@ -72,9 +70,7 @@ def downgrade():
         batch_op.drop_index(batch_op.f('ix_top_runs_team_name'))
         batch_op.drop_index(batch_op.f('ix_top_runs_tag'))
         batch_op.drop_index(batch_op.f('ix_top_runs_raw_time'))
-        batch_op.drop_index(batch_op.f('ix_top_runs_off_courses'))
         batch_op.drop_index(batch_op.f('ix_top_runs_location'))
-        batch_op.drop_index(batch_op.f('ix_top_runs_cones'))
         batch_op.drop_index(batch_op.f('ix_top_runs_car_number'))
         batch_op.drop_index(batch_op.f('ix_top_runs_adjusted_time'))
 
@@ -83,9 +79,7 @@ def downgrade():
         batch_op.drop_index(batch_op.f('ix_run_order_team_name'))
         batch_op.drop_index(batch_op.f('ix_run_order_tag'))
         batch_op.drop_index(batch_op.f('ix_run_order_raw_time'))
-        batch_op.drop_index(batch_op.f('ix_run_order_off_courses'))
         batch_op.drop_index(batch_op.f('ix_run_order_location'))
-        batch_op.drop_index(batch_op.f('ix_run_order_cones'))
         batch_op.drop_index(batch_op.f('ix_run_order_car_number'))
         batch_op.drop_index(batch_op.f('ix_run_order_adjusted_time'))
 

@@ -13,7 +13,8 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 class TestConfig(Config):
     TESTING = True
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'app.db')
+    #SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'app.db')
+    SQLALCHEMY_DATABASE_URI = 'postgresql://nick:password@localhost/test_scans'
     ELASTICSEARCH_URL = None
 
 def float_input(s):
@@ -41,13 +42,13 @@ class UserModelCase(unittest.TestCase):
 
 
     def test_periodically_add_runs(self):
-        time_between_runs = .01 # seconods
+        time_between_runs = 5 # seconods
         with open('team_entry_data.csv') as csvfile:
             readCSV = csv.reader(csvfile, delimiter=',')
             next(readCSV, None)  # skip the headers
             for row in readCSV:
                 print("Inserting: " + str(row))
-                r = RunOrder(team_name=row[0], location=row[1], tag=row[2], car_number=row[3], cones=row[4], off_courses=row[5], raw_time=row[6], adjusted_time=float_input(row[7]))
+                r = RunOrder(team_name=row[0], location=row[1], tag=row[2], car_number=row[3], cones=0 if row[4] == '' else int(row[4]), off_courses=0 if row[5] == '' else int(row[5]),  dnfs=0 if row[6] == '' else int(row[6]),  raw_time=row[7], adjusted_time=float_input(row[8]))
                 db.session.add(r)
                 db.session.commit()
                 print(RunOrder.query.order_by(RunOrder.id.desc()).first().print_row())

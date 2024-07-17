@@ -12,7 +12,7 @@
         {{ run.location }}
     </td>
     <td>
-        {{ run.tag }}
+        <span title="{{ run.tag }}">...{{ run.tag[-6:] }}</span>
     </td>
     <td>
         {{ run.car_number }}
@@ -25,6 +25,11 @@
     <td>
         {% if run.off_courses != 0 %}
             {{ run.off_courses }}
+        {% endif %}
+    </td>
+    <td>
+        {% if run.dnfs != 0 %}
+            {{ run.dnfs }}
         {% endif %}
     </td>
     <td>
