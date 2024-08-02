@@ -2,7 +2,7 @@
 from datetime import datetime, timezone, timedelta
 import unittest
 from app import create_app, db
-from app.models import RunOrder
+from app.models import CarReg
 from config import Config
 import csv
 import time
@@ -42,17 +42,17 @@ class UserModelCase(unittest.TestCase):
 
 
     def test_periodically_add_runs(self):
-        time_between_runs = 30 # seconods
-        with open('team_entry_data.csv') as csvfile:
+        # time_between_runs = 30 # seconods
+        with open('car_reg_data.csv') as csvfile:
             readCSV = csv.reader(csvfile, delimiter=',')
             next(readCSV, None)  # skip the headers
             for row in readCSV:
                 print("Inserting: " + str(row))
-                r = RunOrder(team_name=row[0], location=row[1], tag=row[2], car_number=row[3], cones=0 if row[4] == '' else int(row[4]), off_courses=0 if row[5] == '' else int(row[5]),  dnfs=0 if row[6] == '' else int(row[6]),  raw_time=0 if row[7] == '' else row[7], adjusted_time=float_input(row[8]))
+                r = CarReg(tag=row[1], car_number=row[2], team_name=row[0], scan_time = datetime.now())
                 db.session.add(r)
                 db.session.commit()
-                print(RunOrder.query.order_by(RunOrder.id.desc()).first().print_row())
-                time.sleep(time_between_runs)
+                #print(CarReg.query.order_by(CarReg.id.desc()).first().print_row())
+                #time.sleep(time_between_runs)
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

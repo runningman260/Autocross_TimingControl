@@ -2,7 +2,13 @@
 {% import "bootstrap_wtf.html" as wtf %}
 
 {% block content %}
-    <h2>All Runs</h2>
+    <div class="d-flex justify-content-between align-items-center">
+        <h2 class="mb-0">All Runs</h2>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addRunModal">
+            Add Run
+        </button>
+    </div>
+
     {% if form %}
     <form method="POST" action="/runtable">
         {{ form.hidden_tag() }}
@@ -10,9 +16,7 @@
             <div class="col">
                 <table class="table table-hover">
                     <tr>
-                        {% for col in cols %}
-                            {% include '_run_header.html' %}
-                        {% endfor %}
+                        {% include '_run_header.html' %}
                     </tr>
                     {% for run in runs %}
                         {% include '_run.html' %}
@@ -31,29 +35,51 @@
                     <button class="btn btn-default cone mb-2 mx-1 btn-lg flex-fill" id="submit_minus_cone" name="submit_minus_cone" type="submit">
                         <i class="bi bi-dash-lg"></i> <i class="bi bi-cone-striped"></i><br>Cone
                     </button>
+                    <button class="btn btn-info mb-2 mx-1 btn-lg flex-fill" id="submit_plus_oc" name="submit_plus_oc" type="submit">
+                        <i class="bi bi-plus-lg"></i><i class="bi bi-flag"></i><br> Off Course
+                    </button>
+                    <button class="btn btn-info mb-2 mx-1 btn-lg flex-fill" id="submit_minus_oc" name="submit_minus_oc" type="submit">
+                        <i class="bi bi-dash-lg"></i><i class="bi bi-flag"></i><br> Off Course
+                    </button>
                     <button class="btn btn-danger mb-2 mx-1 btn-lg flex-fill" id="submit_plus_dnf" name="submit_plus_dnf" type="submit">
-                        <i class="bi bi-plus-lg"></i><br> DNF
+                        <i class="bi bi-plus-lg"></i><i class="bi bi-flag-fill"></i><br> DNF
                     </button>
                     
                     <button class="btn btn-danger mb-2 mx-1 btn-lg flex-fill" id="submit_minus_dnf" name="submit_minus_dnf" type="submit">
-                        <i class="bi bi-dash-lg"></i><br> DNF
+                        <i class="bi bi-dash-lg"></i><i class="bi bi-flag-fill text-dark"></i><br> DNS
                     </button>                    
-                    <button class="btn btn-info mb-2 mx-1 btn-lg flex-fill" id="submit_plus_oc" name="submit_plus_oc" type="submit">
-                        <i class="bi bi-plus-lg"></i><br> Off Course
-                    </button>
-                    
-                    <button class="btn btn-info mb-2 mx-1 btn-lg flex-fill" id="submit_minus_oc" name="submit_minus_oc" type="submit">
-                        <i class="bi bi-dash-lg"></i><br> Off Course
-                    </button>
-        
                     <button class="btn btn-dark mb-2 btn-lg mx-1 flex-fill" id="deselect" name="deselect" type="reset">
                         Deselect<br/>All
                     </button>
-                    <a class="btn btn-success mb-2 btn-lg mx-1 flex-fill" href="{{ url_for('main.runtable') }}"><i class="bi bi-arrow-clockwise"></i><br> Refresh</a>
+                    <a class="btn btn-success mb-2 btn-lg mx-1 flex-fill" href="{{ url_for('main.fixdata') }}"><i class="bi bi-arrow-clockwise"></i><br> Refresh</a>
                 </div>
             </div>
         </div>
     </form>
     {% endif %}
 
+
+    <!-- Modal -->
+    <div class="modal fade" id="addRunModal" tabindex="-1" aria-labelledby="addRunModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addRunModalLabel">Add New Run</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form method="POST" action="{{ url_for('main.add_run') }}">
+                        {{ addRunForm.hidden_tag() }}
+                        <div class="mb-3">
+                            {{ addRunForm.car_number.label(class="form-label") }}
+                            {{ addRunForm.car_number(class="form-select") }}
+                        </div>
+                        <div class="mb-3">
+                            {{ addRunForm.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}

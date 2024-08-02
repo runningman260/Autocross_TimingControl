@@ -18,24 +18,30 @@
         {{ run.car_number }}
     </td>
     <td>
-        {% if run.cones != 0 %}
+        {% if run.cones is not none and run.cones != 0 %}
             {{ run.cones }}
         {% endif %}
     </td>
     <td>
-        {% if run.off_courses != 0 %}
+        {% if run.off_courses is not none and run.off_courses != 0 %}
             {{ run.off_courses }}
         {% endif %}
     </td>
     <td>
-        {% if run.dnfs != 0 %}
+        {% if run.dnfs is not none and run.dnfs != 0 %}
             {{ run.dnfs }}
         {% endif %}
     </td>
     <td>
         {{ run.raw_time }}
     </td>
-    <td>
-        {{ run.adjusted_time }}
+    <td class="{% if run.dnfs != 0 %}table-danger{% elif (run.cones != 0 or run.off_courses != 0) and run.raw_time == 0 %}bg-warning{% elif run.raw_time == 0 and run.cones == 0 and run.off_courses == 0 %}table-success{% endif %}">
+        {% if (run.dnfs is not none and run.dnfs > 0 and run.adjusted_time==0.0) %}
+            DNF
+        {% elif (run.dnfs is not none and run.dnfs < 0  and run.adjusted_time==0.0) %}
+            DNS
+        {% else %}
+            {{ run.adjusted_time }}
+        {% endif %}
     </td>
 </tr>
