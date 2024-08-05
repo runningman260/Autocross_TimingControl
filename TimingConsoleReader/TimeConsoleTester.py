@@ -511,4 +511,4 @@ for bytes in list_of_bytearrays:
 	values = bytearray.fromhex(bytes).decode()
 	values = values.encode('ascii')
 	ser.write(values)
-	time.sleep(0.25)
+	time.sleep(10)
