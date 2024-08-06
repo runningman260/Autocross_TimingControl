@@ -67,6 +67,20 @@
             event.preventDefault();
             updateRunsTable();
         });
+        // Function to handle deselect button click
+        function handleDeselectClick(event) {
+            event.preventDefault();
+            const checkboxes = document.querySelectorAll('input[name="selected_runs"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+        }
+
+        // Attach event listener to deselect button
+        const deselectButton = document.getElementById('deselect');
+        if (deselectButton) {
+            deselectButton.addEventListener('click', handleDeselectClick);
+        }
 
         function updateRunsTable() {
             fetch('/api/runs')
@@ -106,6 +120,10 @@
 
                         table.appendChild(row);
                     });
+                    if (deselectButton) {
+                            deselectButton.removeEventListener('click', handleDeselectClick);
+                            deselectButton.addEventListener('click', handleDeselectClick);
+                        }
                 });
         }
         document.querySelector('form').addEventListener('submit', function(event) {
