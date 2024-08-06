@@ -125,6 +125,13 @@
           bsAlert.close();
         }, 5000); // 10000 milliseconds = 10 seconds
       }
+
+      function flashRow(row) {
+        row.classList.add('table-success');
+        setTimeout(() => {
+          row.classList.remove('table-success');
+        }, 2000); // Adjust the timeout duration as needed
+      }
     
       // Initialize MutationObserver to detect new alerts
       document.addEventListener('DOMContentLoaded', function() {

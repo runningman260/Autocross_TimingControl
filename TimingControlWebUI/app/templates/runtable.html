@@ -159,6 +159,7 @@
                         ${run.dnfs > 0 && run.adjusted_time == 0.0 ? 'DNF' : run.dnfs < 0 && run.adjusted_time == 0.0 ? 'DNS' : run.adjusted_time}
                     </td>
                 `;
+                flashRow(row); // Flash the row with success color
             });
             } else {
                 showAlert('danger', 'An error occurred. Please try again.');
