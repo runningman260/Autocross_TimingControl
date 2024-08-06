@@ -4,8 +4,8 @@
 {% block content %}
     <div class="d-flex justify-content-between align-items-center">
         <h2 class="mb-0">All Runs</h2>
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addRunModal">
-            Add Run
+        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#addRunModal">
+            <i class="bi bi-plus-circle"></i>        Add Missed Start
         </button>
     </div>
 
@@ -42,14 +42,14 @@
                         <i class="bi bi-dash-lg"></i><i class="bi bi-flag"></i><br> Off Course
                     </button>
                     <button class="btn btn-danger mb-2 mx-1 btn-lg flex-fill" id="submit_plus_dnf" name="submit_plus_dnf" type="submit">
-                        <i class="bi bi-plus-lg"></i><i class="bi bi-flag-fill"></i><br> DNF
+                        <i class="bi bi-flag-fill"></i><br> DNF
                     </button>
                     
                     <button class="btn btn-danger mb-2 mx-1 btn-lg flex-fill" id="submit_minus_dnf" name="submit_minus_dnf" type="submit">
-                        <i class="bi bi-dash-lg"></i><i class="bi bi-flag-fill text-dark"></i><br> DNS
+                       <i class="bi bi-flag-fill text-dark"></i><br> DNS
                     </button>                    
                     <button class="btn btn-dark mb-2 btn-lg mx-1 flex-fill" id="deselect" name="deselect" type="reset">
-                        Deselect<br/>All
+                        <i class="bi bi-x-circle"></i><br/>Deselect
                     </button>
                     <a class="btn btn-success mb-2 btn-lg mx-1 flex-fill" href="#" id="refresh-button"><i class="bi bi-arrow-clockwise"></i><br> Refresh</a>
                     <!-- <a class="btn btn-success mb-2 btn-lg mx-1 flex-fill" href="{{ url_for('main.fixdata') }}"><i class="bi bi-arrow-clockwise"></i><br> Refresh</a> -->
@@ -97,7 +97,7 @@
                             <td>${run.car_number}</td>
                             <td>${run.cones || ''}</td>
                             <td>${run.off_courses || ''}</td>
-                            <td>${run.dnfs || ''}</td>
+                            <!-- <td>${run.dnfs || ''}</td> -->
                             <td>${run.raw_time}</td>
                             <td class="${run.dnfs != 0 ? 'table-danger' : (run.cones != 0 || run.off_courses != 0) && run.raw_time == 0 ? 'bg-warning' : run.raw_time == 0 && run.cones == 0 && run.off_courses == 0 ? 'table-success' : ''}">
                                 ${run.dnfs > 0 && run.adjusted_time == 0.0 ? 'DNF' : run.dnfs < 0 && run.adjusted_time == 0.0 ? 'DNS' : run.adjusted_time}
@@ -108,5 +108,45 @@
                     });
                 });
         }
+        document.querySelector('form').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const formData = new FormData(this);
+        const submitButton = event.submitter;
+        if (submitButton) {
+            formData.append(submitButton.name, submitButton.value);
+        }
+        fetch('/runtable', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                showAlert('success', data.message);
+                data.runs.forEach(run => {
+                console.log('Processing run:', run);
+                const row = document.getElementById(run.id);
+                row.innerHTML = `
+                    <td>
+                        <input type="checkbox" id="run_${run.id}" name="selected_runs" value="${run.id}-${run.tag}" checked>
+                    </td>
+                    <td>${run.id}</td>
+                    <td>${run.team_name}</td>
+                    <td><span title="${run.tag}">...${run.tag.slice(-6)}</span></td>
+                    <td>${run.car_number}</td>
+                    <td>${run.cones || ''}</td>
+                    <td>${run.off_courses || ''}</td>
+                    <td>${run.raw_time}</td>
+                    <td class="${run.dnfs != 0 ? 'table-danger' : (run.cones != 0 || run.off_courses != 0) && run.raw_time == 0 ? 'bg-warning' : run.raw_time == 0 && run.cones == 0 && run.off_courses == 0 ? 'table-success' : ''}">
+                        ${run.dnfs > 0 && run.adjusted_time == 0.0 ? 'DNF' : run.dnfs < 0 && run.adjusted_time == 0.0 ? 'DNS' : run.adjusted_time}
+                    </td>
+                `;
+            });
+            } else {
+                showAlert('danger', 'An error occurred. Please try again.');
+            }
+
+        });
+    });
     </script>
-{% endblock %}
+    {% endblock %}

@@ -26,6 +26,9 @@ def runtable():
     if request.method == 'POST':
         if form.validate_on_submit():
             selected_runs = request.form.getlist('selected_runs')
+            updated_runs = []
+            carmessage = ''
+            actionmessage=''
             for checkbox_id in selected_runs:
                 run_id=checkbox_id.split("-")
                 run = db.session.query(RunOrder).filter_by(id=run_id[0], tag=run_id[1]).first()
@@ -41,24 +44,54 @@ def runtable():
 
 
                 if 'submit_plus_cone' in request.form:
-                    run.cones+=1 
+                    run.cones+=1
+                    actionmessage='Added Cone'
                 elif 'submit_minus_cone' in request.form:
                     if run.cones>0:
                         run.cones-=1  # Ensure cones doesn't go below 0
+                        actionmessage='Removed Cone'
                 elif 'submit_plus_oc' in request.form:
-                    run.off_courses+=1  
+                    run.off_courses+=1
+                    actionmessage='Added Off Course'  
                 elif 'submit_minus_oc' in request.form:
                     if run.off_courses>0:
                         run.off_courses-=1  # Ensure off_courses doesn't go below 0
+                        actionmessage='Removed Off Course'
                 elif 'submit_plus_dnf' in request.form:
                     if run.dnfs<1:
-                        run.dnfs+=1  
+                        run.dnfs=1
+                        actionmessage='Did Not Finish'
+                    elif run.dnfs==1:
+                        run.dnfs=0
+                        actionmessage='Removed DNF'  
                 elif 'submit_minus_dnf' in request.form:
                     if run.dnfs>-1:#-1 is a DNS (if we want to use them)
-                        run.dnfs-=1  
-                
+                        run.dnfs=-1
+                        actionmessage='Did Not Start'
+                    elif run.dnfs==-1:
+                        run.dnfs=0
+                        actionmessage='Removed DNS'  
+                carmessage += f"{run.car_number},"
                 run = calculateAdjustedTime(run)
                 db.session.commit()
+                updated_runs.append(run)
+            message = "Car(s)" + carmessage[:-1] + ": " + actionmessage
+            response = {
+                'status': 'success',
+                'message': message,
+                'runs': [{
+                    'id': run.id,
+                    'tag': run.tag,
+                    'team_name': run.team_name,
+                    'car_number': run.car_number,
+                    'cones': run.cones,
+                    'off_courses': run.off_courses,
+                    'dnfs': run.dnfs,
+                    'raw_time': run.raw_time,
+                    'adjusted_time': run.adjusted_time
+                } for run in updated_runs]
+            }
+            return jsonify(response)
             #flash?
             #somehow return via ajax and keep current pageview/selections
     query = sa.select(RunOrder).order_by(-RunOrder.id)
@@ -147,6 +180,7 @@ def add_run():
 
 @bp.route('/api/runs', methods=['GET'])
 def get_runs():
+    #fixdata()#to be removed when handled by db insert of finishtime
     runs=db.session.scalars(sa.select(RunOrder).order_by(-RunOrder.id)).all()
     runs_data = [
         {

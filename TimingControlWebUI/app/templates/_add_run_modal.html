@@ -62,7 +62,7 @@
               <td>${data.run.car_number}</td>
               <td>${data.run.cones || ''}</td>
               <td>${data.run.off_courses || ''}</td>
-              <td>${data.run.dnfs || ''}</td>
+              <!-- <td>${data.run.dnfs || ''}</td> -->
               <td>${data.run.raw_time}</td>
               <td class="${data.run.dnfs != 0 ? 'table-danger' : (data.run.cones != 0 || data.run.off_courses != 0) && data.run.raw_time == 0 ? 'bg-warning' : data.run.raw_time == 0 && data.run.cones == 0 && data.run.off_courses == 0 ? 'table-success' : ''}">
                 ${data.run.dnfs > 0 && data.run.adjusted_time == 0.0 ? 'DNF' : data.run.dnfs < 0 && data.run.adjusted_time == 0.0 ? 'DNS' : data.run.adjusted_time}
