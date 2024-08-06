@@ -33,3 +33,8 @@ class Config:
     #SQLALCHEMY_DATABASE_URI = 'postgresql://nick:password@localhost/test_raw_lap_times'
     #ELASTICSEARCH_URL = None
     DATABASE = load_config()
+    MQTTBROKER = 'localhost'
+    MQTTPORT = 1883
+    MQTTUSERNAME = 'username'
+    MQTTPASSWORD = 'password'
+    MQTTCLIENTID = 'TimingConsoleReader'

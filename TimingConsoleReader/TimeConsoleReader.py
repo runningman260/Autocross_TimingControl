@@ -14,10 +14,14 @@ import atexit
 import serial					# pySerial
 import serial.tools.list_ports	# pySerial
 from database_helper import *
+import paho.mqtt.client as paho
+import json
+import datetime
 
 def exit_handler():
 	print(' Cleaning Up!')
 	ser.close()
+	client.loop_stop()
 	exit(1)
 
 def environment_check():
@@ -57,6 +61,31 @@ def environment_check():
 		create_timestamp_trigger(table_name, function_name)
 	return True
 
+def create_mqtt_connection():
+	def on_connect(client, userdata, flags, reason_code, properties):
+		if reason_code == 0:
+			print("MQTT Client Connected")
+		else:
+			print("MQTT Client NOT Connected, rc= " + str(reason_code))
+		#client.subscribe("iotstack/mosquitto/healthcheck")
+	client = paho.Client(paho.CallbackAPIVersion.VERSION2,client_id=client_id)
+	client.username_pw_set(Config.MQTTUSERNAME, Config.MQTTPASSWORD)
+	client.on_connect = on_connect
+	client.connect(Config.MQTTBROKER, Config.MQTTPORT)
+	return client
+
+def sub_handler(client, userdata, msg):
+    print(f"{msg.topic}: {msg.payload.decode()}")
+
+def build_payload(insert, read_count, raw_time, timestamp):
+	if(insert):
+		# "Created Time"
+		payload = {"read_count":read_count,"raw_time":raw_time,"created_at":timestamp}
+	else:
+		# "Updated Time"
+		payload = {"read_count":read_count,"raw_time":raw_time,"updated_at":timestamp}
+	return json.dumps(payload)
+
 # Config check
 if Config.FARMTEK_CONSOLE_PATH == "":
 	print("Console path not specified! Exiting.")
@@ -86,6 +115,13 @@ if __name__ == '__main__':
 	if(not environment_check):
 		print("Database Schema not correct. Exiting.")
 		atexit.register(exit_handler)
+	
+	client_id = Config.MQTTCLIENTID
+	client = create_mqtt_connection()
+	client.on_message = sub_handler
+	client.loop_start()
+	prev_health_check = 0
+	health_check_interval = 30 #seconds
 
 	try:
 		while True:
@@ -106,6 +142,7 @@ if __name__ == '__main__':
 						# Run number isn't updated since the incorrect time already incremented the run number
 						print("DB UDPATE:\t" + prev_lap_time + " to\tDNF")
 						update_rawlaptime(table_name,[run_number,"DNF"])
+						client.publish("/timing/laptime/updatetime",build_payload(False,run_number,"DNF",str(datetime.datetime.now())))
 						prev_lap_time = lap_time_buffer
 						update_db_flag = False
 					else:
@@ -113,12 +150,14 @@ if __name__ == '__main__':
 						run_number = run_number + 1
 						print("DB INSERT:\tDNF")
 						insert_rawlaptime(table_name,[run_number,"DNF"])
+						client.publish("/timing/laptime/newtime",build_payload(True,run_number,"DNF",str(datetime.datetime.now())))
 						prev_lap_time = "DNF"
 				elif update_db_flag:
 					# Restart button was pressed and this is the next value, should UPDATE the previous time
 					# Run number isn't updated since the incorrect time already incremented the run number
 					print("DB UDPATE:\t" + prev_lap_time + " to\t" + lap_time_buffer)
 					update_rawlaptime(table_name,[run_number,lap_time_buffer])
+					client.publish("/timing/laptime/updatetime",build_payload(False,run_number,lap_time_buffer,str(datetime.datetime.now())))
 					prev_lap_time = lap_time_buffer
 					update_db_flag = False
 				else:
@@ -126,7 +165,11 @@ if __name__ == '__main__':
 					run_number = run_number + 1
 					print("DB INSERT:\t" + lap_time_buffer)
 					insert_rawlaptime(table_name,[run_number,lap_time_buffer])
+					client.publish("/timing/laptime/newtime",build_payload(True,run_number,lap_time_buffer,str(datetime.datetime.now())))
 					prev_lap_time = lap_time_buffer
+			if((time.time() - prev_health_check) > health_check_interval):
+				client.publish("/timing/timeconsolereader/healthcheck",str(datetime.datetime.now()))
+				prev_health_check = time.time()
 	except KeyboardInterrupt:
 		pass
 	finally:	 
