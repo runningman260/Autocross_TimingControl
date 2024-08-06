@@ -110,14 +110,57 @@ def add_run():
         car = db.session.query(CarReg).filter_by(car_number=car_number).first()
         if car:
             team_name = car.team_name
-            location = "go away"
             tag = car.tag
             # Add the new run to the RunOrder with the team name
-            new_run = RunOrder(car_number=car_number, team_name=team_name, location=location, tag=tag, raw_time=0.0, adjusted_time=0.0)
+            new_run = RunOrder(car_number=car_number, team_name=team_name, tag=tag, raw_time=0.0, adjusted_time=0.0)
             db.session.add(new_run)
             db.session.commit()
-            flash('New run added successfully!', 'success')
+            response = {
+                'status': 'success',
+                'message': 'New run added successfully!',
+                'run': {
+                    'id': new_run.id,
+                    'team_name': new_run.team_name,
+                    'tag': new_run.tag,
+                    'car_number': new_run.car_number,
+                    'cones': new_run.cones,
+                    'off_courses': new_run.off_courses,
+                    'dnfs': new_run.dnfs,
+                    'raw_time': new_run.raw_time,
+                    'adjusted_time': new_run.adjusted_time
+                }
+            }
+            return jsonify(response), 200
         else:
-            flash('Car number not found!', 'danger')
-        return redirect(url_for('main.runtable'))
-    return render_template('add_run.html', form=form)
+            response = {
+                'status': 'danger',
+                'message': 'Car number not found!'
+            }
+            return jsonify(response), 404
+    response = {
+        'status': 'danger',
+        'message': 'Form validation failed!'
+    }
+    flash('New run added successfully!', 'success')
+    return jsonify(response), 400
+
+from flask import jsonify
+
+@bp.route('/api/runs', methods=['GET'])
+def get_runs():
+    runs=db.session.scalars(sa.select(RunOrder).order_by(-RunOrder.id)).all()
+    runs_data = [
+        {
+            'id': run.id,
+            'team_name': run.team_name,
+            'tag': run.tag,
+            'car_number': run.car_number,
+            'cones': run.cones,
+            'off_courses': run.off_courses,
+            'dnfs': run.dnfs,
+            'raw_time': run.raw_time,
+            'adjusted_time': run.adjusted_time
+        }
+        for run in runs
+    ]
+    return jsonify(runs_data)

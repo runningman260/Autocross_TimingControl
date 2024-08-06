@@ -61,14 +61,15 @@
         </div>
       </div>
     </nav>
-    <div class="container mt-3 content-container">
+    <div class="container mt-3 content-container"><div  id="alert-div">
       {% with messages = get_flashed_messages() %}
       {% if messages %}
         {% for message in messages %}
-        <div class="alert alert-info" role="alert">{{ message }}</div>
+        <div class="alert alert-info alert-dismissible fade show" role="alert">{{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>
         {% endfor %}
       {% endif %}
       {% endwith %}
+      </div>
       <!-- This is where the target page is loaded (example, runtable)-->
       {% block content %}
       {% endblock %}
@@ -116,7 +117,38 @@
         }, 10000);
       }
       //document.addEventListener('DOMContentLoaded', initialize_notifications);
-      
+
+
+      function handleAlertTimeout(alert) {
+        var bsAlert = new bootstrap.Alert(alert);
+        setTimeout(function() {
+          bsAlert.close();
+        }, 5000); // 10000 milliseconds = 10 seconds
+      }
+    
+      // Initialize MutationObserver to detect new alerts
+      document.addEventListener('DOMContentLoaded', function() {
+        var alertContainer = document.getElementById('alert-div');
+        if (alertContainer) {
+          var observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+              mutation.addedNodes.forEach(function(node) {
+                if (node.classList && node.classList.contains('alert-success')) {
+                  handleAlertTimeout(node);
+                }
+              });
+            });
+          });
+    
+          observer.observe(alertContainer, { childList: true });
+    
+          // Check for existing alert on page load
+          var existingAlert = document.getElementById('alert-success');
+          if (existingAlert) {
+            handleAlertTimeout(existingAlert);
+          }
+        }
+      });
     </script>
   </body>
 </html>

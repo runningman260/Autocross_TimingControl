@@ -14,13 +14,13 @@
         {{ form.hidden_tag() }}
         <div class="row align-items-start">
             <div class="col">
-                <table class="table table-hover">
-                    <tr>
-                        {% include '_run_header.html' %}
-                    </tr>
-                    {% for run in runs %}
-                        {% include '_run.html' %}
-                    {% endfor %}
+                <table id="runs-table" class="table table-hover">
+                    <thead id="runs-table-body">{% include '_run_header.html' %}</thead>
+                    <tbody>
+                        {% for run in runs %}
+                            {% include '_run.html' %}
+                        {% endfor %}
+                    </tbody>
                 </table>
             </div>
 
@@ -51,7 +51,8 @@
                     <button class="btn btn-dark mb-2 btn-lg mx-1 flex-fill" id="deselect" name="deselect" type="reset">
                         Deselect<br/>All
                     </button>
-                    <a class="btn btn-success mb-2 btn-lg mx-1 flex-fill" href="{{ url_for('main.fixdata') }}"><i class="bi bi-arrow-clockwise"></i><br> Refresh</a>
+                    <a class="btn btn-success mb-2 btn-lg mx-1 flex-fill" href="#" id="refresh-button"><i class="bi bi-arrow-clockwise"></i><br> Refresh</a>
+                    <!-- <a class="btn btn-success mb-2 btn-lg mx-1 flex-fill" href="{{ url_for('main.fixdata') }}"><i class="bi bi-arrow-clockwise"></i><br> Refresh</a> -->
                 </div>
             </div>
         </div>
@@ -60,26 +61,52 @@
 
 
     <!-- Modal -->
-    <div class="modal fade" id="addRunModal" tabindex="-1" aria-labelledby="addRunModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="addRunModalLabel">Add New Run</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form method="POST" action="{{ url_for('main.add_run') }}">
-                        {{ addRunForm.hidden_tag() }}
-                        <div class="mb-3">
-                            {{ addRunForm.car_number.label(class="form-label") }}
-                            {{ addRunForm.car_number(class="form-select") }}
-                        </div>
-                        <div class="mb-3">
-                            {{ addRunForm.submit(class="btn btn-primary") }}
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
+    {% include '_add_run_modal.html' %}
+    <script>
+        document.getElementById('refresh-button').addEventListener('click', function(event) {
+            event.preventDefault();
+            updateRunsTable();
+        });
+
+        function updateRunsTable() {
+            fetch('/api/runs')
+                .then(response => response.json())
+                .then(data => {
+                    const table = document.getElementById('runs-table-body');
+                    const selectedRuns = new Set(
+                        Array.from(document.querySelectorAll('input[name="selected_runs"]:checked'))
+                            .map(input => input.value)
+                    );
+
+                    // Clear existing rows
+                    table.querySelectorAll('tr[name="run_row"]').forEach(row => row.remove());
+
+                    // Add new rows
+                    data.forEach(run => {
+                        const row = document.createElement('tr');
+                        row.setAttribute('name', 'run_row');
+                        row.setAttribute('id', run.id);
+
+                        row.innerHTML = `
+                            <td>
+                                <input type="checkbox" id="run_${run.id}" name="selected_runs" value="${run.id}-${run.tag}" ${selectedRuns.has(`${run.id}-${run.tag}`) ? 'checked' : ''}>
+                            </td>
+                            <td>${run.id}</td>
+                            <td>${run.team_name}</td>
+                            <td><span title="${run.tag}">...${run.tag.slice(-6)}</span></td>
+                            <td>${run.car_number}</td>
+                            <td>${run.cones || ''}</td>
+                            <td>${run.off_courses || ''}</td>
+                            <td>${run.dnfs || ''}</td>
+                            <td>${run.raw_time}</td>
+                            <td class="${run.dnfs != 0 ? 'table-danger' : (run.cones != 0 || run.off_courses != 0) && run.raw_time == 0 ? 'bg-warning' : run.raw_time == 0 && run.cones == 0 && run.off_courses == 0 ? 'table-success' : ''}">
+                                ${run.dnfs > 0 && run.adjusted_time == 0.0 ? 'DNF' : run.dnfs < 0 && run.adjusted_time == 0.0 ? 'DNS' : run.adjusted_time}
+                            </td>
+                        `;
+
+                        table.appendChild(row);
+                    });
+                });
+        }
+    </script>
 {% endblock %}
