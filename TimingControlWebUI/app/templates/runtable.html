@@ -16,7 +16,7 @@
             <div class="col">
                 <table id="runs-table" class="table table-hover">
                     <thead id="runs-table-body">{% include '_run_header.html' %}</thead>
-                    <tbody>
+                    <tbody id="runs-table-tbody">
                         {% for run in runs %}
                             {% include '_run.html' %}
                         {% endfor %}

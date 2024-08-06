@@ -141,7 +141,6 @@ def add_run():
         'status': 'danger',
         'message': 'Form validation failed!'
     }
-    flash('New run added successfully!', 'success')
     return jsonify(response), 400
 
 from flask import jsonify
