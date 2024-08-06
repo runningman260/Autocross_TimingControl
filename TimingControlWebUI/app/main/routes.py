@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from flask import render_template, flash, redirect, url_for, request, g, current_app
+from flask import render_template, flash, redirect, url_for, request, g, current_app, jsonify
 from flask_babel import _, get_locale
 import sqlalchemy as sa
 from app import db
@@ -51,10 +51,10 @@ def runtable():
                     if run.off_courses>0:
                         run.off_courses-=1  # Ensure off_courses doesn't go below 0
                 elif 'submit_plus_dnf' in request.form:
-                    if run.dnfs<1: #why do I use Capital N None here but lowercase n none in jinja?
+                    if run.dnfs<1:
                         run.dnfs+=1  
                 elif 'submit_minus_dnf' in request.form:
-                    if run.dnfs>-1:
+                    if run.dnfs>-1:#-1 is a DNS (if we want to use them)
                         run.dnfs-=1  
                 
                 run = calculateAdjustedTime(run)
@@ -101,7 +101,7 @@ def fixdata():
     return redirect(url_for('main.runtable'))
 
 
-@bp.route('/add_run', methods=['GET', 'POST'])
+@bp.route('/add_run', methods=['POST'])
 def add_run():
     form = AddRunForm()
     if form.validate_on_submit():
@@ -112,7 +112,7 @@ def add_run():
             team_name = car.team_name
             tag = car.tag
             # Add the new run to the RunOrder with the team name
-            new_run = RunOrder(car_number=car_number, team_name=team_name, tag=tag, raw_time=0.0, adjusted_time=0.0)
+            new_run = RunOrder(car_number=car_number, team_name=team_name, tag=tag, raw_time=0.0, adjusted_time=0.0, cones=0, off_courses=0, dnfs=0)
             db.session.add(new_run)
             db.session.commit()
             response = {
@@ -143,7 +143,7 @@ def add_run():
     }
     return jsonify(response), 400
 
-from flask import jsonify
+
 
 @bp.route('/api/runs', methods=['GET'])
 def get_runs():

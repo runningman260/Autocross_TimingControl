@@ -55,7 +55,7 @@ class RunOrder(db.Model):
         return '<RunOrder {}>'.format(self.id)
     
     def print_row(self):
-        return f'{self.id}; {self.team_name}; {self.location}; {self.tag}; {self.car_number}; {self.cones}; {self.off_courses}; {self.dnfs}; {self.raw_time}; {self.adjusted_time};'
+        return f'{self.id}; {self.team_name}; {self.tag}; {self.car_number}; {self.cones}; {self.off_courses}; {self.dnfs}; {self.raw_time}; {self.adjusted_time};'
 
 class CarReg(db.Model):
     id: so.Mapped[int] = so.mapped_column(primary_key=True, autoincrement=True)
