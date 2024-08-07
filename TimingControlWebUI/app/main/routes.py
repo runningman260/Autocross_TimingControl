@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
-from flask import render_template, flash, redirect, url_for, request, g, current_app, jsonify
+import os
+from flask import render_template, flash, redirect, send_from_directory, url_for, request, g, current_app, jsonify
 from flask_babel import _, get_locale
 import sqlalchemy as sa
 from app import db
@@ -103,6 +104,9 @@ def runtable():
     
     return render_template('runtable.html', title='Run Table', runs=runs, cols=cols, form=form, addRunForm=addRunForm)
 
+@bp.route('/favicon.ico')
+def favicon():
+    return send_from_directory(os.path.join(bp.root_path, 'static'),'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
 @bp.route('/toplaps', methods=['GET', 'POST'])
 def toplaps():

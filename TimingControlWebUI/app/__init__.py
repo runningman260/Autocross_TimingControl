@@ -1,7 +1,7 @@
 import logging
 from logging.handlers import SMTPHandler, RotatingFileHandler
 import os
-from flask import Flask, request, current_app
+from flask import Flask, request, current_app, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_login import LoginManager
@@ -34,8 +34,6 @@ def create_app(config_class=Config):
 
     db.init_app(app)
     migrate.init_app(app, db)
-    with app.app_context():
-        models.TopLaps.__table__ = sa.Table('top_runs', db.metadata, autoload_with=db.engine, info={'is_view': True}) #I have no idea if this does a damn thing
     #login.init_app(app)
     mail.init_app(app)
     moment.init_app(app)

@@ -27,6 +27,18 @@
         </div>
         <div class="row">
             <div class="bottom-fixed">
+            <div class="row">
+            <div class="container-md" id="alert-div">
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-info alert-dismissible fade show" role="alert">{{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
+            </div>
+            </div>
+            <div class="row">
                 <div class="col-lg d-flex flex-wrap justify-content-center align-items-center">
                     <button class="btn btn-default cone mb-2 mx-1 btn-lg flex-fill" id="submit_plus_cone" name="submit_plus_cone" type="submit">
                         <i class="bi bi-plus-lg"></i><i class="bi bi-cone-striped"></i><br> Cone
@@ -46,7 +58,7 @@
                     </button>
                     
                     <button class="btn btn-danger mb-2 mx-1 btn-lg flex-fill" id="submit_minus_dnf" name="submit_minus_dnf" type="submit">
-                       <i class="bi bi-flag-fill text-dark"></i><br> DNS
+                    <i class="bi bi-flag-fill text-dark"></i><br> DNS
                     </button>                    
                     <button class="btn btn-dark mb-2 btn-lg mx-1 flex-fill" id="deselect" name="deselect" type="reset">
                         <i class="bi bi-x-circle"></i><br/>Deselect
@@ -54,6 +66,7 @@
                     <a class="btn btn-success mb-2 btn-lg mx-1 flex-fill" href="#" id="refresh-button"><i class="bi bi-arrow-clockwise"></i><br> Refresh</a>
                     <!-- <a class="btn btn-success mb-2 btn-lg mx-1 flex-fill" href="{{ url_for('main.fixdata') }}"><i class="bi bi-arrow-clockwise"></i><br> Refresh</a> -->
                 </div>
+            </div>
             </div>
         </div>
     </form>
@@ -142,7 +155,7 @@
             if (data.status === 'success') {
                 showAlert('success', data.message);
                 data.runs.forEach(run => {
-                console.log('Processing run:', run);
+                //console.log('Processing run:', run);
                 const row = document.getElementById(run.id);
                 row.innerHTML = `
                     <td>
