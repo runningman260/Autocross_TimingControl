@@ -47,10 +47,13 @@ def delete_table(table_name):
     except (psycopg2.DatabaseError, Exception) as error:
         print(error)
 
-def insert_rawlaptime(table_name, run_data):
-    sql = """INSERT INTO {table_name}(read_counter, raw_time) VALUES({read_count}, '{raw_time}' ) RETURNING run_id;""".format(table_name=table_name, read_count=run_data[0], raw_time=run_data[1])
+def insert_newcar(table_name, scan_time, tag_number, car_number, team_name):
+    sql = """
+        INSERT INTO {table_name}(scan_time, tag_number, car_number, team_name) 
+        VALUES('{scan_time}', '{tag_number}', '{car_number}', '{team_name}') 
+        RETURNING id;""".format(table_name=table_name, scan_time=scan_time, tag_number=tag_number, car_number=car_number, team_name=team_name)
 
-    run_id = None
+    id = None
 
     try:
         with  psycopg2.connect(**Config.DATABASE) as conn:
@@ -61,25 +64,42 @@ def insert_rawlaptime(table_name, run_data):
                 # get the generated id back
                 rows = cur.fetchone()
                 if rows:
-                    run_id = rows[0]
+                    id = rows[0]
 
                 # commit the changes to the database
                 conn.commit()
     except (Exception, psycopg2.DatabaseError) as error:
         print(error)
     finally:
-        return run_id
+        return id
 
-def update_rawlaptime(table_name, run_data, id = None):
-    # IF id is provided, update will occur on record with run_id=id. 
-    # IF id is NOT provided, update will occur on record with read_counter=run_data[0]
-    # Single quotes around read_counter can be removed if field is declared as an int later
-    if(id == None):
-        sql = """UPDATE {table_name} SET raw_time = '{time}' WHERE read_counter = '{read_counter}' RETURNING run_id;""".format(table_name=table_name, read_counter=run_data[0], time=run_data[1])
+def update_newcar(table_name, scan_time, tag_number, car_number=None, team_name=None, id=None):
+    if(id != None):
+        sql = """
+            UPDATE {table_name} 
+            SET tag_number = '{tag_number}', scan_time = '{scan_time}' 
+            WHERE id = {id} 
+            RETURNING id;
+            """.format(table_name=table_name, scan_time=scan_time, tag_number=tag_number, id=id)
+
+    elif(car_number != None):
+        sql = """        
+            UPDATE {table_name} 
+            SET tag_number = '{tag_number}', scan_time = '{scan_time}' 
+            WHERE car_number = '{car_number}'
+            RETURNING id;
+            """.format(table_name=table_name, scan_time=scan_time, tag_number=tag_number, car_number=car_number)
+    elif(team_name != None):
+        sql = """
+            UPDATE {table_name} 
+            SET tag_number = '{tag_number}', scan_time = '{scan_time}' 
+            WHERE team_name = '{team_name}'
+            RETURNING id;
+            """.format(table_name=table_name, scan_time=scan_time, tag_number=tag_number, team_name=team_name)
     else:
-        sql = """UPDATE {table_name} SET raw_time = '{time}' WHERE run_id = {id} RETURNING run_id;""".format(table_name=table_name, id=id, time=run_data[1])
+        return -1
 
-    run_id = None
+    return_id = None
     try:
         with  psycopg2.connect(**Config.DATABASE) as conn:
             with  conn.cursor() as cur:
@@ -89,14 +109,75 @@ def update_rawlaptime(table_name, run_data, id = None):
                 # get the generated id back
                 rows = cur.fetchone()
                 if rows:
-                    run_id = rows[0]
+                    return_id = rows[0]
 
                 # commit the changes to the database
                 conn.commit()
     except (Exception, psycopg2.DatabaseError) as error:
         print(error)
     finally:
-        return run_id
+        return return_id
+
+def merge_car(table_name, scan_time, tag_number, car_number, team_name):
+    sql = """
+        MERGE INTO carreg w
+        USING (values('{scan_time}','{tag_number}','{car_number}','{team_name}')) as v
+        ON v.column3 = w.car_number
+        WHEN NOT MATCHED THEN
+        INSERT (scan_time, tag_number, car_number, team_name)
+        values(v.column1,v.column2,v.column3,v.column4)
+        WHEN MATCHED THEN
+        UPDATE SET tag_number = v.column2;
+        """.format(table_name=table_name, scan_time=scan_time, tag_number=tag_number, car_number=car_number, team_name=team_name)
+    id = None
+
+    try:
+        with  psycopg2.connect(**Config.DATABASE) as conn:
+            with  conn.cursor() as cur:
+                # execute the INSERT statement
+                cur.execute(sql)
+
+                # get the generated id back
+                rows = cur.fetchone()
+                if rows:
+                    id = rows[0]
+
+                # commit the changes to the database
+                conn.commit()
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+    finally:
+        return id
+
+def upsert_car(table_name, scan_time, tag_number, car_number, team_name):
+    sql = """
+        INSERT INTO carreg(scan_time, tag_number, car_number, team_name)
+        values('{scan_time}','{tag_number}','{car_number}','{team_name}')
+        ON CONFLICT(car_number)
+        DO UPDATE SET
+        tag_number = EXCLUDED.tag_number,
+        scan_time = EXCLUDED.scan_time
+        RETURNING (xmax = 0) AS inserted;
+        """.format(table_name=table_name, scan_time=scan_time, tag_number=tag_number, car_number=car_number, team_name=team_name)
+    inserted_flag = None
+
+    try:
+        with  psycopg2.connect(**Config.DATABASE) as conn:
+            with  conn.cursor() as cur:
+                # execute the INSERT statement
+                cur.execute(sql)
+
+                # get the generated inserted_flag back
+                rows = cur.fetchone()
+                if rows:
+                    inserted_flag = rows[0]
+
+                # commit the changes to the database
+                conn.commit()
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+    finally:
+        return inserted_flag
     
 def delete_all_table_rows(table_name):
     sql = "TRUNCATE " + table_name + ";"

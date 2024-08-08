@@ -53,12 +53,12 @@ def environment_check():
 		create_table(sql_cmd)
 
 	## Check if function and trigger are present. If not, create
-	function_name = "trigger_set_timestamp"
-	trigger_name = "set_timestamp"
+	function_name = table_name + "_trigger_set_timestamp"
+	trigger_name = table_name + "_set_timestamp"
 	if(not check_function_exists(function_name) and not check_trigger_exists(trigger_name)):
 		print("Function or trigger do not exist, creating...")
 		create_timestamp_function(function_name)
-		create_timestamp_trigger(table_name, function_name)
+		create_timestamp_trigger(table_name, function_name, trigger_name)
 	return True
 
 def create_mqtt_connection():
@@ -112,7 +112,7 @@ if __name__ == '__main__':
 	run_number = 0
 	table_name = "laptimeraw"
 
-	if(not environment_check):
+	if(not environment_check()):
 		print("Database Schema not correct. Exiting.")
 		atexit.register(exit_handler)
 	
