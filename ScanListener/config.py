@@ -2,7 +2,7 @@
 
 ##################################################################
 #                                                                #
-#  Configuration class for Car Registration Listener             #
+#  Configuration class for Scan Listener                         #
 #                                                                #
 ####################################### Pittsburgh Shootout LLC ##
 
@@ -31,5 +31,5 @@ class Config:
     MQTTPORT = 1883
     MQTTUSERNAME = 'username'
     MQTTPASSWORD = 'password'
-    MQTTCLIENTID = 'CarRegistrationListener'
-    MQTTTESTERCLIENTID = 'CarRegistrationListenerTester'
+    MQTTCLIENTID = 'ScanListener'
+    MQTTTESTERCLIENTID = 'ScanListenerTester'
