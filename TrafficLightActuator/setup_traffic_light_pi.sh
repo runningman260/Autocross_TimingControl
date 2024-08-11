@@ -1,5 +1,5 @@
 #!/bin/bash
-# This script is responsible for installing and configuring pre-reqs needed on the Autocross Timing Server
+# This script is responsible for installing and configuring pre-reqs needed on the Traffic Light Control Pi
 
 # Is needed on a pi?
 modify_bashrc(){
