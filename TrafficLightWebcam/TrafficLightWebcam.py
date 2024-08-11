@@ -16,6 +16,7 @@ import cv2
 from time import gmtime, strftime
 from config import Config
 import datetime
+import os
 
 def exit_handler():
 	print(' Cleaning Up!')
@@ -44,7 +45,7 @@ def sub_handler(client, userdata, msg):
 		cam = cv2.VideoCapture(cam_port)
 		result, image = cam.read()
 		if result:
-			cv2.imwrite("image" + strftime("%Y-%m-%d %H:%M:%S", gmtime()) + ".png", image)
+			cv2.imwrite(os.path.join(image_folder_path , "image" + strftime("%Y-%m-%d %H:%M:%S", gmtime()) + ".png"), image)
 		else:
 			client.publish("/timing/trafficlightwebcam/BadImage",str(datetime.datetime.now()))
 
@@ -56,7 +57,15 @@ if __name__ == '__main__':
 	prev_health_check = 0
 	health_check_interval = 30 #seconds
 	cam_port = 0
-		 
+
+	script_wd = os.path.abspath(os.path.dirname(__file__))
+	image_folder_name = "StartLineImages"
+	image_folder_path = script_wd + r"/" + image_folder_name
+	if(not os.path.isdir(image_folder_path)):
+		print("Does not Exist, Creating")
+		os.makedirs(image_folder_path)
+	else:
+		print("Image folder exists!")
 
 	while (not client.is_connected()):
 		print("Client not connected...")
