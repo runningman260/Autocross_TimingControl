@@ -71,8 +71,6 @@ if __name__ == '__main__':
 		print("Client not connected...")
 	time.sleep(2)
 
-	prevTimestamp = round(time.time() * 1000)
-
 	try:
 		while True:
 			# Send out a health check
