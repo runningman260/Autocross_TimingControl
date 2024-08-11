@@ -74,7 +74,7 @@ def control_LED(GPIO_Pin, state, prevTimestamp):
 		print(str(GPIO_Pin) + " off")
 
 if __name__ == '__main__':
-	client_id = Config.MQTTTESTERCLIENTID
+	client_id = Config.MQTTCLIENTID
 	client = create_mqtt_connection()
 	client.on_message = sub_handler
 	client.loop_start()
