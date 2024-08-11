@@ -1,5 +1,13 @@
 #!/usr/bin/python3
 
+#######################################################################################
+#                                                                                     #
+#  Task to listen for traffic light pattern actuation commands over MQTT and          #
+#  display those patterns on the traffic light via GPIO commands that run a relay     #
+#  board.                                                                             #
+#                                                                                     #
+############################################################ Pittsburgh Shootout LLC ##
+
 import RPi.GPIO as GPIO
 import time
 import paho.mqtt.client as paho
