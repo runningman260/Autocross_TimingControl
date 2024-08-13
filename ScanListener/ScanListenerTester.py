@@ -17,6 +17,7 @@ def create_mqtt_connection():
 		else:
 			print("MQTT Client NOT Connected, rc= " + str(reason_code))
 		client.subscribe("/timing/scanlistener/confirm_insert") #This goes here to sub on reconnection
+		client.subscribe("/timing/scanlistener/confirm_run_create") #This goes here to sub on reconnection
 	client = paho.Client(paho.CallbackAPIVersion.VERSION2,client_id=client_id)
 	client.username_pw_set(Config.MQTTUSERNAME, Config.MQTTPASSWORD)
 	client.on_connect = on_connect
@@ -24,13 +25,18 @@ def create_mqtt_connection():
 	return client
 
 def sub_handler(client, userdata, msg):
+	decoded_message = str(msg.payload.decode("utf-8"))
+	json_message = json.loads(decoded_message)
 	if(msg.topic == "/timing/scanlistener/confirm_insert"):
-		decoded_message = str(msg.payload.decode("utf-8"))
-		json_message = json.loads(decoded_message)
 		if(json_message["success"] == True):
-			print("Registration submitted successfully")
+			print("Run record submitted successfully")
 		else:
-			print("Registration not successful, radio for Nick")
+			print("Run record not successful, radio for Nick")
+	if(msg.topic == "/timing/scanlistener/confirm_run_create"):
+		if(json_message["success"] == True):
+			print("Run table insert submitted successfully")
+		else:
+			print("Run table insert not successful, radio for Nick")
 
 def build_payload(tag_number, scan_number=None):
 	if(scan_number == None):
@@ -154,23 +160,38 @@ if __name__ == '__main__':
 	time.sleep(2)
 	
 	try:
-		print("Start Line Entries Test")
-		for index,entry in enumerate(test_data):
-			print(str(index) + ": " + entry[0])
-			client.publish("/timing/slscan/newscan",build_payload(entry[0],index+1))
-			time.sleep(0.5)
-		
-		print("Finish Line Entries Test")
-		for index,entry in enumerate(test_data):
-			print(str(index) + ": " + entry[0])
-			client.publish("/timing/flscan/newscan",build_payload(entry[0],index+1))
-			time.sleep(0.5)
+		#print("Start Line Entries Test")
+		#for index,entry in enumerate(test_data):
+		#	print(str(index) + ": " + entry[0])
+		#	client.publish("/timing/slscan/newscan",build_payload(entry[0],index+1))
+		#	time.sleep(0.5)
+		#
+		#print("Finish Line Entries Test")
+		#for index,entry in enumerate(test_data):
+		#	print(str(index) + ": " + entry[0])
+		#	client.publish("/timing/flscan/newscan",build_payload(entry[0],index+1))
+		#	time.sleep(0.5)
+#
+		#print("Override Start Line Entries Test")
+		#for index,entry in enumerate(test_data):
+		#	print(str(index) + ": " + entry[0])
+		#	client.publish("/timing/webui/override",build_payload(entry[0]))
+		#	time.sleep(0.5)		
 
-		print("Override Start Line Entries Test")
-		for index,entry in enumerate(test_data):
-			print(str(index) + ": " + entry[0])
-			client.publish("/timing/webui/override",build_payload(entry[0]))
-			time.sleep(0.5)		
+		## Testing RunTable Car Number Entry with VALID tag number and VALID scan number
+		print("Scanning in: " + 'c7272088434b87ff463ae128ab18ac5e')
+		client.publish("/timing/slscan/newscan",build_payload('c7272088434b87ff463ae128ab18ac5e',0))
+		time.sleep(0.5)
+
+		### Testing RunTable Car Number Entry with INVALID tag number and VALID scan number
+		print("Scanning in: " + '7')
+		client.publish("/timing/slscan/newscan",build_payload('7',1))
+		time.sleep(0.5)
+#
+		### Testing RunTable Car Number Entry with VALID tag number and INVALID scan number
+		#print("Scanning in: " + 'c7272088434b87ff463ae128ab18ac5e')
+		#client.publish("/timing/slscan/newscan",build_payload('c7272088434b87ff463ae128ab18ac5e',0))
+		#time.sleep(0.5)
 	except KeyboardInterrupt:
 		pass
 	finally:	 

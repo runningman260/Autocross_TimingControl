@@ -47,6 +47,31 @@ def delete_table(table_name):
     except (psycopg2.DatabaseError, Exception) as error:
         print(error)
 
+def create_new_run(table_name,car_number,startline_scan_status):
+    run_created = None
+    sql = """
+        INSERT INTO {table_name}(car_number,startline_scan_status) 
+        VALUES('{car_number}', '{startline_scan_status}') 
+        RETURNING id;""".format(table_name=table_name,car_number=car_number,startline_scan_status=startline_scan_status)
+    try:
+        with  psycopg2.connect(**Config.DATABASE) as conn:
+            with  conn.cursor() as cur:
+                # execute the INSERT statement
+                cur.execute(sql)
+
+                # get the generated id back
+                rows = cur.fetchone()
+                if rows:
+                    id = rows[0]
+
+                # commit the changes to the database
+                conn.commit()
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+    finally:
+        if(id is not None): run_created = id
+        return run_created
+
 def insert_newscan(table_name, tag_number, scan_number=None, created_by=None):
     if(created_by == None):
         sql = """
@@ -208,6 +233,23 @@ def upsert_car(table_name, scan_time, tag_number, car_number, team_name):
         print(error)
     finally:
         return inserted_flag
+    
+def get_car_number(table_name, tag_number):
+    car_number = -1
+    response = None
+    sql = """
+        SELECT car_number from {table_name} where tag_number = '{tag_number}';
+        """.format(table_name=table_name, tag_number=tag_number)
+    try:
+        with psycopg2.connect(**Config.DATABASE) as conn:
+            with conn.cursor() as cur:
+                # execute the CREATE TABLE statement
+                cur.execute(sql)
+                response = cur.fetchone()[0]
+    except (psycopg2.DatabaseError, Exception) as error:
+        print(error)
+    if response is not None: car_number = response
+    return car_number
     
 def delete_all_table_rows(table_name):
     sql = "TRUNCATE " + table_name + ";"

@@ -84,20 +84,40 @@ def sub_handler(client, userdata, msg):
 		json_message = json.loads(decoded_message)
 		inserted = insert_newscan(startline_table_name, json_message["tag_number"], scan_number=json_message["scan_number"], created_by="SCAN")
 		print("Inserted Scan: " + str(json_message["scan_number"]) + " " + str(json_message["tag_number"]))
+		## Look up tag to car number
+		retreived_car_number  = get_car_number("carreg",json_message["tag_number"])
+		print("Retrieved Car Number: " + str(retreived_car_number))
+		if(int(retreived_car_number) > 0):
+			## Insert car number into run table as new run
+			run_created = create_new_run("runtable",str(retreived_car_number),"scanned at start line")
+			if(run_created is None): run_created = 0
+			client.publish("/timing/scanlistener/confirm_run_create",build_payload((int(run_created)>0),str(retreived_car_number),msg.topic,str(datetime.datetime.now())))
+		else:
+			## The Tag ID does not exist in the carreg table.
+			run_created = create_new_run("runtable","car_num_not_found","scanned_at_start_line")
+			if(run_created is None): run_created = 0
+			client.publish("/timing/scanlistener/confirm_run_create",build_payload((int(run_created)>0),"car_num_not_found",msg.topic,str(datetime.datetime.now())))
+		client.publish("/timing/scanlistener/confirm_insert",build_payload((inserted>0),str(json_message["tag_number"]),msg.topic,str(datetime.datetime.now())))
 
 	if(msg.topic == "/timing/flscan/newscan"):
 		decoded_message = str(msg.payload.decode("utf-8"))
 		json_message = json.loads(decoded_message)
 		inserted = insert_newscan(finishline_table_name, json_message["tag_number"], scan_number=json_message["scan_number"])
 		print("Inserted Scan: " + str(json_message["scan_number"]) + " " + str(json_message["tag_number"]))
+		## Need to work out how to insert these into the run table
 
 	if(msg.topic == "/timing/webui/override"):
+		# Since we don't have a tag_number, we'll put the car_number in the tag column so that we know who was inserted
 		decoded_message = str(msg.payload.decode("utf-8"))
 		json_message = json.loads(decoded_message)
-		inserted = insert_newscan(startline_table_name, json_message["tag_number"],scan_number="" ,created_by="ui_override")
-		print("Inserted Scan: " + "ui_override" + " " + str(json_message["tag_number"]))
+		inserted = insert_newscan(startline_table_name, str("override_" + json_message["car_number"]),scan_number="" ,created_by="ui_override")
+		print("Inserted Scan: " + "ui_override" + " " + str(json_message["car_number"]))
+		## Insert car number into run table as new run
+		run_created = create_new_run("runtable",json_message["car_number"],"ui_override")
+		if(run_created is None): run_created = 0
+		client.publish("/timing/scanlistener/confirm_run_create",build_payload((int(run_created)>0),json_message["car_number"],msg.topic,str(datetime.datetime.now())))
+		client.publish("/timing/scanlistener/confirm_insert",build_payload((inserted>0),str(json_message["tag_number"]),msg.topic,str(datetime.datetime.now())))
 
-	client.publish("/timing/scanlistener/confirm_insert",build_payload((inserted>0),str(json_message["tag_number"]),msg.topic,str(datetime.datetime.now())))
 
 def build_payload(success, tag_number, source, timestamp):
 	payload = {"success":success,"tag":tag_number,"source":source,"created_at":timestamp}
