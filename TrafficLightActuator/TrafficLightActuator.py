@@ -13,8 +13,9 @@ import time
 import paho.mqtt.client as paho
 import json
 import atexit
-
-from config import Config
+import os, sys
+sys.path.insert(0, os.path.abspath(".."))
+from Common.config import Config
 import datetime
 
 def exit_handler():
@@ -34,7 +35,7 @@ def create_mqtt_connection():
 	client = paho.Client(paho.CallbackAPIVersion.VERSION2,client_id=client_id)
 	client.username_pw_set(Config.MQTTUSERNAME, Config.MQTTPASSWORD)
 	client.on_connect = on_connect
-	client.connect(Config.MQTTBROKER, Config.MQTTPORT)
+	client.connect(Config.TrafficLightActuator.MQTTBROKER, Config.MQTTPORT)
 	return client
 
 def sub_handler(client, userdata, msg):
@@ -82,7 +83,7 @@ def control_LED(GPIO_Pin, state, prevTimestamp):
 		print(str(GPIO_Pin) + " off")
 
 if __name__ == '__main__':
-	client_id = Config.MQTTCLIENTID
+	client_id = Config.TrafficLightActuator.MQTTCLIENTID
 	client = create_mqtt_connection()
 	client.on_message = sub_handler
 	client.loop_start()

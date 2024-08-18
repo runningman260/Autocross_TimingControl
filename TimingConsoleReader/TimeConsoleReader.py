@@ -8,12 +8,14 @@
 #                                                                                     #
 ############################################################ Pittsburgh Shootout LLC ##
 
-from config import Config
 import time
 import atexit
 import serial					# pySerial
 import serial.tools.list_ports	# pySerial
-from database_helper import *
+import os, sys
+sys.path.insert(0, os.path.abspath(".."))
+from Common.config import Config
+from Common.database_helper import *
 import paho.mqtt.client as paho
 import json
 import datetime
@@ -25,40 +27,6 @@ def exit_handler():
 	exit(1)
 
 def environment_check():
-	## Check if table exists
-	## If EXISTS, clear rows if desired
-	## If !EXISTS, create
-
-	delete_if_exists = False
-
-	print("CHECKING")
-	if(check_table_exist(table_name)):
-		print("TABLE EXISTS")
-		if(delete_if_exists):
-			print("DELETING ROWS")
-			delete_all_table_rows(table_name)
-		else:
-			print("NOT DELETING ROWS")
-	else:
-		print("CREATING")
-		sql_cmd ="""
-			CREATE TABLE {table_name}(
-				run_id SERIAL PRIMARY KEY,
-				read_counter VARCHAR(255),
-				raw_time  VARCHAR(255),
-				created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-				updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-			)
-			""".format(table_name=table_name)
-		create_table(sql_cmd)
-
-	## Check if function and trigger are present. If not, create
-	function_name = table_name + "_trigger_set_timestamp"
-	trigger_name = table_name + "_set_timestamp"
-	if(not check_function_exists(function_name) and not check_trigger_exists(trigger_name)):
-		print("Function or trigger do not exist, creating...")
-		create_timestamp_function(function_name)
-		create_timestamp_trigger(table_name, function_name, trigger_name)
 	return True
 
 def create_mqtt_connection():
@@ -71,7 +39,7 @@ def create_mqtt_connection():
 	client = paho.Client(paho.CallbackAPIVersion.VERSION2,client_id=client_id)
 	client.username_pw_set(Config.MQTTUSERNAME, Config.MQTTPASSWORD)
 	client.on_connect = on_connect
-	client.connect(Config.MQTTBROKER, Config.MQTTPORT)
+	client.connect(Config.TimingConsoleReader.MQTTBROKER, Config.MQTTPORT)
 	return client
 
 def sub_handler(client, userdata, msg):
@@ -116,12 +84,14 @@ if __name__ == '__main__':
 		print("Database Schema not correct. Exiting.")
 		atexit.register(exit_handler)
 	
-	client_id = Config.MQTTCLIENTID
+	client_id = Config.TimingConsoleReader.MQTTCLIENTID
 	client = create_mqtt_connection()
 	client.on_message = sub_handler
 	client.loop_start()
 	prev_health_check = 0
 	health_check_interval = 30 #seconds
+
+	last_runtable_row_inserted = 0
 
 	try:
 		while True:
@@ -143,6 +113,8 @@ if __name__ == '__main__':
 						print("DB UDPATE:\t" + prev_lap_time + " to\tDNF")
 						update_rawlaptime(table_name,[run_number,"DNF"])
 						client.publish("/timing/laptime/updatetime",build_payload(False,run_number,"DNF",str(datetime.datetime.now())))
+						row_updated = update_runtable("runtable","raw_time","DNF",last_runtable_row_inserted)
+						print("Runtable row updated: " + str(row_updated))
 						prev_lap_time = lap_time_buffer
 						update_db_flag = False
 					else:
@@ -151,6 +123,19 @@ if __name__ == '__main__':
 						print("DB INSERT:\tDNF")
 						insert_rawlaptime(table_name,[run_number,"DNF"])
 						client.publish("/timing/laptime/newtime",build_payload(True,run_number,"DNF",str(datetime.datetime.now())))
+
+						#Find where to put this in the runtable
+						fifo_runtable_row = retrieve_oldest_active_run_by_raw_time("runtable", "raw_time")
+						if (fifo_runtable_row > -1):
+							# We found a row, update that row with a raw time.
+							row_updated = update_runtable("runtable","raw_time","DNF",fifo_runtable_row)
+							print("Runtable row updated: " + str(row_updated))
+						#else:
+							# We did not get a row, something wrong. What do?
+							# Send MQTT?
+					
+						#housekeeping
+						last_runtable_row_inserted = fifo_runtable_row
 						prev_lap_time = "DNF"
 				elif update_db_flag:
 					# Restart button was pressed and this is the next value, should UPDATE the previous time
@@ -158,14 +143,31 @@ if __name__ == '__main__':
 					print("DB UDPATE:\t" + prev_lap_time + " to\t" + lap_time_buffer)
 					update_rawlaptime(table_name,[run_number,lap_time_buffer])
 					client.publish("/timing/laptime/updatetime",build_payload(False,run_number,lap_time_buffer,str(datetime.datetime.now())))
+					row_updated = update_runtable("runtable","raw_time",str(lap_time_buffer),last_runtable_row_inserted)
+					print("Runtable row updated: " + str(row_updated))
 					prev_lap_time = lap_time_buffer
 					update_db_flag = False
 				else:
 					# Typical op, valid lap time flew in
 					run_number = run_number + 1
 					print("DB INSERT:\t" + lap_time_buffer)
+
+					# Update laptime table
 					insert_rawlaptime(table_name,[run_number,lap_time_buffer])
 					client.publish("/timing/laptime/newtime",build_payload(True,run_number,lap_time_buffer,str(datetime.datetime.now())))
+					
+					#Find where to put this in the runtable
+					fifo_runtable_row = retrieve_oldest_active_run_by_raw_time("runtable", "raw_time")
+					if (fifo_runtable_row > -1):
+						# We found a row, update that row with a raw time.
+						row_updated = update_runtable("runtable","raw_time",str(lap_time_buffer),fifo_runtable_row)
+						print("Runtable row updated: " + str(row_updated))
+					#else:
+						# We did not get a row, something wrong. What do?
+						# Send MQTT?
+					
+					#housekeeping
+					last_runtable_row_inserted = fifo_runtable_row
 					prev_lap_time = lap_time_buffer
 			if((time.time() - prev_health_check) > health_check_interval):
 				client.publish("/timing/timeconsolereader/healthcheck",str(datetime.datetime.now()))

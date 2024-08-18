@@ -1,4 +1,7 @@
-from config import Config
+import os, sys
+sys.path.insert(0, os.path.abspath(".."))
+from Common.config import Config
+from Common.database_helper import *
 import time
 import paho.mqtt.client as paho
 import json
@@ -20,7 +23,7 @@ def create_mqtt_connection():
 	client = paho.Client(paho.CallbackAPIVersion.VERSION2,client_id=client_id)
 	client.username_pw_set(Config.MQTTUSERNAME, Config.MQTTPASSWORD)
 	client.on_connect = on_connect
-	client.connect(Config.MQTTBROKER, Config.MQTTPORT)
+	client.connect(Config.CarRegistration.MQTTBROKER, Config.MQTTPORT)
 	return client
 
 def sub_handler(client, userdata, msg):
@@ -141,7 +144,7 @@ test_data = [
 
 
 if __name__ == '__main__':
-	client_id = Config.MQTTTESTERCLIENTID
+	client_id = Config.CarRegistration.MQTTTESTERCLIENTID
 	client = create_mqtt_connection()
 	client.on_message = sub_handler
 	client.loop_start()

@@ -14,9 +14,10 @@ import json
 import atexit
 import cv2
 from time import gmtime, strftime
-from config import Config
+import os, sys
+sys.path.insert(0, os.path.abspath(".."))
+from Common.config import Config
 import datetime
-import os
 
 def exit_handler():
 	print(' Cleaning Up!')
@@ -34,7 +35,7 @@ def create_mqtt_connection():
 	client = paho.Client(paho.CallbackAPIVersion.VERSION2,client_id=client_id)
 	client.username_pw_set(Config.MQTTUSERNAME, Config.MQTTPASSWORD)
 	client.on_connect = on_connect
-	client.connect(Config.MQTTBROKER, Config.MQTTPORT)
+	client.connect(Config.TrafficLightWebcam.MQTTBROKER, Config.MQTTPORT)
 	return client
 
 def sub_handler(client, userdata, msg):
@@ -50,7 +51,7 @@ def sub_handler(client, userdata, msg):
 			client.publish("/timing/trafficlightwebcam/BadImage",str(datetime.datetime.now()))
 
 if __name__ == '__main__':
-	client_id = Config.MQTTCLIENTID
+	client_id = Config.TrafficLightWebcam.MQTTCLIENTID
 	client = create_mqtt_connection()
 	client.on_message = sub_handler
 	client.loop_start()
