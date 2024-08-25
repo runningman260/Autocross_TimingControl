@@ -30,12 +30,12 @@ install_python_packages() {
 	python3 -m pip install -r requirements.txt
 }
 
-setup_network_interface() {
-	# IP MUST be 192.168.2.205
-}
+#setup_network_interface() {
+#	# IP MUST be 192.168.2.205
+#}
 
 create_traffic_light_service(){
-	sudo cp /home/relaypi/Documents/TrafficLightActuator/TrafficLightActuatorService.service /lib/systemd/system/
+	sudo cp /home/admin/Documents/Autocross_TimingControl-main/TrafficLightActuator/TrafficLightActuatorService.service /lib/systemd/system/
 	sudo systemctl enable TrafficLightActuatorService.service
 }
 
@@ -46,7 +46,7 @@ SCRIPT_LOCATION="$(dirname "$(readlink -f "$0")")"
 update_pi
 install_packages
 install_python_packages
-setup_network_interface
+#setup_network_interface
 create_traffic_light_service
 
 echo ""
@@ -58,4 +58,3 @@ echo "|  Reboot the PC.              |"
 echo "|                              |"
 echo "--------------------------------"
 echo ""
-
