@@ -3,18 +3,21 @@
 
 install_python_packages() {
 	echo "Installing Python Packages..."
-	python3 -m pip install -r requirements.txt
+	# This seems to crash on older Pis	
+	#python3 -m pip install -r requirements.txt --break-system-packages
+	# This works, FOR NOW
+	sudo apt-get install python3-opencv
 }
 
 create_webcam_service(){
-	sudo cp /home/relaypi/Documents/TrafficLightWebcam/TrafficLightWebcamService.service /lib/systemd/system/
+	sudo cp /home/admin/Documents/Autocross_TimingControl-main/TrafficLightWebcam/TrafficLightWebcamService.service /lib/systemd/system/
 	sudo systemctl enable TrafficLightWebcamService.service
 }
 
 
 SCRIPT_LOCATION="$(dirname "$(readlink -f "$0")")"
 
-install_python_packages
+#install_python_packages
 create_webcam_service
 
 echo ""
