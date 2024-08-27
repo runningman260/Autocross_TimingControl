@@ -46,20 +46,12 @@ def sub_handler(client, userdata, msg):
 		json_message = json.loads(decoded_message)
 	
 		global LightState
-		if(json_message["pattern_command"] == 'SolidRed'):
+		if(json_message["RedState"] == 1):
 			LightState = [1,0,0]
-		if(json_message["pattern_command"] == 'TrackNotReady'):
-			LightState = [1,0,0]
-		if(json_message["pattern_command"] == 'SolidYellow'):
+		if(json_message["YellowState"] == 1):
 			LightState = [0,1,0]
-		if(json_message["pattern_command"] == 'SolidGreen'):
+		if(json_message["GreenState"] == 1):
 			LightState = [0,0,1]
-		if(json_message["pattern_command"] == 'BlinkingRed'):
-			LightState = [1,0,0]
-		if(json_message["pattern_command"] == 'BlinkingYellow'):
-			LightState = [1,0,0]
-		if(json_message["pattern_command"] == 'BlinkingGreen'):
-			LightState = [0,1,0]
 		print(LightState)
 
 def control_LED(GPIO_Pin, state, prevTimestamp):

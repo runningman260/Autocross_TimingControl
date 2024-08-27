@@ -27,7 +27,7 @@ install_packages() {
 
 install_python_packages() {
 	echo "Installing Python Packages..."
-	python3 -m pip install -r requirements.txt --break-system-packages
+	python3 -m pip install -r requirements.txt
 }
 
 #setup_network_interface() {
@@ -58,3 +58,4 @@ echo "|  Reboot the PC.              |"
 echo "|                              |"
 echo "--------------------------------"
 echo ""
+
