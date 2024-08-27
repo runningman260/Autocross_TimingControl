@@ -1,5 +1,5 @@
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QApplication, QWidget, QMainWindow, QPushButton, QLabel, QLineEdit, QVBoxLayout, QComboBox, QMessageBox
+from PyQt6.QtWidgets import QApplication, QWidget, QMainWindow, QPushButton, QLabel, QLineEdit, QVBoxLayout, QComboBox, QMessageBox, QDialog
 import paho.mqtt.client as paho
 from Common.config import Config
 import sys
@@ -19,7 +19,7 @@ import json
 # 	client.on_connect = on_connect
 # 	client.connect(Config.TrafficLightActuator.MQTTBROKER, Config.MQTTPORT)
 # 	return client
-class MQTTHandler():
+class MQTTHandler:
 
     def sub_handler():
         print("test")
@@ -45,12 +45,17 @@ class MQTTHandler():
             if(decoded_message == str(0)):
                 print("Get Nick Hills")
                 # MainWindow.show_popup(self)
+                # Create an instance of the popup window and show it
+                popup = getNickPopUpWindow()
+                popup.exec()  # Use exec() for modal behavior
+
             print(decoded_message)
 
-    def __init__(self, parent=None):
+    def __init__(self, mainWindow):
         super().__init__()
 
         self.getNick = False
+        self.mainWindow=mainWindow
     
         self.client_id = Config.CarRegistration.MQTTCLIENTID
         self.client = self.create_mqtt_connection()
@@ -63,7 +68,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.mqttClient = MQTTHandler(self)
+        self.mqttClient = MQTTHandler(mainWindow=self)
         self.teamNameList = []
         self.carNumberList= []
         self.getCSVData()
@@ -152,6 +157,19 @@ class MainWindow(QMainWindow):
         # Show the popup window
         msg.exec()
 
+class getNickPopUpWindow(QDialog):
+    def __init__(self):
+        super().__init__()
+
+        # Set the title and size of the popup
+        self.setWindowTitle("Popup Window")
+        self.setGeometry(100, 100, 200, 100)
+
+        # Add a label to the popup
+        layout = QVBoxLayout()
+        label = QLabel("Get Nick Hills!", self)
+        layout.addWidget(label)
+        self.setLayout(layout)
 
 getNick = False
 
