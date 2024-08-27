@@ -35,7 +35,7 @@ install_python_packages() {
 #}
 
 create_traffic_light_service(){
-	sudo cp /home/admin/Documents/Autocross_TimingControl-main/TrafficLightActuator/TrafficLightActuatorService.service /lib/systemd/system/
+	sudo cp /home/admin/Documents/Autocross_TimingControl/TrafficLightActuator/TrafficLightActuatorService.service /lib/systemd/system/
 	sudo systemctl enable TrafficLightActuatorService.service
 }
 

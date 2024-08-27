@@ -10,7 +10,7 @@ install_python_packages() {
 }
 
 create_webcam_service(){
-	sudo cp /home/admin/Documents/Autocross_TimingControl-main/TrafficLightWebcam/TrafficLightWebcamService.service /lib/systemd/system/
+	sudo cp /home/admin/Documents/Autocross_TimingControl/TrafficLightWebcam/TrafficLightWebcamService.service /lib/systemd/system/
 	sudo systemctl enable TrafficLightWebcamService.service
 }
 
