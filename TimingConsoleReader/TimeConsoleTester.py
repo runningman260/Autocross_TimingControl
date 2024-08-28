@@ -1,7 +1,7 @@
 #/bin/python3
 
 # To test, run the line below in a separate console window FIRST. 
-#sudo socat -d -d pty,b9600,raw,link=/dev/ttyUSB98,echo=0,perm=0777 pty,b9600,raw,link=/dev/ttyUSB99,echo=0,perm=0777
+# echo "98=reader, 99=tester" && sudo socat -d -d pty,b9600,raw,link=/dev/ttyUSB98,echo=0,perm=0777 pty,b9600,raw,link=/dev/ttyUSB99,echo=0,perm=0777
 # THEN, update the config.py file to the correct device path for the test console.
 
 import time
