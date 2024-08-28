@@ -14,6 +14,11 @@ create_webcam_service(){
 	sudo systemctl enable TrafficLightWebcamService.service
 }
 
+create_cronjob(){
+	crontab -l > temp_cron_file
+	echo "* * * * * /home/admin/Documents/Autocross_TimingControl/TrafficLightWebcam/startline-photo-backup.sh" >> temp_cron_file
+	crontab temp_cron_file
+	rm temp_cron_file
 
 SCRIPT_LOCATION="$(dirname "$(readlink -f "$0")")"
 
