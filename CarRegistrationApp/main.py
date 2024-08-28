@@ -1,3 +1,12 @@
+#/bin/python3
+
+#######################################################################################
+#                                                                                     #
+#  App to register cars.                                                              #
+#  Car info is sent over MQTT to the timing server.                                   #
+#                                                                                     #
+############################################################ Pittsburgh Shootout LLC ##
+
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QApplication, QWidget, QMainWindow, QPushButton, QLabel, QLineEdit, QVBoxLayout, QComboBox, QMessageBox, QDialog
 import paho.mqtt.client as paho
@@ -43,7 +52,7 @@ class MQTTHandler:
         if(msg.topic == "/timing/carreg/confirm"):
             decoded_message = str(msg.payload.decode("utf-8"))
             if(decoded_message == str(0)):
-                print("Get Nick Hills")
+                print("Radio for Nick Hills!")
                 # MainWindow.show_popup(self)
                 # Create an instance of the popup window and show it
                 popup = getNickPopUpWindow()
@@ -133,11 +142,11 @@ class MainWindow(QMainWindow):
         self.mqttClient.client.publish("/timing/carreg/newcar", payload=data_json, qos=0)
 
     def getCSVData(self):
-        with open('carList.csv', newline='') as csvfile:
+        with open('PS_2024_Registration.csv', newline='') as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
-                self.teamNameList.append(row['TeamName'])
-                self.carNumberList.append(row['CarNumber'])
+                self.teamNameList.append(row['team_name'])
+                self.carNumberList.append(row['car_number'])
     
     def schoolChanged(self):
         self.carNumberBox.setText(self.carNumberList[self.teamNameComboBox.currentIndex()])
@@ -167,7 +176,7 @@ class getNickPopUpWindow(QDialog):
 
         # Add a label to the popup
         layout = QVBoxLayout()
-        label = QLabel("Get Nick Hills!", self)
+        label = QLabel("Radio for Nick Hills!", self)
         layout.addWidget(label)
         self.setLayout(layout)
 
