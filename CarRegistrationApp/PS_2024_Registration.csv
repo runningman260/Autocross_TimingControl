@@ -1,4 +1,4 @@
-﻿car_number,team_name,class,year
+car_number,team_name,class,year
 0,University of Guelph,IC,2019
 3,Formula Buckeyes,IC,2024
 4,Bearcat Motorsports,IC,2024
@@ -12,7 +12,7 @@
 26,University of Toronto Formula Racing Alumni,IC,2021
 27,Ravens Racing,IC,2024
 42,York College of Pennsylvania,IC,2024
-49,"University of Maryland, College Park",IC,2024
+49,University of Maryland College Park,IC,2024
 53,Clemson Formula SAE,IC,2024
 60,University Of Illinois at Chicago,IC,2024
 64,Mountaineer Racing- WVU,IC,2024

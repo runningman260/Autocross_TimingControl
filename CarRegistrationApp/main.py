@@ -10,28 +10,13 @@
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QApplication, QWidget, QMainWindow, QPushButton, QLabel, QLineEdit, QVBoxLayout, QComboBox, QMessageBox, QDialog
 import paho.mqtt.client as paho
-from Common.config import Config
+from config import Config
 import sys
 import csv
 from datetime import datetime
 import json
 
-# def create_mqtt_connection():
-# 	def on_connect(client, userdata, flags, reason_code, properties):
-# 		if reason_code == 0:
-# 			print("MQTT Client Connected")
-# 		else:
-# 			print("MQTT Client NOT Connected, rc= " + str(reason_code))
-# 		client.subscribe("/timing/TLCtrl/newpattern") #This goes here to sub on reconnection
-# 	client = paho.Client(paho.CallbackAPIVersion.VERSION2,client_id=client_id)
-# 	client.username_pw_set(Config.MQTTUSERNAME, Config.MQTTPASSWORD)
-# 	client.on_connect = on_connect
-# 	client.connect(Config.TrafficLightActuator.MQTTBROKER, Config.MQTTPORT)
-# 	return client
 class MQTTHandler:
-
-    def sub_handler():
-        print("test")
 
     def create_mqtt_connection(self):
         def on_connect(client, userdata, flags, reason_code, properties):
@@ -39,12 +24,11 @@ class MQTTHandler:
                 print("MQTT Client Connected")
             else:
                 print("MQTT Client NOT Connected, rc= " + str(reason_code))
-            client.subscribe("/timing/carreg/newcar") #This goes here to sub on reconnection
             client.subscribe("/timing/carreg/confirm") #This goes here to sub on reconnection
         client = paho.Client(paho.CallbackAPIVersion.VERSION2,client_id=self.client_id)
         client.username_pw_set(Config.MQTTUSERNAME, Config.MQTTPASSWORD)
         client.on_connect = on_connect
-        client.connect(host=Config.CarRegistration.MQTTBROKER, port=Config.MQTTPORT)
+        client.connect(host=Config.CarRegistrationApp.MQTTBROKER, port=Config.MQTTPORT)
         return client
         
     def subHandler(self, client, userdata, msg):
@@ -57,7 +41,10 @@ class MQTTHandler:
                 # Create an instance of the popup window and show it
                 popup = getNickPopUpWindow()
                 popup.exec()  # Use exec() for modal behavior
-
+            #else:
+                # Clear the form when there is a successful submission
+                # How do we call this with "self" when the client is the "self"?
+            #    clearButtonClicked(self)
             print(decoded_message)
 
     def __init__(self, mainWindow):
@@ -65,22 +52,21 @@ class MQTTHandler:
 
         self.getNick = False
         self.mainWindow=mainWindow
-    
-        self.client_id = Config.CarRegistration.MQTTCLIENTID
+        self.client_id = Config.CarRegistrationApp.MQTTCLIENTID
         self.client = self.create_mqtt_connection()
         self.client.on_message = self.subHandler
         self.client.loop_start()
-
 
 class MainWindow(QMainWindow):  
     
     def __init__(self):
         super().__init__()
-
-        self.mqttClient = MQTTHandler(mainWindow=self)
-        self.teamNameList = []
-        self.carNumberList= []
+        # Commented out to not fail when testing
+        #self.mqttClient = MQTTHandler(mainWindow=self)
+        self.teamNameList = [""]
+        self.carNumberList= [""]
         self.getCSVData()
+        self.setStyleSheet('font-size: ' + str(26)+'px')
 
         self.setWindowTitle("Car Registration App")
 
@@ -91,7 +77,7 @@ class MainWindow(QMainWindow):
         self.carNumberLabel = QLabel("Car Number")
         self.carNumberBox = QLineEdit()
         self.teamNameLabel = QLabel("Team Name")
-        self.teamNameBox = QLineEdit()
+        #self.teamNameBox = QLineEdit()
         # self.tagNumberLabel = QLabel("Tag Number")
         # self.tagNumberBox = QLineEdit()
         # self.scanTimeLabel = QLabel("Scan Time")
@@ -103,9 +89,15 @@ class MainWindow(QMainWindow):
         
 
         #create button
-        self.button = QPushButton(text="Submit", parent=self)
-        # button.setCheckable(True)
-        self.button.clicked.connect(self.buttonClicked)
+        self.submitButton = QPushButton(text="Submit", parent=self)
+        self.submitButton.setStyleSheet('margin: 20px')
+        self.submitButton.setStyleSheet('padding: 5px')
+        self.submitButton.clicked.connect(self.submitButtonClicked)
+        
+        self.clearButton = QPushButton(text="Clear", parent=self)
+        self.clearButton.setStyleSheet('margin: 20px')
+        self.clearButton.setStyleSheet('padding: 5px')
+        self.clearButton.clicked.connect(self.clearButtonClicked)
 
         #create layout
         self.layout = QVBoxLayout()
@@ -121,7 +113,8 @@ class MainWindow(QMainWindow):
         # self.layout.addWidget(self.tagNumberBox)
         # self.layout.addWidget(self.scanTimeLabel)
         # self.layout.addWidget(self.scanTimeBox)
-        self.layout.addWidget(self.button)
+        self.layout.addWidget(self.submitButton)
+        self.layout.addWidget(self.clearButton)
 
         self.container = QWidget()
         self.container.setLayout(self.layout)
@@ -129,8 +122,8 @@ class MainWindow(QMainWindow):
         #set the central widget of the window
         self.setCentralWidget(self.container)
 
-    def buttonClicked(self):
-        print("Button Pressed")
+    def submitButtonClicked(self):
+        print("Submit Button Pressed")
         print(self.tagScanBox.text())
         data = {
             "car_number"    :   self.carNumberBox.text(),
@@ -140,6 +133,13 @@ class MainWindow(QMainWindow):
         }
         data_json = json.dumps(data, indent=4)
         self.mqttClient.client.publish("/timing/carreg/newcar", payload=data_json, qos=0)
+    
+    def clearButtonClicked(self):
+        print("Clear Button Pressed")
+        self.tagScanBox.setText("")
+        self.carNumberBox.setText("")
+        self.teamNameComboBox.clear()
+        self.teamNameComboBox.addItems(self.teamNameList)
 
     def getCSVData(self):
         with open('PS_2024_Registration.csv', newline='') as csvfile:
