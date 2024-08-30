@@ -48,7 +48,7 @@ class UserModelCase(unittest.TestCase):
             next(readCSV, None)  # skip the headers
             for row in readCSV:
                 print("Inserting: " + str(row))
-                r = CarReg(tag=row[1], car_number=row[2], team_name=row[0], scan_time = datetime.now())
+                r = CarReg(tag_number=row[1], car_number=row[2], team_name=row[0], scan_time = datetime.now())
                 db.session.add(r)
                 db.session.commit()
                 #print(CarReg.query.order_by(CarReg.id.desc()).first().print_row())
