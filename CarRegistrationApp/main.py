@@ -49,6 +49,8 @@ class MQTTHandler:
             else:
                 # Clear the form when there is a successful submission
                 print("Successful Submit")
+                popup = successPopUpWindow()
+                popup.exec()  # Use exec() for modal behavior
                 self.mainWindow.tagScanBox.setText("")
                 self.mainWindow.carNumberBox.setText("")
                 self.mainWindow.teamNameComboBox.clear()
@@ -182,6 +184,22 @@ class blankFieldsPopUpWindow(QDialog):
         # Add a label to the popup
         layout = QVBoxLayout()
         label = QLabel("Blank Rows found\nNo submission.", self)
+        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(label)
+        self.setLayout(layout)
+
+class successPopUpWindow(QDialog):
+    def __init__(self):
+        super().__init__()
+
+        # Set the title and size of the popup
+        self.setWindowTitle("Success")
+        self.setGeometry(300, 300, 200, 200)
+        self.setStyleSheet('font-size: ' + str(48)+'px')
+
+        # Add a label to the popup
+        layout = QVBoxLayout()
+        label = QLabel("Success!", self)
         label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(label)
         self.setLayout(layout)
