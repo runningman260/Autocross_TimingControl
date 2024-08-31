@@ -8,11 +8,10 @@
 ############################################################ Pittsburgh Shootout LLC ##
 
 import os, sys
-sys.path.insert(0, os.path.abspath(".."))
 import time
 import atexit
-from Common.config import Config
-from Common.database_helper import *
+from config import Config
+from database_helper import *
 import paho.mqtt.client as paho
 import json
 import datetime

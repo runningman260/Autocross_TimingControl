@@ -9,9 +9,10 @@
 import os
 
 class Config:
-    MQTTBROKER = '192.168.2.200'
-    MQTTPORT = 1883
-    MQTTUSERNAME = 'username'
-    MQTTPASSWORD = 'password'
-    MQTTCLIENTID = 'TrafficLightWebcam'
-    MQTTTESTERCLIENTID = 'TrafficLightWebcamTester'
+    class MQTT:
+        PORT = 1883
+        USERNAME = 'username'
+        PASSWORD = 'password'
+        BROKER = '192.168.2.200'
+        CLIENTID = 'TrafficLightWebcam'
+        TESTERCLIENTID = 'TrafficLightWebcamTester'

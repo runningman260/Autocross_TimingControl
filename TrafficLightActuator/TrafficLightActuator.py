@@ -14,8 +14,6 @@ import paho.mqtt.client as paho
 import json
 import atexit
 import os, sys
-#sys.path.insert(0, os.path.abspath(".."))
-#from Common.config import Config
 from config import Config
 import datetime
 
@@ -34,9 +32,9 @@ def create_mqtt_connection():
 			print("MQTT Client NOT Connected, rc= " + str(reason_code))
 		client.subscribe("/timing/TLCtrl/newpattern") #This goes here to sub on reconnection
 	client = paho.Client(paho.CallbackAPIVersion.VERSION2,client_id=client_id)
-	client.username_pw_set(Config.MQTTUSERNAME, Config.MQTTPASSWORD)
+	client.username_pw_set(Config.MQTT.USERNAME, Config.MQTT.PASSWORD)
 	client.on_connect = on_connect
-	client.connect(Config.MQTTBROKER, Config.MQTTPORT)
+	client.connect(Config.MQTT.BROKER, Config.MQTT.PORT)
 	return client
 
 def sub_handler(client, userdata, msg):
@@ -76,7 +74,7 @@ def control_LED(GPIO_Pin, state, prevTimestamp):
 		print(str(GPIO_Pin) + " off")
 
 if __name__ == '__main__':
-	client_id = Config.MQTTCLIENTID
+	client_id = Config.MQTT.CLIENTID
 	client = create_mqtt_connection()
 	client.on_message = sub_handler
 	client.loop_start()

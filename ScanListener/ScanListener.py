@@ -8,33 +8,32 @@
 ############################################################ Pittsburgh Shootout LLC ##
 
 import os, sys
-sys.path.insert(0, os.path.abspath(".."))
 import time
 import atexit
-from Common.config import Config
-from Common.database_helper import *
+from config import Config
+from database_helper import *
 import paho.mqtt.client as paho
 import json
 import datetime
 
 def exit_handler():
-	print(' Cleaning Up!')
+	print(' Cleaning Up!', flush=True)
 	client.loop_stop()
 	exit(1)
 
 def create_mqtt_connection():
 	def on_connect(client, userdata, flags, reason_code, properties):
 		if reason_code == 0:
-			print("MQTT Client Connected")
+			print("MQTT Client Connected", flush=True)
 		else:
-			print("MQTT Client NOT Connected, rc= " + str(reason_code))
+			print("MQTT Client NOT Connected, rc= " + str(reason_code), flush=True)
 		client.subscribe("/timing/slscan/newscan") #This goes here to sub on reconnection
 		client.subscribe("/timing/flscan/newscan") #This goes here to sub on reconnection
 		client.subscribe("/timing/webui/override") #This goes here to sub on reconnection
 	client = paho.Client(paho.CallbackAPIVersion.VERSION2,client_id=client_id)
-	client.username_pw_set(Config.MQTTUSERNAME, Config.MQTTPASSWORD)
+	client.username_pw_set(Config.MQTT.USERNAME, Config.MQTT.PASSWORD)
 	client.on_connect = on_connect
-	client.connect(Config.ScanListener.MQTTBROKER, Config.MQTTPORT)
+	client.connect(Config.MQTT.BROKER, Config.MQTT.PORT)
 	return client
 
 def sub_handler(client, userdata, msg):
@@ -43,10 +42,10 @@ def sub_handler(client, userdata, msg):
 		decoded_message = str(msg.payload.decode("utf-8"))
 		json_message = json.loads(decoded_message)
 		inserted = insert_newscan(startline_table_name, json_message["tag_number"], scan_number=json_message["scan_number"], created_by="SCAN")
-		print("Inserted Scan: " + str(json_message["scan_number"]) + " " + str(json_message["tag_number"]))
+		print("Inserted Scan: " + str(json_message["scan_number"]) + " " + str(json_message["tag_number"]), flush=True)
 		## Look up tag to car number
 		retreived_car_number  = get_car_number("carreg",json_message["tag_number"])
-		print("Retrieved Car Number: " + str(retreived_car_number))
+		print("Retrieved Car Number: " + str(retreived_car_number), flush=True)
 		if(int(retreived_car_number) > 0):
 			## Insert car number into run table as new run
 			run_created = create_new_run("runtable",str(retreived_car_number),"scanned_at_start_line")
@@ -63,7 +62,7 @@ def sub_handler(client, userdata, msg):
 		decoded_message = str(msg.payload.decode("utf-8"))
 		json_message = json.loads(decoded_message)
 		inserted = insert_newscan(finishline_table_name, json_message["tag_number"], scan_number=json_message["scan_number"])
-		print("Inserted Scan: " + str(json_message["scan_number"]) + " " + str(json_message["tag_number"]))
+		print("Inserted Scan: " + str(json_message["scan_number"]) + " " + str(json_message["tag_number"]), flush=True)
 		## Need to work out how to insert these into the run table
 		# SELECT id FROM runtable WHERE raw_time is null ORDER BY id LIMIT 1 RETURNING id;
 		# SELECT id FROM runtable WHERE finishline_scan_status is null ORDER BY id LIMIT 1 RETURNING id;
@@ -72,7 +71,7 @@ def sub_handler(client, userdata, msg):
 		if (fifo_runtable_row > -1):
 			# We found a row, update that row with a scan status.
 			row_updated = update_runtable("runtable","finishline_scan_status","scanned_at_finish_line",fifo_runtable_row)
-			print("Runtable row updated: " + str(row_updated))
+			print("Runtable row updated: " + str(row_updated), flush=True)
 		#else:
 			# We did not get a row, something wrong. What do?
 			# Send MQTT?
@@ -83,7 +82,7 @@ def sub_handler(client, userdata, msg):
 		decoded_message = str(msg.payload.decode("utf-8"))
 		json_message = json.loads(decoded_message)
 		inserted = insert_newscan(startline_table_name, str("override_" + json_message["car_number"]),scan_number="" ,created_by="ui_override")
-		print("Inserted Scan: " + "ui_override" + " " + str(json_message["car_number"]))
+		print("Inserted Scan: " + "ui_override" + " " + str(json_message["car_number"]), flush=True)
 		## Insert car number into run table as new run
 		run_created = create_new_run("runtable",json_message["car_number"],"ui_override")
 		if(run_created is None): run_created = 0
@@ -104,7 +103,7 @@ if __name__ == '__main__':
 	#	print("Database Schema not correct. Exiting.")
 	#	atexit.register(exit_handler)
 	
-	client_id = Config.ScanListener.MQTTCLIENTID
+	client_id = Config.MQTT.CLIENTID
 	client = create_mqtt_connection()
 	client.on_message = sub_handler
 	client.loop_start()

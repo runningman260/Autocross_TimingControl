@@ -4,9 +4,8 @@ import json
 import datetime
 import sys
 import os
-sys.path.insert(0, os.path.abspath(".."))
-from Common.config import Config
-from Common.database_helper import *
+from config import Config
+from database_helper import *
 
 def sub_handler(client, userdata, msg):
 	decoded_message = str(msg.payload.decode("utf-8"))

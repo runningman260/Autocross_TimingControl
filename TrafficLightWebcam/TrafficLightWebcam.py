@@ -15,8 +15,6 @@ import atexit
 import cv2
 from time import gmtime, strftime
 import os, sys
-#sys.path.insert(0, os.path.abspath(".."))
-#from Common.config import Config
 from config import Config
 import datetime
 
@@ -42,9 +40,9 @@ def create_mqtt_connection():
 			print("MQTT Client NOT Connected, rc= " + str(reason_code), flush=True)
 		client.subscribe("/timing/TLCtrl/phototrigger") #This goes here to sub on reconnection
 	client = paho.Client(paho.CallbackAPIVersion.VERSION2,client_id=client_id)
-	client.username_pw_set(Config.MQTTUSERNAME, Config.MQTTPASSWORD)
+	client.username_pw_set(Config.MQTT.USERNAME, Config.MQTT.PASSWORD)
 	client.on_connect = on_connect
-	client.connect(Config.MQTTBROKER, Config.MQTTPORT)
+	client.connect(Config.MQTT.BROKER, Config.MQTT.PORT)
 	return client
 
 def sub_handler(client, userdata, msg):
@@ -63,7 +61,7 @@ def sub_handler(client, userdata, msg):
 			print("Image not taken", flush=True)
 
 if __name__ == '__main__':
-	client_id = Config.MQTTCLIENTID
+	client_id = Config.MQTT.CLIENTID
 	client = create_mqtt_connection()
 	client.on_message = sub_handler
 	client.loop_start()

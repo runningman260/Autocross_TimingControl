@@ -20,9 +20,8 @@ import json
 import datetime
 import sys
 import os
-sys.path.insert(0, os.path.abspath(".."))
-from Common.config import Config
-from Common.database_helper import *
+from config import Config
+from database_helper import *
 from TestCases import *
 
 def exit_handler():

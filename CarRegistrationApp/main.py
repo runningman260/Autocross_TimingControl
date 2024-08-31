@@ -27,9 +27,9 @@ class MQTTHandler:
             client.subscribe("/timing/carreg/confirm_update") #This goes here to sub on reconnection
             client.subscribe("/timing/carreg/failed") #This goes here to sub on reconnection
         client = paho.Client(paho.CallbackAPIVersion.VERSION2,client_id=self.client_id)
-        client.username_pw_set(Config.MQTTUSERNAME, Config.MQTTPASSWORD)
+        client.username_pw_set(Config.MQTT.USERNAME, Config.MQTT.PASSWORD)
         client.on_connect = on_connect
-        client.connect(host=Config.CarRegistrationApp.MQTTBROKER, port=Config.MQTTPORT)
+        client.connect(host=Config.MQTT.BROKER, port=Config.MQTT.PORT)
         return client
         
     def subHandler(self, client, userdata, msg):
@@ -61,7 +61,7 @@ class MQTTHandler:
         super().__init__()
 
         self.mainWindow=mainWindow
-        self.client_id = Config.CarRegistrationApp.MQTTCLIENTID
+        self.client_id = Config.MQTT.CLIENTID
         self.client = self.create_mqtt_connection()
         self.client.on_message = self.subHandler
         self.client.loop_start()

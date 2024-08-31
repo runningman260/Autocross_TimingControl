@@ -183,12 +183,19 @@ if __name__ == '__main__':
 		## Testing RunTable Car Number Entry with VALID tag number and VALID scan number
 		print("Scanning in: " + 'c7272088434b87ff463ae128ab18ac5e')
 		client.publish("/timing/slscan/newscan",build_payload('c7272088434b87ff463ae128ab18ac5e',0))
+		client.publish("/timing/TLCtrl/phototrigger",json.dumps("A"))
+		
 		time.sleep(0.5)
 
+		## Testing RunTable Car Number Entry with VALID tag number and VALID scan number
+		#print("Scanning in: " + 'c7272088434b87ff463ae128ab18ac5e')
+		#client.publish("/timing/flscan/newscan",build_payload('c7272088434b87ff463ae128ab18ac5e',0))
+		#time.sleep(0.5)
+
 		### Testing RunTable Car Number Entry with INVALID tag number and VALID scan number
-		print("Scanning in: " + '7')
-		client.publish("/timing/slscan/newscan",build_payload('7',1))
-		time.sleep(0.5)
+		#print("Scanning in: " + '7')
+		#client.publish("/timing/slscan/newscan",build_payload('7',1))
+		#time.sleep(0.5)
 #
 		### Testing RunTable Car Number Entry with VALID tag number and INVALID scan number
 		#print("Scanning in: " + 'c7272088434b87ff463ae128ab18ac5e')
