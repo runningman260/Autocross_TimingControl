@@ -44,9 +44,10 @@ def sub_handler(client, userdata, msg):
 		inserted = insert_newscan(startline_table_name, json_message["tag_number"], scan_number=json_message["scan_number"], created_by="SCAN")
 		print("Inserted Scan: " + str(json_message["scan_number"]) + " " + str(json_message["tag_number"]), flush=True)
 		## Look up tag to car number
+		retreived_car_number = -1
 		retreived_car_number  = get_car_number("carreg",json_message["tag_number"])
 		print("Retrieved Car Number: " + str(retreived_car_number), flush=True)
-		if(int(retreived_car_number) > 0):
+		if(int(retreived_car_number) > -1):
 			## Insert car number into run table as new run
 			run_created = create_new_run("runtable",str(retreived_car_number),"scanned_at_start_line")
 			if(run_created is None): run_created = 0

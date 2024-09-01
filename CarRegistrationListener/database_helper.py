@@ -566,6 +566,43 @@ def delete_trigger(trigger_name, table_name):
 	except (psycopg2.DatabaseError, Exception) as error:
 		print(error)
 
+def create_pg_notify_function(function_name):
+	sql = """create or replace function {function_name}() 
+	returns trigger as $$
+	begin 
+		perform pg_notify('new_id', row_to_json(new)::text);
+		return new; 
+	end; 
+	$$ language plpgsql;""".format(function_name=function_name)
+	try:
+		with psycopg2.connect(
+			host=Config.DB.HOST, 
+			database=Config.DB.NAME, 
+			user=Config.DB.USER, 
+			password=Config.DB.PASS) as conn:
+			with conn.cursor() as cur:
+				# execute
+				cur.execute(sql)
+	except (psycopg2.DatabaseError, Exception) as error:
+		print(error)
+
+def create_pg_notify_trigger(table_name, function_name, trigger_name):
+	sql = """
+		CREATE OR REPLACE TRIGGER "{trigger_name}" 
+		after insert or update on "{table_name}"
+		FOR EACH ROW EXECUTE PROCEDURE {function_name}();""".format(function_name=function_name, trigger_name=trigger_name, table_name=table_name)
+	try:
+		with psycopg2.connect(
+			host=Config.DB.HOST, 
+			database=Config.DB.NAME, 
+			user=Config.DB.USER, 
+			password=Config.DB.PASS) as conn:
+			with conn.cursor() as cur:
+				# execute
+				cur.execute(sql)
+	except (psycopg2.DatabaseError, Exception) as error:
+		print(error)
+
 def clear_and_create_schema():
 	database_tables = {
 		"carreg":
@@ -637,14 +674,17 @@ def clear_and_create_schema():
 	function_name = "_set_timestamp"
 
 	## Drop table and functions
+	#delete_table("carreg")
 	delete_table("startlinescan")
 	delete_table("finishlinescan")
 	delete_table("runtable")
 	delete_table("laptimeraw")
+	delete_table("leaderboard")
 	delete_function("startlinescan_set_timestamp")
 	delete_function("finishlinescan_set_timestamp")
 	delete_function("runtable_set_timestamp")
 	delete_function("laptimeraw_set_timestamp")
+	delete_function("leaderboard_set_timestamp")
 
 	for table_name in database_tables:
 		delete_if_exists = False
@@ -669,3 +709,9 @@ def clear_and_create_schema():
 		#print(table_name  + "\t\t\t Present: " + str(table_exists))
 		#print(function_name + "\t\t Present: " + str(function_exists))
 		#print(trigger_name  + "\t Present: " + str(trigger_exists))
+		if(table_name == "runtable"):
+			function_name = table_name + "_function_pg_nofity"
+			trigger_name  = table_name + "_trigger_pg_nofity"
+			create_pg_notify_function(function_name)
+			create_pg_notify_trigger(table_name,function_name,trigger_name)
+

@@ -13,7 +13,7 @@ class Config:
         PASSWORD = 'password'
         BROKER = '192.168.2.200'
         CLIENTID = 'ScanListener'
-        TESTERCLIENTID = 'ScanListener'
+        TESTERCLIENTID = 'ScanListenerTester'
     
     class DB:
         HOST="192.168.2.200"

@@ -1,6 +1,5 @@
 import os, sys
-sys.path.insert(0, os.path.abspath(".."))
-from Common.config import Config
+from config import Config
 import time
 import paho.mqtt.client as paho
 import json
@@ -21,9 +20,9 @@ def create_mqtt_connection():
 		client.subscribe("/timing/scanlistener/confirm_insert") #This goes here to sub on reconnection
 		client.subscribe("/timing/scanlistener/confirm_run_create") #This goes here to sub on reconnection
 	client = paho.Client(paho.CallbackAPIVersion.VERSION2,client_id=client_id)
-	client.username_pw_set(Config.MQTTUSERNAME, Config.MQTTPASSWORD)
+	client.username_pw_set(Config.MQTT.USERNAME, Config.MQTT.PASSWORD)
 	client.on_connect = on_connect
-	client.connect(Config.ScanListener.MQTTBROKER, Config.MQTTPORT)
+	client.connect(Config.MQTT.BROKER, Config.MQTT.PORT)
 	return client
 
 def sub_handler(client, userdata, msg):
@@ -152,7 +151,7 @@ test_data = [
 
 
 if __name__ == '__main__':
-	client_id = Config.ScanListener.MQTTTESTERCLIENTID
+	client_id = Config.MQTT.TESTERCLIENTID
 	client = create_mqtt_connection()
 	client.on_message = sub_handler
 	client.loop_start()
@@ -181,11 +180,17 @@ if __name__ == '__main__':
 		#	time.sleep(0.5)		
 
 		## Testing RunTable Car Number Entry with VALID tag number and VALID scan number
-		print("Scanning in: " + 'c7272088434b87ff463ae128ab18ac5e')
-		client.publish("/timing/slscan/newscan",build_payload('c7272088434b87ff463ae128ab18ac5e',0))
+		print("Scanning in: " + "200070839A9D0B1F")
+		client.publish("/timing/slscan/newscan",build_payload("200070839A9D0B1F",0))
 		client.publish("/timing/TLCtrl/phototrigger",json.dumps("A"))
 		
 		time.sleep(0.5)
+
+		#print("Scanning in: " + "200070839A9D0B20")
+		#client.publish("/timing/slscan/newscan",build_payload("200070839A9D0B20",0))
+		#client.publish("/timing/TLCtrl/phototrigger",json.dumps("A"))
+		#
+		#time.sleep(0.5)
 
 		## Testing RunTable Car Number Entry with VALID tag number and VALID scan number
 		#print("Scanning in: " + 'c7272088434b87ff463ae128ab18ac5e')
