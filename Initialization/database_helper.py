@@ -75,6 +75,33 @@ def delete_table(table_name):
 	except (psycopg2.DatabaseError, Exception) as error:
 		print(error)
 
+def create_view(command):
+	try:
+		with psycopg2.connect(
+			host=Config.DB.HOST, 
+			database=Config.DB.NAME, 
+			user=Config.DB.USER, 
+			password=Config.DB.PASS) as conn:
+			with conn.cursor() as cur:
+				# execute the CREATE TABLE statement
+				cur.execute(command)
+	except (psycopg2.DatabaseError, Exception) as error:
+		print(error)
+
+def delete_view(view_name):
+	sql = "DROP VIEW IF EXISTS " + view_name + " CASCADE;"
+	try:
+		with psycopg2.connect(
+			host=Config.DB.HOST, 
+			database=Config.DB.NAME, 
+			user=Config.DB.USER, 
+			password=Config.DB.PASS) as conn:
+			with conn.cursor() as cur:
+				# execute the DROP TABLE statement
+				cur.execute(sql)
+	except (psycopg2.DatabaseError, Exception) as error:
+		print(error)
+
 def create_new_run(table_name,car_number,startline_scan_status):
 	run_created = None
 	sql = """
@@ -659,15 +686,6 @@ def clear_and_create_schema():
 				adjusted_time VARCHAR(255),
 				created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 				updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-				);""",
-		"leaderboard":
-		"""
-			CREATE TABLE leaderboard(
-				id SERIAL PRIMARY KEY,
-				car_number VARCHAR(255),
-				adjusted_time VARCHAR(255),
-				raw_time VARCHAR(255),
-				penalties VARCHAR(255)
 				);"""
 	}
 	trigger_name = "_trigger_set_timestamp"
@@ -685,6 +703,7 @@ def clear_and_create_schema():
 	delete_function("runtable_set_timestamp")
 	delete_function("laptimeraw_set_timestamp")
 	delete_function("leaderboard_set_timestamp")
+	delete_view("leaderboard")
 
 	for table_name in database_tables:
 		delete_if_exists = False

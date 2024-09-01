@@ -186,11 +186,23 @@ if __name__ == '__main__':
 		
 		time.sleep(0.5)
 
-		#print("Scanning in: " + "200070839A9D0B20")
-		#client.publish("/timing/slscan/newscan",build_payload("200070839A9D0B20",0))
-		#client.publish("/timing/TLCtrl/phototrigger",json.dumps("A"))
-		#
-		#time.sleep(0.5)
+		print("Scanning in: " + "200070839A9D0B20")
+		client.publish("/timing/slscan/newscan",build_payload("200070839A9D0B20",0))
+		client.publish("/timing/TLCtrl/phototrigger",json.dumps("A"))
+		
+		time.sleep(0.5)
+
+		print("Scanning in: " + "200070839A9D0B20")
+		client.publish("/timing/slscan/newscan",build_payload("200070839A9D0B24",0))
+		client.publish("/timing/TLCtrl/phototrigger",json.dumps("A"))
+		
+		time.sleep(0.5)
+
+		print("Scanning in: " + "200070839A9D0B20")
+		client.publish("/timing/slscan/newscan",build_payload("200070839A9D0B31",0))
+		client.publish("/timing/TLCtrl/phototrigger",json.dumps("A"))
+		
+		time.sleep(0.5)
 
 		## Testing RunTable Car Number Entry with VALID tag number and VALID scan number
 		#print("Scanning in: " + 'c7272088434b87ff463ae128ab18ac5e')

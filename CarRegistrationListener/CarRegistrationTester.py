@@ -67,7 +67,9 @@ if __name__ == '__main__':
 
 	while (not client.is_connected()):
 		print("Client not connected...")
-	time.sleep(2)
+		time.sleep(0.01)
+	time.sleep(1)
+	print("Client Connected!")
 	
 	try:
 		getCSVData()

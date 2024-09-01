@@ -79,8 +79,8 @@ if __name__ == '__main__':
 		print("Image folder exists!", flush=True)
 
 	while (not client.is_connected()):
-		print("Client not connected...", flush=True)
-		time.sleep(0.1)
+		print("Client not connected...")
+		time.sleep(0.01)
 	time.sleep(1)
 	print("MQTT Client Connected", flush=True)
 

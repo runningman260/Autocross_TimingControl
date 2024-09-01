@@ -174,6 +174,7 @@ if __name__ == '__main__':
 			if((time.time() - prev_health_check) > health_check_interval):
 				client.publish("/timing/timeconsolereader/healthcheck",str(datetime.datetime.now()))
 				prev_health_check = time.time()
+			time.sleep(0.01)
 	except KeyboardInterrupt:
 		pass
 	finally:	 

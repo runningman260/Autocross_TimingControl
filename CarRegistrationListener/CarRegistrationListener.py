@@ -22,7 +22,6 @@ def exit_handler():
 	exit(1)
 
 def environment_check():
-	delete_if_exists = False
 	table_exists = False
 	function_exists = False
 	trigger_exists = False
@@ -32,9 +31,6 @@ def environment_check():
 	trigger_name  = table_name + "_trigger_set_timestamp"
 	function_exists = check_function_exists(function_name) 
 	trigger_exists  = check_trigger_exists(trigger_name)
-	if(table_exists and delete_if_exists):
-		print("Deleting all rows from " + table_name + "...", flush=True)
-		delete_all_table_rows(table_name)
 	print(table_name    + " Present: " + str(table_exists), flush=True)
 	print(function_name + " Present: " + str(function_name), flush=True)
 	print(trigger_name  + " Present: " + str(trigger_exists), flush=True)
