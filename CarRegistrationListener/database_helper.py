@@ -676,13 +676,13 @@ def clear_and_create_schema():
 		"""
 			CREATE TABLE runtable(
 				id SERIAL PRIMARY KEY,
-				run_number VARCHAR(255),
 				car_number VARCHAR(255),
 				startline_scan_status VARCHAR(255),
 				finishline_scan_status VARCHAR(255),
 				raw_time VARCHAR(255),
 				cones VARCHAR(255),
 				off_course VARCHAR(255),
+				dnf VARCHAR(255),
 				adjusted_time VARCHAR(255),
 				created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 				updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
