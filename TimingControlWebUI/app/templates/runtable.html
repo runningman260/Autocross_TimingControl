@@ -181,7 +181,14 @@
                   <td>${run.car_number}</td>
                   <td>${run.cones || ''}</td>
                   <td>${run.off_course || ''}</td>
-                  <td>${run.raw_time}</td>
+                  <td>
+                        <div class="cell-content">
+                            ${run.raw_time}
+                            <span class="edit-icon" onclick="editRun('${run.id}')">
+                                <i class="bi bi-pencil-square"></i>
+                            </span>
+                        </div>
+                    </td>
                   <td class="${run.dnf && String(run.dnf).includes('DNF') ? 'table-danger' : (run.cones != 0 || run.off_course != 0) && run.raw_time == 0 ? 'bg-warning' : run.raw_time == 0 && run.cones == 0 && run.off_course == 0 ? 'table-success' : ''}">
                     ${run.adjusted_time}
                   </td>
@@ -233,7 +240,14 @@
                     <td>${run.car_number}</td>
                     <td>${run.cones || ''}</td>
                     <td>${run.off_course || ''}</td>
-                    <td>${run.raw_time}</td>
+                    <td>
+                        <div class="cell-content">
+                            ${run.raw_time}
+                            <span class="edit-icon" onclick="editRun('${run.id}')">
+                                <i class="bi bi-pencil-square"></i>
+                            </span>
+                        </div>
+                    </td>
                     <td class="${run.dnf  && String(run.dnf).includes('DNF') ? 'table-danger' : (run.cones != 0 || run.off_course != 0) && run.raw_time == 0 ? 'bg-warning' : run.raw_time == 0 && run.cones == 0 && run.off_course == 0 ? 'table-success' : ''}">
                         ${run.adjusted_time}
                     </td>
