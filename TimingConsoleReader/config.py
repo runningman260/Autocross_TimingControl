@@ -11,12 +11,18 @@ class Config:
         PORT = 1883
         USERNAME = 'username'
         PASSWORD = 'password'
-        BROKER = '192.168.2.200'
+        if( os.environ.get('DOCKER_HOST_IP') is not None ):
+            BROKER = os.environ.get('DOCKER_HOST_IP')
+        else:
+            BROKER = 'localhost'
         CLIENTID = 'TimingConsoleReader'
         TESTERCLIENTID = 'TimingConsoleReader'
     
     class DB:
-        HOST="192.168.2.200"
+        if( os.environ.get('DOCKER_HOST_IP') is not None ):
+            HOST = os.environ.get('DOCKER_HOST_IP')
+        else:
+            HOST = 'localhost'
         NAME="test_scans"
         USER="nick"
         PASS="password"

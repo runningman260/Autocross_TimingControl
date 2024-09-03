@@ -29,7 +29,7 @@ create or replace view leaderboard as
 Select runtable.car_number, runtable.adjusted_time, carreg.team_name 
 from runtable 
 join carreg on runtable.car_number=carreg.car_number 
-where adjusted_time is not null and adjusted_time is distinct from 'DNF' 
+where adjusted_time is not null and adjusted_time is distinct from 'DNF' and raw_time is not null and raw_time != '0.0'
 ORDER BY CASE WHEN pg_input_is_valid(adjusted_time, 'decimal') THEN adjusted_time::decimal END asc;
 """
 create_view(sql)
@@ -54,11 +54,11 @@ from (
             end as points
             from (
                 select
-                    car_number, adjusted_time,
+                    car_number, adjusted_time, raw_time,
                     min(adjusted_time::decimal) over () as tmin,
                     1.45*min(adjusted_time::decimal) over () as Tmax
                     from runtable
-					where adjusted_time is not null and adjusted_time is distinct from 'DNF' 
+					where adjusted_time is not null and adjusted_time is distinct from 'DNF' and raw_time is not null and raw_time != '0.0'
                 ) s
         order by points desc
         ) b
@@ -75,7 +75,7 @@ create or replace view cones_leaderboard as
 select * from runtable 
 where adjusted_time is not null 
 and cones is not null 
-and adjusted_time is distinct from 'DNF' 
+and raw_time is not null and raw_time != '0.0'
 ORDER BY CASE WHEN pg_input_is_valid(cones, 'int') THEN cones::int END desc;
 """
 create_view(sql)
