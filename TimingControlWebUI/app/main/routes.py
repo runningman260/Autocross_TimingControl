@@ -34,6 +34,7 @@ def runtable():
     form = RunEditForm()
     addRunForm = AddRunForm()
     editRunForm = EditRunForm()
+
     if request.method == 'POST':
         if form.validate_on_submit():
             selected_runs = request.form.getlist('selected_runs')
@@ -125,8 +126,8 @@ def toplaps():
     
     query = sa.select(TopLaps)
     runs = db.session.scalars(query).all()
-    inst = sa.inspect(TopLaps)                                 # To get headers, should probs be in the model code
-    cols = [c_attr.key for c_attr in inst.mapper.column_attrs]  # To get headers, should probs be in the model code                                  # Add column header for the checkboxes
+    inst = sa.inspect(TopLaps)                        
+    cols = [c_attr.key for c_attr in inst.mapper.column_attrs]  
     page = request.args.get('page', 1, type=int)
     
     return render_template('toplaps.html', title='Top Laps', runs=runs, cols=cols)
@@ -136,8 +137,8 @@ def pointsLeaderboard():
     
     query = sa.select(PointsLeaderboard)
     runs = db.session.scalars(query).all()
-    inst = sa.inspect(PointsLeaderboard)                                 # To get headers, should probs be in the model code
-    cols = [c_attr.key for c_attr in inst.mapper.column_attrs]  # To get headers, should probs be in the model code                                  # Add column header for the checkboxes
+    inst = sa.inspect(PointsLeaderboard)                                 
+    cols = [c_attr.key for c_attr in inst.mapper.column_attrs]  
     page = request.args.get('page', 1, type=int)
     
     return render_template('pointsLeaderboard.html', title='Points Leaderboard', runs=runs, cols=cols)

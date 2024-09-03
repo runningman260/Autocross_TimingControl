@@ -60,10 +60,17 @@
               <td>${data.run.car_number}</td>
               <td>${data.run.cones || ''}</td>
               <td>${data.run.off_course || ''}</td>
-              <td>${data.run.raw_time}</td>
-              <td class="${data.run.raw_time == 'DNF' ? 'table-danger' : (data.run.cones != 0 || data.run.off_course != 0) && (data.run.raw_time === 0 || typeof data.run.raw_time === 'undefined') ? 'bg-warning' : data.run.raw_time == 0 && data.run.cones == 0 && data.run.off_course == 0 ? 'table-success' : ''}">
-                ${data.run.raw_time == 'DNF' ? 'DNF' : data.run.adjusted_time}
-              </td>
+              <td>
+                        <div class="cell-content">
+                            ${data.raw_time}
+                            <span class="edit-icon" onclick="editRun('${data.id}')">
+                                <i class="bi bi-pencil-square"></i>
+                            </span>
+                        </div>
+                    </td>
+                  <td class="${data.dnf && String(data.dnf).includes('DNF') ? 'table-danger' : (data.cones != 0 || data.off_course != 0) && data.raw_time == 0 ? 'bg-warning' : data.raw_time == 0 && data.cones == 0 && data.off_course == 0 ? 'table-success' : ''}">
+                    ${data.adjusted_time}
+                  </td>
             `;
             table.insertBefore(row, table.firstChild);
             }
