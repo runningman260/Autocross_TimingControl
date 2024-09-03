@@ -54,18 +54,15 @@
             row.setAttribute('id', data.run.id);
             row.innerHTML = `
               <td>
-                <input type="checkbox" id="run_${data.run.id}" name="selected_runs" value="${data.run.id}-${data.run.tag}">
+                <input type="checkbox" id="run_${data.run.id}" name="selected_runs" value="${data.run.id}-${data.run.car_number}">
               </td>
               <td>${data.run.id}</td>
-              <td>${data.run.team_name}</td>
-              <td><span title="${data.run.tag}">...${data.run.tag.slice(-6)}</span></td>
               <td>${data.run.car_number}</td>
               <td>${data.run.cones || ''}</td>
-              <td>${data.run.off_courses || ''}</td>
-              <!-- <td>${data.run.dnfs || ''}</td> -->
+              <td>${data.run.off_course || ''}</td>
               <td>${data.run.raw_time}</td>
-              <td class="${data.run.dnfs != 0 ? 'table-danger' : (data.run.cones != 0 || data.run.off_courses != 0) && data.run.raw_time == 0 ? 'bg-warning' : data.run.raw_time == 0 && data.run.cones == 0 && data.run.off_courses == 0 ? 'table-success' : ''}">
-                ${data.run.dnfs > 0 && data.run.adjusted_time == 0.0 ? 'DNF' : data.run.dnfs < 0 && data.run.adjusted_time == 0.0 ? 'DNS' : data.run.adjusted_time}
+              <td class="${data.run.raw_time == 'DNF' ? 'table-danger' : (data.run.cones != 0 || data.run.off_course != 0) && (data.run.raw_time === 0 || typeof data.run.raw_time === 'undefined') ? 'bg-warning' : data.run.raw_time == 0 && data.run.cones == 0 && data.run.off_course == 0 ? 'table-success' : ''}">
+                ${data.run.raw_time == 'DNF' ? 'DNF' : data.run.adjusted_time}
               </td>
             `;
             table.insertBefore(row, table.firstChild);

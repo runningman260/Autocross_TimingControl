@@ -5,9 +5,51 @@
     <div class="d-flex justify-content-between align-items-center">
         <h2 class="mb-0">All Runs</h2>
         <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#addRunModal">
-            <i class="bi bi-plus-circle"></i>        Add Missed Start
+            <i class="bi bi-plus-circle-fill"></i>        Add Missed Start
         </button>
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            function editRun(runId) {
+                fetch(`/api/runs/${runId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.error) {
+                            alert(data.error);
+                            return;
+                        }
+        
+                        // Populate the modal with the run data
+                        var editRunForm = document.getElementById('editRunForm');
+                        if (editRunForm) {
+                            editRunForm.action = `/edit_run/${runId}`;
+                            editRunForm.raw_time.value = data.raw_time;
+                            editRunForm.run_id.value = data.id;
+                            editRunForm.car_number.value = data.car_number;
+        
+                            // Open the modal
+                            var myModal = new bootstrap.Modal(document.getElementById('editRunModal'));
+                            myModal.show();
+                        } else {
+                            console.error('Error: editRunForm not found');
+                        }
+                    })
+                    .catch(error => console.error('Error:', error));
+            }
+        
+            // Make the editRun function globally accessible
+            window.editRun = editRun;
+
+            window.validateForm = function() {
+                var rawTime = document.getElementById('raw_time').value;
+                if (isNaN(rawTime) || rawTime < 0) {
+                    alert('Please enter a valid positive decimal number for raw time.');
+                    return false;
+                }
+                return true;
+            };
+        });
+        </script>
 
     {% if form %}
     <form method="POST" action="/runtable">
@@ -41,27 +83,26 @@
             <div class="row">
                 <div class="col-lg d-flex flex-wrap justify-content-center align-items-center">
                     <button class="btn btn-default cone mb-2 mx-1 btn-lg flex-fill" id="submit_plus_cone" name="submit_plus_cone" type="submit">
-                        <i class="bi bi-plus-lg"></i><i class="bi bi-cone-striped"></i><br> Cone
+                        <i class="bi bi-plus"></i><i class="bi bi-cone-striped"></i><br> Cone
                     </button>
                     
                     <button class="btn btn-default cone mb-2 mx-1 btn-lg flex-fill" id="submit_minus_cone" name="submit_minus_cone" type="submit">
-                        <i class="bi bi-dash-lg"></i> <i class="bi bi-cone-striped"></i><br>Cone
+                        <i class="bi bi-dash"></i> <i class="bi bi-cone-striped"></i><br>Cone
                     </button>
                     <button class="btn btn-info mb-2 mx-1 btn-lg flex-fill" id="submit_plus_oc" name="submit_plus_oc" type="submit">
-                        <i class="bi bi-plus-lg"></i><i class="bi bi-flag"></i><br> Off Course
+                        <i class="bi bi-plus"></i><i class="bi bi-flag"></i><br> Off Course
                     </button>
                     <button class="btn btn-info mb-2 mx-1 btn-lg flex-fill" id="submit_minus_oc" name="submit_minus_oc" type="submit">
-                        <i class="bi bi-dash-lg"></i><i class="bi bi-flag"></i><br> Off Course
+                        <i class="bi bi-dash"></i><i class="bi bi-flag"></i><br> Off Course
                     </button>
                     <button class="btn btn-danger mb-2 mx-1 btn-lg flex-fill" id="submit_plus_dnf" name="submit_plus_dnf" type="submit">
                         <i class="bi bi-flag-fill"></i><br> DNF
                     </button>
                     
-                    <button class="btn btn-danger mb-2 mx-1 btn-lg flex-fill" id="submit_minus_dnf" name="submit_minus_dnf" type="submit">
-                    <i class="bi bi-flag-fill text-dark"></i><br> DNS
+
                     </button>                    
                     <button class="btn btn-dark mb-2 btn-lg mx-1 flex-fill" id="deselect" name="deselect" type="reset">
-                        <i class="bi bi-x-circle"></i><br/>Deselect
+                        <i class="bi bi-x-circle-fill"></i><br/>Deselect
                     </button>
                     <a class="btn btn-success mb-2 btn-lg mx-1 flex-fill" href="#" id="refresh-button"><i class="bi bi-arrow-clockwise"></i><br> Refresh</a>
                     <!-- <a class="btn btn-success mb-2 btn-lg mx-1 flex-fill" href="{{ url_for('main.fixdata') }}"><i class="bi bi-arrow-clockwise"></i><br> Refresh</a> -->
@@ -74,6 +115,7 @@
 
 
     <!-- Modal -->
+    {% include '_edit_run_modal.html' %}
     {% include '_add_run_modal.html' %}
     <script>
         document.getElementById('refresh-button').addEventListener('click', function(event) {
@@ -95,50 +137,75 @@
             deselectButton.addEventListener('click', handleDeselectClick);
         }
 
-        function updateRunsTable() {
-            fetch('/api/runs')
-                .then(response => response.json())
-                .then(data => {
-                    const table = document.getElementById('runs-table-body');
-                    const selectedRuns = new Set(
-                        Array.from(document.querySelectorAll('input[name="selected_runs"]:checked'))
-                            .map(input => input.value)
-                    );
+        const highlightedRows = new Set();
 
-                    // Clear existing rows
-                    table.querySelectorAll('tr[name="run_row"]').forEach(row => row.remove());
-
-                    // Add new rows
-                    data.forEach(run => {
-                        const row = document.createElement('tr');
-                        row.setAttribute('name', 'run_row');
-                        row.setAttribute('id', run.id);
-
-                        row.innerHTML = `
-                            <td>
-                                <input type="checkbox" id="run_${run.id}" name="selected_runs" value="${run.id}-${run.tag}" ${selectedRuns.has(`${run.id}-${run.tag}`) ? 'checked' : ''}>
-                            </td>
-                            <td>${run.id}</td>
-                            <td>${run.team_name}</td>
-                            <td><span title="${run.tag}">...${run.tag.slice(-6)}</span></td>
-                            <td>${run.car_number}</td>
-                            <td>${run.cones || ''}</td>
-                            <td>${run.off_courses || ''}</td>
-                            <!-- <td>${run.dnfs || ''}</td> -->
-                            <td>${run.raw_time}</td>
-                            <td class="${run.dnfs != 0 ? 'table-danger' : (run.cones != 0 || run.off_courses != 0) && run.raw_time == 0 ? 'bg-warning' : run.raw_time == 0 && run.cones == 0 && run.off_courses == 0 ? 'table-success' : ''}">
-                                ${run.dnfs > 0 && run.adjusted_time == 0.0 ? 'DNF' : run.dnfs < 0 && run.adjusted_time == 0.0 ? 'DNS' : run.adjusted_time}
-                            </td>
-                        `;
-
-                        table.appendChild(row);
-                    });
-                    if (deselectButton) {
-                            deselectButton.removeEventListener('click', handleDeselectClick);
-                            deselectButton.addEventListener('click', handleDeselectClick);
-                        }
-                });
+        function flashRow(row) {
+          const rowId = row.id;
+          highlightedRows.add(rowId);
+          //console.log('Flashing row:', rowId);
+          row.classList.add('table-success');
+          setTimeout(() => {
+            row.classList.remove('table-success');
+            highlightedRows.delete(rowId);
+            //console.log('Removing highlight from row:', rowId);
+          }, 3000); // Adjust the timeout duration as needed
         }
+
+        async function updateRunsTable() {
+            try {
+              const response = await fetch('/api/runs');
+              if (!response.ok) {
+                throw new Error('Network response was not ok');
+              }
+              const data = await response.json();
+              const table = document.getElementById('runs-table-tbody');
+              const selectedRuns = new Set(
+                Array.from(document.querySelectorAll('input[name="selected_runs"]:checked'))
+                  .map(input => input.value)
+              );
+        
+              // Clear existing rows
+              table.querySelectorAll('tr[name="run_row"]').forEach(row => row.remove());
+        
+              // Add new rows
+              data.forEach(run => {
+                const row = document.createElement('tr');
+                row.setAttribute('name', 'run_row');
+                row.setAttribute('id', run.id);
+        //TODO update highlighting rules
+                row.innerHTML = `
+                  <td>
+                    <input type="checkbox" id="run_${run.id}" name="selected_runs" value="${run.id}-${run.car_number}" ${selectedRuns.has(`${run.id}-${run.car_number}`) ? 'checked' : ''}>
+                  </td>
+                  <td>${run.id}</td>
+                  <td>${run.car_number}</td>
+                  <td>${run.cones || ''}</td>
+                  <td>${run.off_course || ''}</td>
+                  <td>${run.raw_time}</td>
+                  <td class="${run.dnf && String(run.dnf).includes('DNF') ? 'table-danger' : (run.cones != 0 || run.off_course != 0) && run.raw_time == 0 ? 'bg-warning' : run.raw_time == 0 && run.cones == 0 && run.off_course == 0 ? 'table-success' : ''}">
+                    ${run.adjusted_time}
+                  </td>
+                `;
+
+                table.appendChild(row);
+                // Reapply highlight if the row was recently changed
+                const rowId = row.id;
+                if (highlightedRows.has(rowId)) {
+                    //console.log('Reapplying highlight class to row:', run.id);
+                    row.classList.add('table-success');
+                }
+              });
+        
+              if (deselectButton) {
+                deselectButton.removeEventListener('click', handleDeselectClick);
+                deselectButton.addEventListener('click', handleDeselectClick);
+              }
+            } catch (error) {
+              console.error('Error updating runs table:', error);
+              showAlert('danger', 'An error occurred while updating the runs table. Please try again.');
+            }
+        }
+        
         document.querySelector('form').addEventListener('submit', function(event) {
         event.preventDefault();
         const formData = new FormData(this);
@@ -157,19 +224,18 @@
                 data.runs.forEach(run => {
                 //console.log('Processing run:', run);
                 const row = document.getElementById(run.id);
+                //TODO update
                 row.innerHTML = `
                     <td>
-                        <input type="checkbox" id="run_${run.id}" name="selected_runs" value="${run.id}-${run.tag}" checked>
+                        <input type="checkbox" id="run_${run.id}" name="selected_runs" value="${run.id}-${run.car_number}" checked>
                     </td>
                     <td>${run.id}</td>
-                    <td>${run.team_name}</td>
-                    <td><span title="${run.tag}">...${run.tag.slice(-6)}</span></td>
                     <td>${run.car_number}</td>
                     <td>${run.cones || ''}</td>
-                    <td>${run.off_courses || ''}</td>
+                    <td>${run.off_course || ''}</td>
                     <td>${run.raw_time}</td>
-                    <td class="${run.dnfs != 0 ? 'table-danger' : (run.cones != 0 || run.off_courses != 0) && run.raw_time == 0 ? 'bg-warning' : run.raw_time == 0 && run.cones == 0 && run.off_courses == 0 ? 'table-success' : ''}">
-                        ${run.dnfs > 0 && run.adjusted_time == 0.0 ? 'DNF' : run.dnfs < 0 && run.adjusted_time == 0.0 ? 'DNS' : run.adjusted_time}
+                    <td class="${run.dnf  && String(run.dnf).includes('DNF') ? 'table-danger' : (run.cones != 0 || run.off_course != 0) && run.raw_time == 0 ? 'bg-warning' : run.raw_time == 0 && run.cones == 0 && run.off_course == 0 ? 'table-success' : ''}">
+                        ${run.adjusted_time}
                     </td>
                 `;
                 flashRow(row); // Flash the row with success color
@@ -180,5 +246,15 @@
 
         });
     });
+
+    function update_table_periodically() {
+        let since = 0;
+        setInterval(async function() {
+            await updateRunsTable(); 
+          }, 5000);
+      }
+      document.addEventListener('DOMContentLoaded', update_table_periodically);
+
+
     </script>
     {% endblock %}

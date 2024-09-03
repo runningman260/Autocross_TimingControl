@@ -38,49 +38,58 @@ Base = declarative_base()
 
 
 class RunOrder(db.Model):
+    __tablename__ = 'runtable'
     id: so.Mapped[int] = so.mapped_column(primary_key=True, autoincrement=True)
-    team_name: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
-    tag: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
     car_number: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
-    cones: so.Mapped[int] = so.mapped_column(sa.Integer, nullable=True) 
-    off_courses: so.Mapped[int] = so.mapped_column(sa.Integer, nullable=True)
-    dnfs: so.Mapped[int] = so.mapped_column(sa.Integer, nullable=True)
-    raw_time: so.Mapped[float] = so.mapped_column(sa.Numeric(5,2), index=True)
-    adjusted_time: so.Mapped[float] = so.mapped_column(sa.Numeric(5,2), index=True)
+    cones: so.Mapped[int] = so.mapped_column(sa.String(128), nullable=True) 
+    off_course: so.Mapped[int] = so.mapped_column(sa.String(128), nullable=True)
+    dnf: so.Mapped[str] = so.mapped_column(sa.String(128))
+    raw_time: so.Mapped[float] = so.mapped_column(sa.String(128), index=True)
+    adjusted_time: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    startline_scan_status: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    finishline_scan_status: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
     created_at: so.Mapped[datetime] = so.mapped_column(sa.DateTime, nullable=False, default=datetime.now) 
-    updated_at: so.Mapped[datetime] = so.mapped_column(sa.DateTime, nullable=False, default=datetime.now) 
-    
+    updated_at: so.Mapped[datetime] = so.mapped_column(sa.DateTime, nullable=False, default=datetime.now)     
     
     def __repr__(self):
         return '<RunOrder {}>'.format(self.id)
     
     def print_row(self):
-        return f'{self.id}; {self.team_name}; {self.tag}; {self.car_number}; {self.cones}; {self.off_courses}; {self.dnfs}; {self.raw_time}; {self.adjusted_time};'
+        return f'{self.id}; {self.car_number}; {self.cones}; {self.off_course}; {self.raw_time}; {self.adjusted_time};'
 
 class CarReg(db.Model):
+    __tablename__ = 'carreg'
     id: so.Mapped[int] = so.mapped_column(primary_key=True, autoincrement=True)
     scan_time: so.Mapped[datetime] = so.mapped_column(sa.DateTime)
-    tag: so.Mapped[str] = so.mapped_column(sa.String(128), index=True, unique=True, primary_key=True)
-    car_number: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    tag_number: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    car_number: so.Mapped[str] = so.mapped_column(sa.String(128), index=True, unique=True)
     team_name: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
     created_at: so.Mapped[datetime] = so.mapped_column(sa.DateTime, nullable=False, default=datetime.now)
+    updated_at: so.Mapped[datetime] = so.mapped_column(sa.DateTime, nullable=False, default=datetime.now)
+
+    def __repr__(self):
+        return '<CarReg {}>'.format(self.id)
+    
     
 
 class TopLaps(db.Model):
-    __tablename__ = 'top_runs'
+    __tablename__ = 'leaderboard'
     __table_args__ = {'info': {'is_view': True}}
-    
-    # Assuming 'id' is a column in your view. You need to define at least one column manually,
-    # typically the primary key or a column you'll frequently query against.
-    #id = db.Column(db.Integer, primary_key=True)
-    id: so.Mapped[int] = so.mapped_column(primary_key=True)
-    team_name: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
-    location: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
-    tag: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    __mapper_args__ = {'primary_key': ['car_number', 'adjusted_time', 'team_name']}
+      
     car_number: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
-    cones: so.Mapped[int] = so.mapped_column(sa.Integer, nullable=True) 
-    off_courses: so.Mapped[int] = so.mapped_column(sa.Integer, nullable=True)
-    dnfs: so.Mapped[int] = so.mapped_column(sa.Integer, nullable=True)
-    raw_time: so.Mapped[float] = so.mapped_column(sa.Numeric(5,2), index=True)
-    adjusted_time: so.Mapped[float] = so.mapped_column(sa.Numeric(5,2), index=True)
+    team_name: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    adjusted_time: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    
+class PointsLeaderboard(db.Model):
+    __tablename__ = 'points_leaderboard'
+    __table_args__ = {'info': {'is_view': True}}
+    __mapper_args__ = {'primary_key': ['car_number', 'adjusted_time', 'points']}
+       
+    car_number: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    adjusted_time: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    points: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    
+    
+   
     

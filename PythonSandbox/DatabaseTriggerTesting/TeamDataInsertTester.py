@@ -14,7 +14,7 @@ def create_table():
             tag VARCHAR(255),
             car_number VARCHAR(255),
             cones VARCHAR(255),
-            off_courses VARCHAR(255),
+            off_course VARCHAR(255),
             raw_time  VARCHAR(255),
             adjusted_time VARCHAR(255)
         )
@@ -31,7 +31,7 @@ def create_table():
 def insert_run(run_data):
     """ Insert a new run into the run_order table """
 
-    sql = """INSERT INTO run_order(team_name, location, tag, car_number, cones, off_courses, raw_time, adjusted_time)
+    sql = """INSERT INTO run_order(team_name, location, tag, car_number, cones, off_course, raw_time, adjusted_time)
              VALUES(%s, %s, %s, %s, %s, %s, %s, %s) RETURNING run_id;"""
 
     run_id = None

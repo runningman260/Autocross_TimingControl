@@ -50,6 +50,10 @@ class AddRunForm(FlaskForm):
         sorted_cars = sorted(cars, key=lambda car: int(car.car_number))#sorts string as int
         self.car_number.choices = [(car.car_number, car.car_number + " - " + car.team_name) for car in sorted_cars]
 
+class EditRunForm(FlaskForm):
+    raw_time = StringField(_l('Raw Time'), validators=[DataRequired()])
+    run_id = HiddenField(_l(validators=[DataRequired()]))
+    car_number = HiddenField(_l(validators=[DataRequired()]))
+    submit = SubmitField(_l('Submit'))
 
-# class RunSelectForm(FlaskForm):
-#     enabled = BooleanField("") # Not sure if this is right
+    

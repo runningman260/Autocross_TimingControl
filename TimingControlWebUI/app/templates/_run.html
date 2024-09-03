@@ -1,15 +1,10 @@
 <tr name="run_row" id="{{run.id}}">
     <td>
-        <input type="checkbox" id="run_{{ run.id }}" name="selected_runs" value="{{ run.id }}-{{run.tag}}">
+        <input type="checkbox" id="run_{{ run.id }}" name="selected_runs" value="{{ run.id }}-{{run.car_number}}">  
     </td>
     <td>
         {{ run.id }}
     </td>
-    <td>
-        {{ run.team_name }}
-    </td>
-    <td>
-        <span title="{{ run.tag }}">...{{ run.tag[-6:] }}</span>
     </td>
     <td>
         {{ run.car_number }}
@@ -20,20 +15,20 @@
         {% endif %}
     </td>
     <td>
-        {% if run.off_courses is not none and run.off_courses != 0 %}
-            {{ run.off_courses }}
+        {% if run.off_course is not none and run.off_course != 0 %}
+            {{ run.off_course }}
         {% endif %}
     </td>
     <td>
-        {{ run.raw_time }}
+        <div class="cell-content">
+            {{ run.raw_time }}
+            <span class="edit-icon" onclick="editRun('{{ run.id }}')">
+                <i class="bi bi-pencil-square"></i>
+            </span>
+        </div>
     </td>
-    <td class="{% if run.dnfs != 0 %}table-danger{% elif (run.cones != 0 or run.off_courses != 0) and run.raw_time == 0 %}bg-warning{% elif run.raw_time == 0 and run.cones == 0 and run.off_courses == 0 %}table-success{% endif %}">
-        {% if (run.dnfs is not none and run.dnfs > 0 and run.adjusted_time==0.0) %}
-            DNF
-        {% elif (run.dnfs is not none and run.dnfs < 0  and run.adjusted_time==0.0) %}
-            DNS
-        {% else %}
-            {{ run.adjusted_time }}
-        {% endif %}
+
+    <td class="{% if  run.dnf is not none and 'DNF' in run.dnf %} table-danger {% elif (run.cones != 0 or run.off_course != 0) and run.raw_time|float < 1 %}bg-warning{% elif run.raw_time|float == 0 and run.cones == 0 and run.off_course == 0 %}table-success{% endif %}">
+        {{ run.adjusted_time }}
     </td>
 </tr>

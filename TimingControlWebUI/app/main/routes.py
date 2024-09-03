@@ -4,17 +4,26 @@ from flask import render_template, flash, redirect, send_from_directory, url_for
 from flask_babel import _, get_locale
 import sqlalchemy as sa
 from app import db
-from app.main.forms import EmptyForm, PostForm, SearchForm, RunEditForm, AddRunForm
-from app.models import RunOrder, TopLaps, CarReg
+from app.main.forms import EmptyForm, PostForm, SearchForm, RunEditForm, AddRunForm, EditRunForm
+from app.models import RunOrder, TopLaps, CarReg, PointsLeaderboard
 from app.main import bp
 
-def calculateAdjustedTime(run):
+def calculateAdjustedTime(run:RunOrder):
     # I hate that this is at the top here
-    run.adjusted_time = run.raw_time
-    run.adjusted_time += run.cones * 2
-    run.adjusted_time += run.off_courses * 10
-    if run.dnfs != 0:
-        run.adjusted_time = 0.0
+
+    if "DNF" in str(run.dnf):
+        run.adjusted_time = "DNF"
+    else:
+        if run.adjusted_time==0.0: 
+            run.adjusted_time=run.raw_time
+        offset:int = 0
+        #run.adjusted_time = float(run.raw_time)
+        offset += int(run.cones) * 2
+        offset += int(run.off_course) * 20
+        offset += float(run.raw_time)
+        offset = round(offset, 3)
+        run.adjusted_time = offset
+        #print(f"Adjusted Time: {run.adjusted_time}")
     return run
 
 
@@ -24,6 +33,7 @@ def calculateAdjustedTime(run):
 def runtable():
     form = RunEditForm()
     addRunForm = AddRunForm()
+    editRunForm = EditRunForm()
     if request.method == 'POST':
         if form.validate_on_submit():
             selected_runs = request.form.getlist('selected_runs')
@@ -32,16 +42,19 @@ def runtable():
             actionmessage=''
             for checkbox_id in selected_runs:
                 run_id=checkbox_id.split("-")
-                run = db.session.query(RunOrder).filter_by(id=run_id[0], tag=run_id[1]).first()
+                run = db.session.query(RunOrder).filter_by(id=run_id[0], car_number=run_id[1]).first()
                 #make sure nulls got initialized
-                if isinstance(run.cones, str) or isinstance(run.cones, type(None)):
-                    run.cones = int(0)
-                if isinstance(run.off_courses, str) or isinstance(run.off_courses, type(None)):
-                    run.off_courses = int(0)
-                if isinstance(run.dnfs, str) or isinstance(run.dnfs, type(None)):
-                    run.dnfs = int(0)  
-                if run.adjusted_time==0.0: 
-                    run.adjusted_time=run.raw_time
+                try:
+                    run.cones = int(run.cones)
+                except:
+                    run.cones = 0   
+                try:
+                    run.off_course = int(run.off_course)
+                except:
+                    run.off_course = 0
+                if run.raw_time is None: 
+                    run.raw_time = 0.0 
+                
 
 
                 if 'submit_plus_cone' in request.form:
@@ -52,26 +65,27 @@ def runtable():
                         run.cones-=1  # Ensure cones doesn't go below 0
                         actionmessage='Removed Cone'
                 elif 'submit_plus_oc' in request.form:
-                    run.off_courses+=1
+                    run.off_course+=1
                     actionmessage='Added Off Course'  
                 elif 'submit_minus_oc' in request.form:
-                    if run.off_courses>0:
-                        run.off_courses-=1  # Ensure off_courses doesn't go below 0
+                    if run.off_course>0:
+                        run.off_course-=1  # Ensure off_course doesn't go below 0
                         actionmessage='Removed Off Course'
                 elif 'submit_plus_dnf' in request.form:
-                    if run.dnfs<1:
-                        run.dnfs=1
+                    if "DNF" not in str(run.dnf):
+                        run.dnf='DNF (u)'
                         actionmessage='Did Not Finish'
-                    elif run.dnfs==1:
-                        run.dnfs=0
+                    elif "DNF" in str(run.dnf):
+                        run.dnf='0'
                         actionmessage='Removed DNF'  
-                elif 'submit_minus_dnf' in request.form:
-                    if run.dnfs>-1:#-1 is a DNS (if we want to use them)
-                        run.dnfs=-1
-                        actionmessage='Did Not Start'
-                    elif run.dnfs==-1:
-                        run.dnfs=0
-                        actionmessage='Removed DNS'  
+                # elif 'submit_minus_dnf' in request.form:
+                #     if run.dnf>-1:#-1 is a DNS (if we want to use them)
+                #         run.dnf=-1
+                #         actionmessage='Did Not Start'
+                #     elif run.dnf==-1:
+                #         run.dnf=0
+                #         actionmessage='Removed DNS'  
+                
                 carmessage += f"{run.car_number},"
                 run = calculateAdjustedTime(run)
                 db.session.commit()
@@ -82,12 +96,10 @@ def runtable():
                 'message': message,
                 'runs': [{
                     'id': run.id,
-                    'tag': run.tag,
-                    'team_name': run.team_name,
                     'car_number': run.car_number,
                     'cones': run.cones,
-                    'off_courses': run.off_courses,
-                    'dnfs': run.dnfs,
+                    'off_course': run.off_course,
+                    'dnf': run.dnf,
                     'raw_time': run.raw_time,
                     'adjusted_time': run.adjusted_time
                 } for run in updated_runs]
@@ -102,7 +114,7 @@ def runtable():
     cols.insert(0, "Select")                                    # Add column header for the checkboxes
     page = request.args.get('page', 1, type=int)
     
-    return render_template('runtable.html', title='Run Table', runs=runs, cols=cols, form=form, addRunForm=addRunForm)
+    return render_template('runtable.html', title='Run Table', runs=runs, cols=cols, form=form, addRunForm=addRunForm, editRunForm=editRunForm)
 
 @bp.route('/favicon.ico')
 def favicon():
@@ -119,19 +131,22 @@ def toplaps():
     
     return render_template('toplaps.html', title='Top Laps', runs=runs, cols=cols)
 
+@bp.route('/pointsLeaderboard', methods=['GET', 'POST'])
+def pointsLeaderboard():
+    
+    query = sa.select(PointsLeaderboard)
+    runs = db.session.scalars(query).all()
+    inst = sa.inspect(PointsLeaderboard)                                 # To get headers, should probs be in the model code
+    cols = [c_attr.key for c_attr in inst.mapper.column_attrs]  # To get headers, should probs be in the model code                                  # Add column header for the checkboxes
+    page = request.args.get('page', 1, type=int)
+    
+    return render_template('pointsLeaderboard.html', title='Points Leaderboard', runs=runs, cols=cols)
+
 @bp.route('/fixdata', methods=['GET', 'POST']) #this is a temporary function to fill in adjusted times and fix data for runs that were missing them
 def fixdata():
     query = sa.select(RunOrder)
     runs = db.session.scalars(query).all()
     for run in runs:
-        if run.adjusted_time == 0.0:
-            run.adjusted_time = run.raw_time
-        if isinstance(run.cones, str) or isinstance(run.cones, type(None)):
-            run.cones = int(0)
-        if isinstance(run.off_courses, str) or isinstance(run.off_courses, type(None)):
-            run.off_courses = int(0)  
-        if isinstance(run.dnfs, str) or isinstance(run.dnfs, type(None)):
-            run.dnfs = int(0)  
         run = calculateAdjustedTime(run)  
         db.session.commit()
 
@@ -146,10 +161,9 @@ def add_run():
         # Query CarReg to get the team name for the given car number
         car = db.session.query(CarReg).filter_by(car_number=car_number).first()
         if car:
-            team_name = car.team_name
-            tag = car.tag
+            
             # Add the new run to the RunOrder with the team name
-            new_run = RunOrder(car_number=car_number, team_name=team_name, tag=tag, raw_time=0.0, adjusted_time=0.0, cones=0, off_courses=0, dnfs=0)
+            new_run = RunOrder(car_number=car_number, raw_time=0.0, adjusted_time=0.0, cones=0, off_course=0, startline_scan_status='Manually Added at ' + datetime.now().strftime('%H:%M:%S'))
             db.session.add(new_run)
             db.session.commit()
             response = {
@@ -157,12 +171,10 @@ def add_run():
                 'message': 'New run added successfully!',
                 'run': {
                     'id': new_run.id,
-                    'team_name': new_run.team_name,
-                    'tag': new_run.tag,
                     'car_number': new_run.car_number,
                     'cones': new_run.cones,
-                    'off_courses': new_run.off_courses,
-                    'dnfs': new_run.dnfs,
+                    'off_course': new_run.off_course,
+                    'dnf': new_run.dnf,
                     'raw_time': new_run.raw_time,
                     'adjusted_time': new_run.adjusted_time
                 }
@@ -180,7 +192,21 @@ def add_run():
     }
     return jsonify(response), 400
 
-
+@bp.route('/edit_run/<int:run_id>', methods=['POST'])
+def edit_run(run_id):
+    form = EditRunForm()
+    if form.validate_on_submit():
+        run = db.session.query(RunOrder).filter_by(id=run_id).first()
+        print(run)
+        if run:
+            oldtime = run.raw_time
+            run.raw_time = form.raw_time.data
+            run = calculateAdjustedTime(run)
+            db.session.commit()
+            flash(_('Run '+ str(run.id) + ' car #'+run.car_number+' updated successfully from '+ str(oldtime) + ' to ' + str(run.raw_time)))
+            return redirect(url_for('main.runtable'))
+    flash(_('Error updating run.'))
+    return redirect(url_for('main.runtable'))
 
 @bp.route('/api/runs', methods=['GET'])
 def get_runs():
@@ -189,15 +215,30 @@ def get_runs():
     runs_data = [
         {
             'id': run.id,
-            'team_name': run.team_name,
-            'tag': run.tag,
             'car_number': run.car_number,
             'cones': run.cones,
-            'off_courses': run.off_courses,
-            'dnfs': run.dnfs,
+            'off_course': run.off_course,
+            'dnf': run.dnf,
             'raw_time': run.raw_time,
             'adjusted_time': run.adjusted_time
         }
         for run in runs
     ]
     return jsonify(runs_data)
+
+@bp.route('/api/runs/<int:run_id>', methods=['GET'])
+def get_run(run_id):
+    run = db.session.query(RunOrder).filter_by(id=run_id).first()
+    if run is None:
+        return jsonify({'error': 'Run not found'}), 404
+
+    run_data = {
+        'id': run.id,
+        'car_number': run.car_number,
+        'cones': run.cones,
+        'off_course': run.off_course,
+        'dnf': run.dnf,
+        'raw_time': run.raw_time,
+        'adjusted_time': run.adjusted_time
+    }
+    return jsonify(run_data)
