@@ -219,6 +219,38 @@ def update_runtable(table_name, column_name, value, id):
 		print(error)
 	finally:
 		return return_id
+
+def update_runtable_2col(table_name, column_1_name, value_1, column_2_name, value_2, id):
+	sql = """
+		UPDATE {table_name} 
+		SET {column_1_name} = '{value_1}',
+		{column_2_name} = '{value_2}'
+		WHERE id = {id} 
+		RETURNING id;
+		""".format(table_name=table_name, column_1_name=column_1_name, value_1=value_1, column_2_name=column_2_name, value_2=value_2, id=id)
+	
+	return_id = None
+	try:
+		with psycopg2.connect(
+			host=Config.DB.HOST, 
+			database=Config.DB.NAME, 
+			user=Config.DB.USER, 
+			password=Config.DB.PASS) as conn:
+			with  conn.cursor() as cur:
+				# execute the INSERT statement
+				cur.execute(sql)
+
+				# get the generated id back
+				rows = cur.fetchone()
+				if rows:
+					return_id = rows[0]
+
+				# commit the changes to the database
+				conn.commit()
+	except (Exception, psycopg2.DatabaseError) as error:
+		print(error)
+	finally:
+		return return_id
 	
 def insert_rawlaptime(table_name, run_data):
 	sql = """INSERT INTO {table_name}(read_counter, raw_time) VALUES({read_count}, '{raw_time}' ) RETURNING run_id;""".format(table_name=table_name, read_count=run_data[0], raw_time=run_data[1])

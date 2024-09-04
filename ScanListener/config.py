@@ -6,6 +6,8 @@
 #                                                                #
 ####################################### Pittsburgh Shootout LLC ##
 
+import os
+
 class Config:
     class MQTT:
         PORT = 1883
