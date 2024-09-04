@@ -55,7 +55,7 @@ class RunOrder(db.Model):
         return '<RunOrder {}>'.format(self.id)
     
     def print_row(self):
-        return f'{self.id}; {self.car_number}; {self.cones}; {self.off_course}; {self.raw_time}; {self.adjusted_time};'
+        return f'{self.id}; {self.car_number}; {self.cones}; {self.off_course}; {self.dnf}; {self.raw_time}; {self.adjusted_time};'
 
 class CarReg(db.Model):
     __tablename__ = 'carreg'

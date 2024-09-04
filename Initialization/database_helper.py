@@ -645,6 +645,7 @@ def create_pg_notify_function(function_name):
 	except (psycopg2.DatabaseError, Exception) as error:
 		print(error)
 
+
 def create_pg_notify_trigger(table_name, function_name, trigger_name):
 	sql = """
 		CREATE OR REPLACE TRIGGER "{trigger_name}" 
@@ -661,6 +662,50 @@ def create_pg_notify_trigger(table_name, function_name, trigger_name):
 				cur.execute(sql)
 	except (psycopg2.DatabaseError, Exception) as error:
 		print(error)
+
+def create_update_adjusted_time_calc_function():
+	sql = """CREATE OR REPLACE FUNCTION update_adjusted_time() 
+		RETURNS TRIGGER AS $$
+		BEGIN
+			IF POSITION('DNF' IN UPPER(NEW.dnf)) > 0 THEN
+				NEW.adjusted_time := 'DNF';
+			ELSE
+				NEW.adjusted_time := (CAST(NEW.raw_time AS NUMERIC) + (2 * CAST(NEW.cones AS NUMERIC)) + (10 * CAST(NEW.off_course AS NUMERIC)))::text;
+			END IF;
+			RETURN NEW;
+		END;
+		$$ LANGUAGE plpgsql;"""
+	try:
+		with psycopg2.connect(
+			host=Config.DB.HOST, 
+			database=Config.DB.NAME, 
+			user=Config.DB.USER, 
+			password=Config.DB.PASS) as conn:
+			with conn.cursor() as cur:
+				# execute
+				cur.execute(sql)
+	except (psycopg2.DatabaseError, Exception) as error:
+		print(error)
+
+
+def create_adjust_time_trigger():
+	sql = """
+		CREATE TRIGGER adjust_time_trigger
+		BEFORE INSERT OR UPDATE ON runtable
+		FOR EACH ROW
+		EXECUTE FUNCTION update_adjusted_time();"""
+	try:
+		with psycopg2.connect(
+			host=Config.DB.HOST, 
+			database=Config.DB.NAME, 
+			user=Config.DB.USER, 
+			password=Config.DB.PASS) as conn:
+			with conn.cursor() as cur:
+				# execute
+				cur.execute(sql)
+	except (psycopg2.DatabaseError, Exception) as error:
+		print(error)
+
 
 def clear_and_create_schema():
 	database_tables = {
@@ -765,4 +810,8 @@ def clear_and_create_schema():
 			trigger_name  = table_name + "_trigger_pg_nofity"
 			create_pg_notify_function(function_name)
 			create_pg_notify_trigger(table_name,function_name,trigger_name)
+			create_update_adjusted_time_calc_function()
+			create_adjust_time_trigger()
+	
+
 

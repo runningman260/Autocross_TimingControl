@@ -79,16 +79,10 @@ def runtable():
                     elif "DNF" in str(run.dnf):
                         run.dnf='0'
                         actionmessage='Removed DNF'  
-                # elif 'submit_minus_dnf' in request.form:
-                #     if run.dnf>-1:#-1 is a DNS (if we want to use them)
-                #         run.dnf=-1
-                #         actionmessage='Did Not Start'
-                #     elif run.dnf==-1:
-                #         run.dnf=0
-                #         actionmessage='Removed DNS'  
+
                 
                 carmessage += f"{run.car_number},"
-                run = calculateAdjustedTime(run)
+                #run = calculateAdjustedTime(run)
                 db.session.commit()
                 updated_runs.append(run)
             message = "Car(s)" + carmessage[:-1] + ": " + actionmessage
@@ -164,7 +158,7 @@ def add_run():
         if car:
             
             # Add the new run to the RunOrder with the team name
-            new_run = RunOrder(car_number=car_number, raw_time=0.0, adjusted_time=0.0, cones=0, off_course=0, startline_scan_status='Manually Added at ' + datetime.now().strftime('%H:%M:%S'))
+            new_run = RunOrder(car_number=car_number, raw_time='0.000', adjusted_time=0.0, cones=0, off_course=0, startline_scan_status='Manually Added at ' + datetime.now().strftime('%H:%M:%S'))
             db.session.add(new_run)
             db.session.commit()
             response = {
@@ -202,7 +196,7 @@ def edit_run(run_id):
         if run:
             oldtime = run.raw_time
             run.raw_time = form.raw_time.data
-            run = calculateAdjustedTime(run)
+            #run = calculateAdjustedTime(run)
             db.session.commit()
             flash(_('Run '+ str(run.id) + ' car #'+run.car_number+' updated successfully from '+ str(oldtime) + ' to ' + str(run.raw_time)))
             return redirect(url_for('main.runtable'))

@@ -42,13 +42,13 @@ class UserModelCase(unittest.TestCase):
 
 
     def test_periodically_add_runs(self):
-        time_between_runs = 30 # seconods
+        time_between_runs = 5 # seconods
         with open('team_entry_data.csv') as csvfile:
             readCSV = csv.reader(csvfile, delimiter=',')
             next(readCSV, None)  # skip the headers
             for row in readCSV:
                 print("Inserting: " + str(row))
-                r = RunOrder(car_number=row[3], cones=0 if row[4] == '' else int(row[4]), off_course=0 if row[5] == '' else int(row[5]),  dnf=0 if row[6] == '' else int(row[6]),  raw_time=0 if row[7] == '' else row[7], adjusted_time=0 if row[7] == '' else row[7])
+                r = RunOrder(car_number=row[3], cones=0 if row[4] == '' else int(row[4]), off_course=0 if row[5] == '' else int(row[5]),  dnf=0 if row[6] == '' else row[6],  raw_time=0 if row[7] == '' else row[7])
                 db.session.add(r)
                 db.session.commit()
                 print(RunOrder.query.order_by(RunOrder.id.desc()).first().print_row())
