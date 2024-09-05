@@ -26,7 +26,7 @@ clear_and_create_schema()
 print("Creating Leaderboard")
 sql = """
 create or replace view leaderboard as 
-Select runtable.car_number, runtable.adjusted_time, carreg.team_name 
+Select runtable.car_number, carreg.team_name, runtable.adjusted_time
 from runtable 
 join carreg on runtable.car_number=carreg.car_number 
 where adjusted_time is not null and adjusted_time is distinct from 'DNF' and raw_time is not null and (raw_time::decimal > 0)
