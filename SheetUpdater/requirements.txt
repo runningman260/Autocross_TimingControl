@@ -1,0 +1,5 @@
+psycopg2-binary
+schedule
+gspread
+oauth2client
+schedule
