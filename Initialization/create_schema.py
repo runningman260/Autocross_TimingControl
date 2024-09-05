@@ -29,7 +29,7 @@ create or replace view leaderboard as
 Select runtable.car_number, runtable.adjusted_time, carreg.team_name 
 from runtable 
 join carreg on runtable.car_number=carreg.car_number 
-where adjusted_time is not null and adjusted_time is distinct from 'DNF' and raw_time is not null and raw_time != '0.0'
+where adjusted_time is not null and adjusted_time is distinct from 'DNF' and raw_time is not null and (raw_time::decimal > 0)
 ORDER BY CASE WHEN pg_input_is_valid(adjusted_time, 'decimal') THEN adjusted_time::decimal END asc;
 """
 create_view(sql)
@@ -38,13 +38,14 @@ create_view(sql)
 print("Creating Points Leaderboard")
 sql = """
 create or replace view points_leaderboard as
-select c.car_number, c.adjusted_time, c.points
+select c.car_number, c.team_name, c.adjusted_time, c.points
 from (
     select
-    distinct on (b.car_number::int) b.car_number, b.adjusted_time, b.points
+    distinct on (b.car_number::int) b.car_number, b.team_name, b.adjusted_time, b.points
     from (
         select 
             s.car_number, 
+			s.team_name,
             s.adjusted_time, 
             s.tmin as MIN,
             s.tmax as max,
@@ -54,11 +55,13 @@ from (
             end as points
             from (
                 select
-                    car_number, adjusted_time, raw_time,
+                    runtable.car_number, runtable.adjusted_time, runtable.raw_time,
                     min(adjusted_time::decimal) over () as tmin,
-                    1.45*min(adjusted_time::decimal) over () as Tmax
+                    1.45*min(adjusted_time::decimal) over () as Tmax,
+					carreg.team_name
                     from runtable
-					where adjusted_time is not null and adjusted_time is distinct from 'DNF' and raw_time is not null and raw_time != '0.0'
+					join carreg on runtable.car_number=carreg.car_number 
+					where adjusted_time is not null and adjusted_time is distinct from 'DNF' and raw_time is not null and (raw_time::decimal > 0)
                 ) s
         order by points desc
         ) b
@@ -72,10 +75,11 @@ create_view(sql)
 print("Creating Cones Leaderboard")
 sql = """
 create or replace view cones_leaderboard as
-select * from runtable 
+select runtable.*, carreg.team_name from runtable 
+join carreg on runtable.car_number=carreg.car_number
 where adjusted_time is not null 
 and cones is not null 
-and raw_time is not null and raw_time != '0.0'
+and raw_time is not null and (raw_time::decimal > 0)
 ORDER BY CASE WHEN pg_input_is_valid(cones, 'int') THEN cones::int END desc;
 """
 create_view(sql)
