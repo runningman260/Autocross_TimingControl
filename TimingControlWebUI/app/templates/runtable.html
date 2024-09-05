@@ -150,38 +150,45 @@
             //console.log('Removing highlight from row:', rowId);
           }, 3000); // Adjust the timeout duration as needed
         }
-
+        let lastUpdateTimestamp = null;
+        let lastrun=0;
         async function updateRunsTable() {
             try {
-              const response = await fetch('/api/runs');
-              if (!response.ok) {
-                throw new Error('Network response was not ok');
-              }
-              const data = await response.json();
+                let url = '/api/runs';
+                if (lastUpdateTimestamp) {
+                    url += `?since=${lastUpdateTimestamp.toISOString()}&lastrun=${lastrun}`;
+                }
+        
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+        
+                const data = await response.json();
               const table = document.getElementById('runs-table-tbody');
               const selectedRuns = new Set(
                 Array.from(document.querySelectorAll('input[name="selected_runs"]:checked'))
                   .map(input => input.value)
               );
         
-              // Clear existing rows
-              table.querySelectorAll('tr[name="run_row"]').forEach(row => row.remove());
-        
-              // Add new rows
               data.forEach(run => {
-                const row = document.createElement('tr');
-                row.setAttribute('name', 'run_row');
-                row.setAttribute('id', run.id);
-        //TODO update highlighting rules
+                let row = document.getElementById(run.id);
+                if (!row) {
+                    row = document.createElement('tr');
+                    row.setAttribute('name', 'run_row');
+                    row.setAttribute('id', run.id);
+                    table.insertBefore(row, table.firstChild);
+                }
+    
                 row.innerHTML = `
-                  <td>
-                    <input type="checkbox" id="run_${run.id}" name="selected_runs" value="${run.id}-${run.car_number}" ${selectedRuns.has(`${run.id}-${run.car_number}`) ? 'checked' : ''}>
-                  </td>
-                  <td>${run.id}</td>
-                  <td>${run.car_number}</td>
-                  <td>${run.cones || ''}</td>
-                  <td>${run.off_course || ''}</td>
-                  <td>
+                    <td>
+                        <input type="checkbox" id="run_${run.id}" name="selected_runs" value="${run.id}-${run.car_number}" ${selectedRuns.has(`${run.id}-${run.car_number}`) ? 'checked' : ''}>
+                    </td>
+                    <td>${run.id}</td>
+                    <td>${run.car_number}</td>
+                    <td>${run.cones || ''}</td>
+                    <td>${run.off_course || ''}</td>
+                    <td>
                         <div class="cell-content">
                             ${run.raw_time}
                             <span class="edit-icon" onclick="editRun('${run.id}')">
@@ -189,20 +196,20 @@
                             </span>
                         </div>
                     </td>
-                  <td class="${run.dnf && String(run.dnf).includes('DNF') ? 'table-danger' : (run.cones != 0 || run.off_course != 0) && run.raw_time == 0 ? 'bg-warning' : run.raw_time == 0 && run.cones == 0 && run.off_course == 0 ? 'table-success' : ''}">
-                    ${run.adjusted_time}
-                  </td>
+                    <td class="${run.dnf && String(run.dnf).includes('DNF') ? 'table-danger' : (run.cones != 0 || run.off_course != 0) && run.raw_time == 0 ? 'bg-warning' : run.raw_time == 0 && run.cones == 0 && run.off_course == 0 ? 'table-success' : ''}">
+                        ${run.adjusted_time}
+                    </td>
                 `;
-
-                table.appendChild(row);
-                // Reapply highlight if the row was recently changed
                 const rowId = row.id;
                 if (highlightedRows.has(rowId)) {
                     //console.log('Reapplying highlight class to row:', run.id);
                     row.classList.add('table-success');
                 }
-              });
-        
+                if (!isNaN(rowId) && Number(rowId) > lastrun) { //keep track of last run number as a backup catch for edge cases. If either are missing, entire page will refresh
+                    lastrun = Number(rowId);
+                }
+            });
+            lastUpdateTimestamp = new Date(Date.now() - 3000); //3 second offset to account for server time and catch edge cases on next update
               if (deselectButton) {
                 deselectButton.removeEventListener('click', handleDeselectClick);
                 deselectButton.addEventListener('click', handleDeselectClick);
@@ -229,7 +236,7 @@
             if (data.status === 'success') {
                 showAlert('success', data.message);
                 data.runs.forEach(run => {
-                //console.log('Processing run:', run);
+
                 const row = document.getElementById(run.id);
                 //TODO update
                 row.innerHTML = `

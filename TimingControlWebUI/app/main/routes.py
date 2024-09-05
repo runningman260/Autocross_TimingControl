@@ -206,7 +206,23 @@ def edit_run(run_id):
 @bp.route('/api/runs', methods=['GET'])
 def get_runs():
     #fixdata()#to be removed when handled by db insert of finishtime
-    runs=db.session.scalars(sa.select(RunOrder).order_by(-RunOrder.id)).all()
+    since = request.args.get('since')
+    lastrun = request.args.get('lastrun')
+    if since and lastrun:
+        try:
+            since_timestamp = datetime.fromisoformat(since)
+            try:
+                int(lastrun)
+                query = sa.select(RunOrder).where(sa.or_(RunOrder.updated_at > since_timestamp,RunOrder.id > lastrun)).order_by(RunOrder.id)
+            except:
+                query = sa.select(RunOrder).order_by(-RunOrder.id)
+        except:
+            query = sa.select(RunOrder).order_by(-RunOrder.id)        
+    else:
+        query = sa.select(RunOrder).order_by(-RunOrder.id)
+    
+    
+    runs=db.session.scalars(query).all()
     runs_data = [
         {
             'id': run.id,
