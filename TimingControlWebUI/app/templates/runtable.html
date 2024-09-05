@@ -120,7 +120,7 @@
     <script>
         document.getElementById('refresh-button').addEventListener('click', function(event) {
             event.preventDefault();
-            updateRunsTable();
+            updateRunsTable(true);
         });
         // Function to handle deselect button click
         function handleDeselectClick(event) {
@@ -152,8 +152,11 @@
         }
         let lastUpdateTimestamp = null;
         let lastrun=0;
-        async function updateRunsTable() {
+        async function updateRunsTable(fullyRefresh = false) {
             try {
+                if (fullyRefresh) {
+                    lastUpdateTimestamp = null;
+                }
                 let url = '/api/runs';
                 if (lastUpdateTimestamp) {
                     url += `?since=${lastUpdateTimestamp.toISOString()}&lastrun=${lastrun}`;
@@ -164,7 +167,7 @@
                     throw new Error('Network response was not ok');
                 }
         
-                const data = await response.json();
+              const data = await response.json();
               const table = document.getElementById('runs-table-tbody');
               const selectedRuns = new Set(
                 Array.from(document.querySelectorAll('input[name="selected_runs"]:checked'))
@@ -181,25 +184,14 @@
                 }
     
                 row.innerHTML = `
-                    <td>
-                        <input type="checkbox" id="run_${run.id}" name="selected_runs" value="${run.id}-${run.car_number}" ${selectedRuns.has(`${run.id}-${run.car_number}`) ? 'checked' : ''}>
-                    </td>
-                    <td>${run.id}</td>
-                    <td>${run.car_number}</td>
-                    <td>${run.cones || ''}</td>
-                    <td>${run.off_course || ''}</td>
-                    <td>
-                        <div class="cell-content">
-                            ${run.raw_time}
-                            <span class="edit-icon" onclick="editRun('${run.id}')">
-                                <i class="bi bi-pencil-square"></i>
-                            </span>
-                        </div>
-                    </td>
-                    <td class="${run.dnf && String(run.dnf).includes('DNF') ? 'table-danger' : (run.cones != 0 || run.off_course != 0) && run.raw_time == 0 ? 'bg-warning' : run.raw_time == 0 && run.cones == 0 && run.off_course == 0 ? 'table-success' : ''}">
-                        ${run.adjusted_time}
-                    </td>
-                `;
+    <td><input type="checkbox" id="run_${run.id}" name="selected_runs" value="${run.id}-${run.car_number}" ${selectedRuns.has(`${run.id}-${run.car_number}`) ? 'checked' : ''}></td>
+    <td>${run.id}</td>
+    <td>${run.car_number}</td>
+    <td>${run.cones || ''}</td>
+    <td>${run.off_course || ''}</td>
+    <td><div class="cell-content">${run.raw_time}<span class="edit-icon" onclick="editRun('${run.id}')"><i class="bi bi-pencil-square"></i></span></div></td>
+    <td class="${run.dnf && String(run.dnf).includes('DNF') ? 'table-danger' : (run.cones != 0 || run.off_course != 0) && run.raw_time == 0 ? 'bg-warning' : run.raw_time == 0 && run.cones == 0 && run.off_course == 0 ? 'table-success' : ''}">${run.adjusted_time}</td>
+`;
                 const rowId = row.id;
                 if (highlightedRows.has(rowId)) {
                     //console.log('Reapplying highlight class to row:', run.id);
@@ -209,7 +201,7 @@
                     lastrun = Number(rowId);
                 }
             });
-            lastUpdateTimestamp = new Date(Date.now() - 3000); //3 second offset to account for server time and catch edge cases on next update
+            lastUpdateTimestamp = new Date(Date.now() - 15000); //15 second lookback just in case one or two update calls are missed
               if (deselectButton) {
                 deselectButton.removeEventListener('click', handleDeselectClick);
                 deselectButton.addEventListener('click', handleDeselectClick);
