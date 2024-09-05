@@ -115,7 +115,7 @@ if __name__ == '__main__':
 						print("DB UDPATE:\t" + prev_lap_time + " to\tDNF", flush=True)
 						update_rawlaptime(table_name,[run_number,"DNF"])
 						client.publish("/timing/laptime/updatetime",build_payload(False,run_number,"DNF",str(datetime.datetime.now())))
-						row_updated = update_runtable_2col("runtable","dnf","DNF","raw_time","0.000",last_runtable_row_inserted)
+						row_updated = update_runtable_2col("runtable","dnf","DNF (TC)","raw_time","0.000",last_runtable_row_inserted)
 						print("Runtable row updated: " + str(row_updated), flush=True)
 						prev_lap_time = lap_time_buffer
 						update_db_flag = False
@@ -130,7 +130,7 @@ if __name__ == '__main__':
 						fifo_runtable_row = retrieve_oldest_active_run_by_raw_time("runtable", "raw_time")
 						if (fifo_runtable_row > -1):
 							# We found a row, update that row with a raw time.
-							row_updated = update_runtable_2col("runtable","dnf","DNF","raw_time","0.000",fifo_runtable_row)
+							row_updated = update_runtable_2col("runtable","dnf","DNF (TC)","raw_time","0.000",fifo_runtable_row)
 							print("Runtable row updated: " + str(row_updated), flush=True)
 						#else:
 							# We did not get a row, something wrong. What do?
