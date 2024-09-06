@@ -77,15 +77,15 @@ def runtable():
                         run.dnf='DNF (u)'
                         actionmessage='Did Not Finish'
                     elif "DNF" in str(run.dnf):
-                        run.dnf='0'
+                        run.dnf=None
                         actionmessage='Removed DNF'  
 
                 
-                carmessage += f"{run.car_number},"
+                carmessage += "Run " + f"{run.id}"+ " Car " +f"{run.car_number} - " + actionmessage + "<br>"
                 #run = calculateAdjustedTime(run)
                 db.session.commit()
                 updated_runs.append(run)
-            message = "Car(s)" + carmessage[:-1] + ": " + actionmessage
+            message = carmessage
             response = {
                 'status': 'success',
                 'message': message,
