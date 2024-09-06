@@ -41,8 +41,9 @@ def sub_handler(client, userdata, msg):
 	if(msg.topic == "/timing/slscan/newscan"):
 		decoded_message = str(msg.payload.decode("utf-8"))
 		json_message = json.loads(decoded_message)
-		inserted = insert_newscan(startline_table_name, json_message["tag_number"], scan_number=json_message["scan_number"], created_by="SCAN")
-		print("Inserted Scan: " + str(json_message["scan_number"]) + " " + str(json_message["tag_number"]), flush=True)
+		json_message["tag_number"] = json_message["tag_number"].replace('\r','')
+		inserted = insert_newscan(startline_table_name, json_message["tag_number"], created_by="SCAN")
+		print("Inserted Scan: " + str(json_message["tag_number"]), flush=True)
 		## Look up tag to car number
 		retreived_car_number = -1
 		retreived_car_number  = get_car_number("carreg",json_message["tag_number"])
@@ -62,8 +63,8 @@ def sub_handler(client, userdata, msg):
 	if(msg.topic == "/timing/flscan/newscan"):
 		decoded_message = str(msg.payload.decode("utf-8"))
 		json_message = json.loads(decoded_message)
-		inserted = insert_newscan(finishline_table_name, json_message["tag_number"], scan_number=json_message["scan_number"])
-		print("Inserted Scan: " + str(json_message["scan_number"]) + " " + str(json_message["tag_number"]), flush=True)
+		inserted = insert_newscan(finishline_table_name, json_message["tag_number"])
+		print("Inserted Scan: " + str(json_message["tag_number"]), flush=True)
 		## Need to work out how to insert these into the run table
 		# SELECT id FROM runtable WHERE raw_time is null ORDER BY id LIMIT 1 RETURNING id;
 		# SELECT id FROM runtable WHERE finishline_scan_status is null ORDER BY id LIMIT 1 RETURNING id;
@@ -82,7 +83,7 @@ def sub_handler(client, userdata, msg):
 		# Since we don't have a tag_number, we'll put the car_number in the tag column so that we know who was inserted
 		decoded_message = str(msg.payload.decode("utf-8"))
 		json_message = json.loads(decoded_message)
-		inserted = insert_newscan(startline_table_name, str("override_" + json_message["car_number"]),scan_number="" ,created_by="ui_override")
+		inserted = insert_newscan(startline_table_name, str("override_" + json_message["car_number"]),created_by="ui_override")
 		print("Inserted Scan: " + "ui_override" + " " + str(json_message["car_number"]), flush=True)
 		## Insert car number into run table as new run
 		run_created = create_new_run("runtable",json_message["car_number"],"ui_override")
