@@ -53,8 +53,8 @@ def runtable():
                     run.off_course = int(run.off_course)
                 except:
                     run.off_course = 0
-                if run.raw_time is None: 
-                    run.raw_time = 0.0 
+                # if run.raw_time is None: 
+                #     run.raw_time = 0.0 
                 
 
 
@@ -104,12 +104,9 @@ def runtable():
             #somehow return via ajax and keep current pageview/selections
     query = sa.select(RunOrder).order_by(-RunOrder.id)
     runs = db.session.scalars(query).all()
-    inst = sa.inspect(RunOrder)                                 # To get headers, should probs be in the model code
-    cols = [c_attr.key for c_attr in inst.mapper.column_attrs]  # To get headers, should probs be in the model code
-    cols.insert(0, "Select")                                    # Add column header for the checkboxes
     page = request.args.get('page', 1, type=int)
     
-    return render_template('runtable.html', title='Run Table', runs=runs, cols=cols, form=form, addRunForm=addRunForm, editRunForm=editRunForm)
+    return render_template('runtable.html', title='Run Table', runs=runs, form=form, addRunForm=addRunForm, editRunForm=editRunForm)
 
 @bp.route('/favicon.ico')
 def favicon():
@@ -120,33 +117,27 @@ def toplaps():
     
     query = sa.select(TopLaps)
     runs = db.session.scalars(query).all()
-    inst = sa.inspect(TopLaps)                        
-    cols = [c_attr.key for c_attr in inst.mapper.column_attrs]  
     page = request.args.get('page', 1, type=int)
     
-    return render_template('toplaps.html', title='Top Laps', runs=runs, cols=cols)
+    return render_template('toplaps.html', title='Top Laps', runs=runs)
 
 @bp.route('/pointsLeaderboard', methods=['GET', 'POST'])
 def pointsLeaderboard():
     
     query = sa.select(PointsLeaderboard)
     runs = db.session.scalars(query).all()
-    inst = sa.inspect(PointsLeaderboard)                                 
-    cols = [c_attr.key for c_attr in inst.mapper.column_attrs]  
     page = request.args.get('page', 1, type=int)
     
-    return render_template('pointsLeaderboard.html', title='Points Leaderboard', runs=runs, cols=cols)
+    return render_template('pointsLeaderboard.html', title='Points Leaderboard', runs=runs)
 
 @bp.route('/conesLeaderboard', methods=['GET', 'POST'])
 def conesLeaderboard():
         
         query = sa.select(ConesLeaderboard)
         runs = db.session.scalars(query).all()
-        inst = sa.inspect(ConesLeaderboard)                                 
-        cols = [c_attr.key for c_attr in inst.mapper.column_attrs]  
         page = request.args.get('page', 1, type=int)
         
-        return render_template('conesLeaderboard.html', title='Cones Leaderboard', runs=runs, cols=cols)
+        return render_template('conesLeaderboard.html', title='Cones Leaderboard', runs=runs)
 
 @bp.route('/fixdata', methods=['GET', 'POST']) #this is a temporary function to fill in adjusted times and fix data for runs that were missing them
 def fixdata():
@@ -169,7 +160,7 @@ def add_run():
         if car:
             
             # Add the new run to the RunOrder with the team name
-            new_run = RunOrder(car_number=car_number, raw_time='0.000', adjusted_time=0.0, cones=0, off_course=0, startline_scan_status='Manually Added at ' + datetime.now().strftime('%H:%M:%S'))
+            new_run = RunOrder(car_number=car_number, raw_time=None, adjusted_time=0.0, cones=0, off_course=0, startline_scan_status='Manually Added at ' + datetime.now().strftime('%H:%M:%S'))
             db.session.add(new_run)
             db.session.commit()
             response = {

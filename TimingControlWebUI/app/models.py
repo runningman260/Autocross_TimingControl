@@ -44,7 +44,7 @@ class RunOrder(db.Model):
     cones: so.Mapped[int] = so.mapped_column(sa.String(128), nullable=True) 
     off_course: so.Mapped[int] = so.mapped_column(sa.String(128), nullable=True)
     dnf: so.Mapped[str] = so.mapped_column(sa.String(128))
-    raw_time: so.Mapped[float] = so.mapped_column(sa.String(128), index=True)
+    raw_time: so.Mapped[float] = so.mapped_column(sa.String(128))
     adjusted_time: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
     startline_scan_status: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
     finishline_scan_status: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)

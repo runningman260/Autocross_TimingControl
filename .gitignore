@@ -39,3 +39,4 @@ nosetests.xml
 venv
 app.db
 timingctrl.log*
+client_secret.json
