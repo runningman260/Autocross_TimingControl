@@ -43,7 +43,7 @@ def sub_handler(client, userdata, msg):
 		json_message = json.loads(decoded_message)
 		json_message["tag_number"] = json_message["tag_number"].replace('\r','')
 		inserted = insert_newscan(startline_table_name, json_message["tag_number"], created_by="SCAN")
-		print("Inserted Scan: " + str(json_message["tag_number"]), flush=True)
+		print("Inserted Scan into SLScans table: " + str(json_message["tag_number"]), flush=True)
 		## Look up tag to car number
 		retreived_car_number = -1
 		retreived_car_number  = get_car_number("carreg",json_message["tag_number"])
@@ -64,7 +64,7 @@ def sub_handler(client, userdata, msg):
 		decoded_message = str(msg.payload.decode("utf-8"))
 		json_message = json.loads(decoded_message)
 		inserted = insert_newscan(finishline_table_name, json_message["tag_number"])
-		print("Inserted Scan: " + str(json_message["tag_number"]), flush=True)
+		print("Inserted Scan in FLSCans table: " + str(json_message["tag_number"]), flush=True)
 		## Need to work out how to insert these into the run table
 		# SELECT id FROM runtable WHERE raw_time is null ORDER BY id LIMIT 1 RETURNING id;
 		# SELECT id FROM runtable WHERE finishline_scan_status is null ORDER BY id LIMIT 1 RETURNING id;
