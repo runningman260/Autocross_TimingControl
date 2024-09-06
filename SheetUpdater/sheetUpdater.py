@@ -148,6 +148,8 @@ def update_google_sheet(data, sheet_name):
         creds = ServiceAccountCredentials.from_json_keyfile_name('client_secret.json', scope)
         client = gspread.authorize(creds)
         sheet = client.open(SPREADSHEET_NAME).worksheet(sheet_name)
+        current_timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        data[0].append(current_timestamp)
         # Clear existing data
         #sheet.clear()
         # Update with new data
