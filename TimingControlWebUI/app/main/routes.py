@@ -5,7 +5,7 @@ from flask_babel import _, get_locale
 import sqlalchemy as sa
 from app import db
 from app.main.forms import EmptyForm, PostForm, SearchForm, RunEditForm, AddRunForm, EditRunForm
-from app.models import RunOrder, TopLaps, CarReg, PointsLeaderboard
+from app.models import RunOrder, TopLaps, CarReg, PointsLeaderboard, ConesLeaderboard
 from app.main import bp
 
 def calculateAdjustedTime(run:RunOrder):
@@ -136,6 +136,17 @@ def pointsLeaderboard():
     page = request.args.get('page', 1, type=int)
     
     return render_template('pointsLeaderboard.html', title='Points Leaderboard', runs=runs, cols=cols)
+
+@bp.route('/conesLeaderboard', methods=['GET', 'POST'])
+def conesLeaderboard():
+        
+        query = sa.select(ConesLeaderboard)
+        runs = db.session.scalars(query).all()
+        inst = sa.inspect(ConesLeaderboard)                                 
+        cols = [c_attr.key for c_attr in inst.mapper.column_attrs]  
+        page = request.args.get('page', 1, type=int)
+        
+        return render_template('conesLeaderboard.html', title='Cones Leaderboard', runs=runs, cols=cols)
 
 @bp.route('/fixdata', methods=['GET', 'POST']) #this is a temporary function to fill in adjusted times and fix data for runs that were missing them
 def fixdata():

@@ -781,6 +781,8 @@ def clear_and_create_schema():
 	delete_function("laptimeraw_set_timestamp")
 	delete_function("leaderboard_set_timestamp")
 	delete_view("leaderboard")
+	delete_view("points_leaderboard")
+	delete_view("cones_leaderboard")
 
 	for table_name in database_tables:
 		delete_if_exists = False

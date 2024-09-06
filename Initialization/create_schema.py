@@ -74,12 +74,17 @@ create_view(sql)
 # Create Cones Leaderboard
 print("Creating Cones Leaderboard")
 sql = """
-create or replace view cones_leaderboard as
-select runtable.*, carreg.team_name from runtable 
-join carreg on runtable.car_number=carreg.car_number
-where adjusted_time is not null 
-and cones is not null 
-and raw_time is not null and (raw_time::decimal > 0)
-ORDER BY CASE WHEN pg_input_is_valid(cones, 'int') THEN cones::int END desc;
+CREATE VIEW cones_leaderboard
+AS
+( SELECT 
+    runtable.car_number,
+    carreg.team_name,
+    SUM(runtable.cones::int) as total_cones    
+   FROM (runtable
+     JOIN carreg ON (((runtable.car_number)::text = (carreg.car_number)::text)))
+  WHERE ((runtable.adjusted_time IS NOT NULL) AND (runtable.cones IS NOT NULL) AND (runtable.cones::numeric > 0) AND  (runtable.raw_time IS NOT NULL) AND ((runtable.raw_time)::numeric > (0)::numeric))
+  GROUP BY runtable.car_number, carreg.team_name
+  ORDER BY
+        total_cones DESC)
 """
 create_view(sql)
