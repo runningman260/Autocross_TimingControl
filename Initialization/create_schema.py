@@ -74,7 +74,7 @@ create_view(sql)
 # Create Cones Leaderboard
 print("Creating Cones Leaderboard")
 sql = """
-CREATE VIEW cones_leaderboard
+CREATE or REPLACE VIEW cones_leaderboard
 AS
 ( SELECT 
     runtable.car_number,
@@ -82,7 +82,17 @@ AS
     SUM(runtable.cones::int) as total_cones    
    FROM (runtable
      JOIN carreg ON (((runtable.car_number)::text = (carreg.car_number)::text)))
-  WHERE ((runtable.adjusted_time IS NOT NULL) AND (runtable.cones IS NOT NULL) AND (runtable.cones::numeric > 0) AND  (runtable.raw_time IS NOT NULL) AND ((runtable.raw_time)::numeric > (0)::numeric))
+   WHERE (
+     (runtable.adjusted_time IS NOT NULL) 
+      AND 
+     (runtable.cones IS NOT NULL) 
+	  AND 
+	 (runtable.cones::numeric > 0) 
+	  AND 
+	 (runtable.raw_time IS NOT NULL) 
+	  AND 
+	 ((runtable.raw_time)::numeric >= (0)::numeric)
+   )
   GROUP BY runtable.car_number, carreg.team_name
   ORDER BY
         total_cones DESC)
