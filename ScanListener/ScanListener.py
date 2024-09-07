@@ -79,17 +79,17 @@ def sub_handler(client, userdata, msg):
 			# Send MQTT?
 
 
-	if(msg.topic == "/timing/webui/override"):
+	#if(msg.topic == "/timing/webui/override"):
 		# Since we don't have a tag_number, we'll put the car_number in the tag column so that we know who was inserted
-		decoded_message = str(msg.payload.decode("utf-8"))
-		json_message = json.loads(decoded_message)
-		inserted = insert_newscan(startline_table_name, str("override_" + json_message["car_number"]),created_by="ui_override")
-		print("Inserted Scan: " + "ui_override" + " " + str(json_message["car_number"]), flush=True)
+	#	decoded_message = str(msg.payload.decode("utf-8"))
+	#	json_message = json.loads(decoded_message)
+	#	inserted = insert_newscan(startline_table_name, str("override_" + json_message["car_number"]),created_by="ui_override")
+	#	print("Inserted Scan: " + "ui_override" + " " + str(json_message["car_number"]), flush=True)
 		## Insert car number into run table as new run
-		run_created = create_new_run("runtable",json_message["car_number"],"ui_override")
-		if(run_created is None): run_created = 0
-		client.publish("/timing/scanlistener/confirm_run_create",build_payload((int(run_created)>0),json_message["car_number"],msg.topic,str(datetime.datetime.now())))
-		client.publish("/timing/scanlistener/confirm_insert",build_payload((inserted>0),str(json_message["tag_number"]),msg.topic,str(datetime.datetime.now())))
+	#	run_created = create_new_run("runtable",json_message["car_number"],"ui_override")
+	#	if(run_created is None): run_created = 0
+	#	client.publish("/timing/scanlistener/confirm_run_create",build_payload((int(run_created)>0),json_message["car_number"],msg.topic,str(datetime.datetime.now())))
+	#	client.publish("/timing/scanlistener/confirm_insert",build_payload((inserted>0),str(json_message["tag_number"]),msg.topic,str(datetime.datetime.now())))
 
 
 def build_payload(success, tag_number, source, timestamp):

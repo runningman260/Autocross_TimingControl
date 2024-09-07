@@ -4,6 +4,7 @@ import os
 from flask import Flask, request, current_app, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from flask_mqtt import Mqtt
 from flask_login import LoginManager
 from flask_mail import Mail
 from flask_moment import Moment
@@ -26,6 +27,7 @@ migrate = Migrate()
 mail = Mail()
 moment = Moment()
 babel = Babel()
+mqtt = Mqtt()
 
 
 def create_app(config_class=Config):
@@ -81,6 +83,8 @@ def create_app(config_class=Config):
 
         app.logger.setLevel(logging.INFO)
         app.logger.info('timingctrl startup')
+
+    mqtt.init_app(app)
 
     return app
 
