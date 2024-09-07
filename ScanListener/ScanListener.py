@@ -46,7 +46,7 @@ def sub_handler(client, userdata, msg):
 		print("Inserted Scan into SLScans table: " + str(json_message["tag_number"]), flush=True)
 		## Look up tag to car number
 		retreived_car_number = -1
-		retreived_car_number  = get_car_number("carreg",json_message["tag_number"])
+		retreived_car_number = get_car_number("carreg",json_message["tag_number"])
 		print("Retrieved Car Number: " + str(retreived_car_number), flush=True)
 		if(int(retreived_car_number) > -1):
 			## Insert car number into run table as new run
@@ -55,9 +55,9 @@ def sub_handler(client, userdata, msg):
 			client.publish("/timing/scanlistener/confirm_run_create",build_payload((int(run_created)>0),str(retreived_car_number),msg.topic,str(datetime.datetime.now())))
 		else:
 			## The Tag ID does not exist in the carreg table.
-			run_created = create_new_run("runtable","car_num_not_found","scanned_at_start_line")
-			if(run_created is None): run_created = 0
-			client.publish("/timing/scanlistener/confirm_run_create",build_payload((int(run_created)>0),"car_num_not_found",msg.topic,str(datetime.datetime.now())))
+			#run_created = create_new_run("runtable","car_num_not_found","scanned_at_start_line")
+			#if(run_created is None): run_created = 0
+			client.publish("/timing/scanlistener/confirm_run_create",build_payload(False,"car_num_not_found",msg.topic,str(datetime.datetime.now())))
 		client.publish("/timing/scanlistener/confirm_insert",build_payload((inserted>0),str(json_message["tag_number"]),msg.topic,str(datetime.datetime.now())))
 
 	if(msg.topic == "/timing/flscan/newscan"):
@@ -118,6 +118,9 @@ if __name__ == '__main__':
 				client.publish("/timing/scanlistener/healthcheck",str(datetime.datetime.now()))
 				prev_health_check = time.time()
 	except KeyboardInterrupt:
+		pass
+	except Exception as e:
+		print(e)
 		pass
 	finally:	 
 		atexit.register(exit_handler)
