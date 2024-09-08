@@ -27,7 +27,8 @@ SPREADSHEET_NAME = '2024 Pittsburgh Shootout Automated Live Timing'
 LEADERBOARD_SHEET_NAME = 'leaderboard'
 RUNTABLE_SHEET_NAME = 'runtable'
 CONE_SHEET_NAME = 'coneLeaderboard'
-POINTS_SHEET_NAME = 'pointsLeaderboard'
+IC_POINTS_SHEET_NAME = 'pointsLeaderboardIC'
+EV_POINTS_SHEET_NAME = 'pointsLeaderboardEV'
 
 # Function to fetch leaderboard data from the database
 def fetch_runtable():
@@ -113,7 +114,7 @@ def fetch_cone_leaderboard():
             conn.close()
     return leaderboard_data
 
-def fetch_points_leaderboard():
+def fetch_EV_points_leaderboard():
     conn = None
     leaderboard_data = []
     try:
@@ -124,7 +125,7 @@ def fetch_points_leaderboard():
             password=Config.DB.PASS
         )
         cur = conn.cursor()
-        cur.execute("SELECT * FROM points_leaderboard")  # Adjust the query as needed
+        cur.execute("SELECT * FROM points_leaderboard_ev")  # Adjust the query as needed
         leaderboard_data = cur.fetchall()
         col_names = [desc[0] for desc in cur.description]
         leaderboard_data = [
@@ -133,7 +134,35 @@ def fetch_points_leaderboard():
                 
         leaderboard_data.insert(0, col_names)
         cur.close()
-        logging.info("Fetched points leaderboard data from the database.")
+        logging.info("Fetched EV points leaderboard data from the database.")
+    except (Exception, psycopg2.DatabaseError) as error:
+        logging.error(f"Error fetching data from the database: {error}")
+    finally:
+        if conn is not None:
+            conn.close()
+    return leaderboard_data
+
+def fetch_IC_points_leaderboard():
+    conn = None
+    leaderboard_data = []
+    try:
+        conn = psycopg2.connect(
+           host=Config.DB.HOST, 
+            database=Config.DB.NAME, 
+            user=Config.DB.USER, 
+            password=Config.DB.PASS
+        )
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM points_leaderboard_ic")  # Adjust the query as needed
+        leaderboard_data = cur.fetchall()
+        col_names = [desc[0] for desc in cur.description]
+        leaderboard_data = [
+            [float(item) if isinstance(item, Decimal) else item for item in row]
+            for row in leaderboard_data]
+                
+        leaderboard_data.insert(0, col_names)
+        cur.close()
+        logging.info("Fetched IC points leaderboard data from the database.")
     except (Exception, psycopg2.DatabaseError) as error:
         logging.error(f"Error fetching data from the database: {error}")
     finally:
@@ -185,13 +214,21 @@ def jobconeLeaderboard():
         update_google_sheet(cone_leaderboard_data, CONE_SHEET_NAME)
     logging.info("Cone Leaderboard update complete.")
 
-def jobpointsLeaderboard():
-    points_leaderboard_data = fetch_points_leaderboard()
+def jobEVpointsLeaderboard():
+    points_leaderboard_data = fetch_EV_points_leaderboard()
     #print(points_leaderboard_data)
-    logging.info("Updating Points Leaderboard...")
+    logging.info("Updating EV Points Leaderboard...")
     if points_leaderboard_data:
-        update_google_sheet(points_leaderboard_data, POINTS_SHEET_NAME)
-    logging.info("Points Leaderboard update complete.")
+        update_google_sheet(points_leaderboard_data, EV_POINTS_SHEET_NAME)
+    logging.info("EV Points Leaderboard update complete.")
+
+def jobICpointsLeaderboard():
+    points_leaderboard_data = fetch_IC_points_leaderboard()
+    #print(points_leaderboard_data)
+    logging.info("Updating IC Points Leaderboard...")
+    if points_leaderboard_data:
+        update_google_sheet(points_leaderboard_data, IC_POINTS_SHEET_NAME)
+    logging.info("IC Points Leaderboard update complete.")
 
 schedule.every(15).seconds.do(jobLeaderboard)
 time.sleep(3)
@@ -199,7 +236,9 @@ schedule.every(15).seconds.do(jobruntable)
 time.sleep(3)  
 schedule.every(15).seconds.do(jobconeLeaderboard)
 time.sleep(3)
-schedule.every(15).seconds.do(jobpointsLeaderboard)
+schedule.every(15).seconds.do(jobEVpointsLeaderboard)
+time.sleep(3)
+schedule.every(15).seconds.do(jobICpointsLeaderboard)
 
 # Keep the script running
 logging.info("Sheet Updater started.")
