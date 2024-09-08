@@ -137,7 +137,7 @@ class MainWindow(QMainWindow):
                 "car_number"    :   self.carNumberBox.text(),
                 "team_name"     :   self.teamNameComboBox.currentText(),
                 "tag_number"    :   self.tagScanBox.text(),
-                "class"         :   self.carClass
+                "class"         :   self.carClass,
                 "scan_time"     :   datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             }
             data_json = json.dumps(data, indent=4)
