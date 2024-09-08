@@ -196,6 +196,8 @@
         }
         let lastUpdateTimestamp = null;
         let lastrun=0;
+        let failedAttempts = 0;
+        let intervalId;
         async function updateRunsTable(fullyRefresh = false) {
             try {
                 if (fullyRefresh) {
@@ -205,7 +207,14 @@
                 if (lastUpdateTimestamp) {
                     url += `?since=${lastUpdateTimestamp.toISOString()}&lastrun=${lastrun}`;
                 }
-        
+                failedAttempts++;
+                if (failedAttempts > 4) {
+                  console.error('Max failed attempts reached. Stopping refresh attempts.');
+                  showAlert('danger', 'Failed Refresh limit reached. Please refresh the page.');
+                  clearInterval(intervalId); // Stop the interval
+                    return;
+                }
+           
                 const response = await fetch(url);
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
@@ -228,13 +237,13 @@
                 }
     
                 row.innerHTML = `
-    <td><input type="checkbox" id="run_${run.id}" name="selected_runs" value="${run.id}-${run.car_number}" ${selectedRuns.has(`${run.id}-${run.car_number}`) ? 'checked' : ''}></td>
-    <td>${run.id}</td>
-    <td>${run.car_number}</td>
-    <td>${run.cones || ''}</td>
-    <td>${run.off_course || ''}</td>
-     <td><div class="cell-content">${run.raw_time !== undefined && run.raw_time !== null ? run.raw_time : 'None'}<span class="edit-icon" onclick="editRun('${run.id}')"><i class="bi bi-pencil-square"></i></span></div></td>
-    <td class="${run.dnf && String(run.dnf).toUpperCase().includes('DNF') ? 'table-danger' : (run.cones != 0 || run.off_course != 0) && (run.raw_time == 0 || run.raw_time == undefined || run.raw_time == null )? 'bg-warning' :  (run.raw_time == 0 || run.raw_time == undefined || run.raw_time == null ) && run.cones == 0 && run.off_course == 0 ? 'table-success' : ''}">${run.adjusted_time !== undefined && run.adjusted_time !== null ? run.adjusted_time : 'None'}</td>`;
+                    <td><input type="checkbox" id="run_${run.id}" name="selected_runs" value="${run.id}-${run.car_number}" ${selectedRuns.has(`${run.id}-${run.car_number}`) ? 'checked' : ''}></td>
+                    <td>${run.id}</td>
+                    <td>${run.car_number}</td>
+                    <td>${run.cones || ''}</td>
+                    <td>${run.off_course || ''}</td>
+                    <td><div class="cell-content">${run.raw_time !== undefined && run.raw_time !== null ? run.raw_time : 'None'}<span class="edit-icon" onclick="editRun('${run.id}')"><i class="bi bi-pencil-square"></i></span></div></td>
+                    <td class="${run.dnf && String(run.dnf).toUpperCase().includes('DNF') ? 'table-danger' : (run.cones != 0 || run.off_course != 0) && (run.raw_time == 0 || run.raw_time == undefined || run.raw_time == null )? 'bg-warning' :  (run.raw_time == 0 || run.raw_time == undefined || run.raw_time == null ) && run.cones == 0 && run.off_course == 0 ? 'table-success' : ''}">${run.adjusted_time !== undefined && run.adjusted_time !== null ? run.adjusted_time : 'None'}</td>`;
                 const rowId = row.id;
                 if (highlightedRows.has(rowId)) {
                     //console.log('Reapplying highlight class to row:', run.id);
@@ -249,11 +258,14 @@
                 deselectButton.removeEventListener('click', handleDeselectClick);
                 deselectButton.addEventListener('click', handleDeselectClick);
               }
+              // Reset failed attempts counter on successful fetch
+                failedAttempts = 0;
             } catch (error) {
-              console.error('Error updating runs table:', error);
+            console.error('Error updating runs table:', error);
               showAlert('danger', 'An error occurred while updating the runs table. Please try again.');
-            }
+            
         }
+    }
         
         document.querySelector('form').addEventListener('submit', function(event) {
         event.preventDefault();
@@ -282,8 +294,8 @@
                     <td>${run.car_number}</td>
                     <td>${run.cones || ''}</td>
                     <td>${run.off_course || ''}</td>
-                     <td><div class="cell-content">${run.raw_time !== undefined && run.raw_time !== null ? run.raw_time : 'None'}<span class="edit-icon" onclick="editRun('${run.id}')"><i class="bi bi-pencil-square"></i></span></div></td>
-    <td class="${run.dnf && String(run.dnf).toUpperCase().includes('DNF') ? 'table-danger' : (run.cones != 0 || run.off_course != 0) && (run.raw_time == 0 || run.raw_time == undefined || run.raw_time == null )? 'bg-warning' :  (run.raw_time == 0 || run.raw_time == undefined || run.raw_time == null ) && run.cones == 0 && run.off_course == 0 ? 'table-success' : ''}">${run.adjusted_time !== undefined && run.adjusted_time !== null ? run.adjusted_time : 'None'}</td>            `;
+                    <td><div class="cell-content">${run.raw_time !== undefined && run.raw_time !== null ? run.raw_time : 'None'}<span class="edit-icon" onclick="editRun('${run.id}')"><i class="bi bi-pencil-square"></i></span></div></td>
+                    <td class="${run.dnf && String(run.dnf).toUpperCase().includes('DNF') ? 'table-danger' : (run.cones != 0 || run.off_course != 0) && (run.raw_time == 0 || run.raw_time == undefined || run.raw_time == null )? 'bg-warning' :  (run.raw_time == 0 || run.raw_time == undefined || run.raw_time == null ) && run.cones == 0 && run.off_course == 0 ? 'table-success' : ''}">${run.adjusted_time !== undefined && run.adjusted_time !== null ? run.adjusted_time : 'None'}</td>            `;
                 flashRow(row); // Flash the row with success color
             });
             } else {
@@ -295,12 +307,13 @@
 
     function update_table_periodically() {
         let since = 0;
-        setInterval(async function() {
+        
+        intervalId = setInterval(async function() {
             await updateRunsTable(); 
           }, 5000);
       }
       document.addEventListener('DOMContentLoaded', update_table_periodically);
 
-
+        
     </script>
     {% endblock %}
