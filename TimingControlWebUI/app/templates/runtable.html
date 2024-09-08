@@ -4,6 +4,7 @@
 {% block content %}
     <div class="d-flex justify-content-between align-items-center">
         <h2 class="mb-0">All Runs</h2>
+        <div id="last-refresh-timestamp">Last Refresh: Never</div>
         <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#addRunModal">
             <i class="bi bi-plus-circle-fill"></i>        Add Missed Start
         </button>
@@ -258,7 +259,11 @@
                 }
             });
             lastUpdateTimestamp = new Date(Date.now() - 15000); //15 second lookback just in case one or two update calls are missed
-              if (deselectButton) {
+            const timestampElement = document.getElementById('last-refresh-timestamp');
+            const currentTime = new Date();
+            timestampElement.textContent = `Last Refresh: ${currentTime.toLocaleTimeString()}`;
+            
+            if (deselectButton) {
                 deselectButton.removeEventListener('click', handleDeselectClick);
                 deselectButton.addEventListener('click', handleDeselectClick);
               }

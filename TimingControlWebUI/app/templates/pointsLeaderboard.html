@@ -2,7 +2,12 @@
 {% import "bootstrap_wtf.html" as wtf %}
 
 {% block content %}
-    <h2>Points Leaderboard</h2>
+   
+    <div class="d-flex justify-content-between align-items-center">
+        <h2 class="mb-0">Points Leaderboard</h2>
+        <div id="last-refresh-timestamp">Last Refresh: Never</div>
+    <div></div><div></div>
+    </div>
     <div class="row align-items-start">
         <div class="col">
             <table class="table table-hover">
@@ -43,6 +48,9 @@
                     `;
                     tbody.appendChild(row);
                 });
+                const timestampElement = document.getElementById('last-refresh-timestamp');
+                const currentTime = new Date();
+                timestampElement.textContent = `Last Refresh: ${currentTime.toLocaleTimeString()}`;
             } catch (error) {
                 console.error('Error updating points leaderboard:', error);
             }
