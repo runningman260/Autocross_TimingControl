@@ -670,7 +670,7 @@ def create_update_adjusted_time_calc_function():
 			IF POSITION('DNF' IN UPPER(NEW.dnf)) > 0 THEN
 				NEW.adjusted_time := 'DNF';
 			ELSE
-				NEW.adjusted_time := (CAST(NEW.raw_time AS NUMERIC) + (2 * CAST(NEW.cones AS NUMERIC)) + (10 * CAST(NEW.off_course AS NUMERIC)))::text;
+				NEW.adjusted_time := (COALESCE(CAST(NEW.raw_time AS NUMERIC),0) + (2 * CAST(NEW.cones AS NUMERIC)) + (10 * CAST(NEW.off_course AS NUMERIC)))::text;
 			END IF;
 			RETURN NEW;
 		END;

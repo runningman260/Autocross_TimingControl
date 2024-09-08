@@ -21,14 +21,14 @@
     </td>
     <td>
         <div class="cell-content">
-            {{ run.raw_time }}
+            {{ run.raw_time if run.raw_time is not none else 'None' }}
             <span class="edit-icon" onclick="editRun('{{ run.id }}')">
                 <i class="bi bi-pencil-square"></i>
             </span>
         </div>
     </td>
 
-    <td class="{% if  run.dnf is not none and 'DNF' in run.dnf %} table-danger {% elif (run.cones != 0 or run.off_course != 0) and run.raw_time|float < 1 %}bg-warning{% elif run.raw_time|float == 0 and run.cones == 0 and run.off_course == 0 %}table-success{% endif %}">
-        {{ run.adjusted_time }}
+    <td class="{% if  run.dnf is not none and 'dnf' in run.dnf|lower %} table-danger {% elif (run.cones != 0 or run.off_course != 0) and run.raw_time|float < 1 %}bg-warning{% elif run.raw_time|float == 0 and run.cones == 0 and run.off_course == 0 %}table-success{% endif %}">
+        {{ run.adjusted_time if run.adjusted_time is not none else 'None' }}
     </td>
 </tr>

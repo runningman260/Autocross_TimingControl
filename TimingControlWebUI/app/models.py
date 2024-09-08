@@ -11,31 +11,6 @@ from app import db
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
-# Eventually this database should have the following columns
-# Not all of them will be displayed on the site
-
-# id: unique indentifier, primary key
-# team_name: varchar128
-# tag: varchar128
-# car_number: int
-# startline_scan_timestamp: varchar128
-# finishline_scan_timestamp: varchar128
-
-#CarReg Database
-#id
-#tag
-#car_number
-#team_name
-
-# Leaderboard Database
-#  place
-#  run_number
-#  car_number
-#  team_name
-#  raw_time
-#  adjusted_time
-
-
 
 class RunOrder(db.Model):
     __tablename__ = 'runtable'
@@ -98,9 +73,7 @@ class ConesLeaderboard(db.Model):
     __table_args__ = {'info': {'is_view': True}}
     __mapper_args__ = {'primary_key': ['car_number', 'total_cones']}
        
-   
     car_number: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
-    
     total_cones: so.Mapped[int] = so.mapped_column(sa.Integer, index=True)
     team_name: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
     
