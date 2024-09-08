@@ -34,8 +34,8 @@
       })
       .then(response => response.json())
       .then(data => {
-        if (data.status === 'success') {
-          showAlert('success', data.message);
+        if (data.status === 'success' || data.status === 'warning') {
+          showAlert(data.status, data.message);
           // Close the modal
           var myModalEl = document.getElementById('addRunModal');
           var modal = bootstrap.Modal.getInstance(myModalEl);

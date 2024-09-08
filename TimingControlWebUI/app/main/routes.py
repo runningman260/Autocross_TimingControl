@@ -134,8 +134,10 @@ def add_run():
                 }
             }
             # Let the Traffic Light Controller know to unlock the red->yellow transition
-            mqtt.publish("/timing/webui/override","A")
-
+            res = mqtt.publish("/timing/webui/override","A")
+            if res[0] != 0:
+                response['status'] = 'warning'
+                response['message'] = 'Run Added - Error unlocking red->yellow transition'
             return jsonify(response), 200
         else:
             response = {
