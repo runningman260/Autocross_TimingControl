@@ -458,16 +458,16 @@ def merge_car(table_name, scan_time, tag_number, car_number, team_name):
 	finally:
 		return id
 
-def upsert_car(table_name, scan_time, tag_number, car_number, team_name):
+def upsert_car(table_name, scan_time, tag_number, car_number, team_name, car_class):
 	sql = """
-		INSERT INTO carreg(scan_time, tag_number, car_number, team_name)
-		values('{scan_time}','{tag_number}','{car_number}','{team_name}')
+		INSERT INTO carreg(scan_time, tag_number, car_number, team_name, class)
+		values('{scan_time}','{tag_number}','{car_number}','{team_name}','{car_class}')
 		ON CONFLICT(car_number)
 		DO UPDATE SET
 		tag_number = EXCLUDED.tag_number,
 		scan_time = EXCLUDED.scan_time
 		RETURNING (xmax = 0) AS _created;
-		""".format(table_name=table_name, scan_time=scan_time, tag_number=tag_number, car_number=car_number, team_name=team_name)
+		""".format(table_name=table_name, scan_time=scan_time, tag_number=tag_number, car_number=car_number, team_name=team_name, car_class=car_class)
 	inserted_flag = -1
 
 	try:

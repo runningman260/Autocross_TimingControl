@@ -717,6 +717,7 @@ def clear_and_create_schema():
 				tag_number  VARCHAR(255),
 				car_number VARCHAR(255),
 				team_name VARCHAR(255),
+				class VARCHAR(255),
 				created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 				updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 				UNIQUE (car_number)

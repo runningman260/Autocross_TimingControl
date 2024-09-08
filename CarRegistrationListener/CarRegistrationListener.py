@@ -56,7 +56,7 @@ def sub_handler(client, userdata, msg):
 		decoded_message = str(msg.payload.decode("utf-8"))
 		json_message = json.loads(decoded_message)
 		json_message["team_name"] = json_message["team_name"].replace("'","")
-		inserted = upsert_car(table_name, json_message["scan_time"], json_message["tag_number"], json_message["car_number"], json_message["team_name"])
+		inserted = upsert_car(table_name, json_message["scan_time"], json_message["tag_number"], json_message["car_number"], json_message["team_name"], car_class=json_message["class"])
 		if(inserted == True):
 			print("Inserted Car: " + str(json_message["car_number"]), flush=True)
 			client.publish("/timing/carreg/confirm_insert",build_payload(json_message["team_name"] + ": #" + json_message["car_number"],str(datetime.datetime.now())))

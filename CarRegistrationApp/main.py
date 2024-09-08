@@ -55,6 +55,7 @@ class MQTTHandler:
                 self.mainWindow.carNumberBox.setText("")
                 self.mainWindow.teamNameComboBox.clear()
                 self.mainWindow.teamNameComboBox.addItems(self.mainWindow.teamNameList)
+                self.carClass = ""
             print(decoded_message)
 
     def __init__(self, mainWindow):
@@ -74,6 +75,8 @@ class MainWindow(QMainWindow):
         self.mqttClient = MQTTHandler(mainWindow=self)
         self.teamNameList = [""]
         self.carNumberList= [""]
+        self.classList    = [""]
+        self.carClass     = ""
         self.getCSVData()
         self.setStyleSheet('font-size: ' + str(26)+'px')
 
@@ -134,6 +137,7 @@ class MainWindow(QMainWindow):
                 "car_number"    :   self.carNumberBox.text(),
                 "team_name"     :   self.teamNameComboBox.currentText(),
                 "tag_number"    :   self.tagScanBox.text(),
+                "class"         :   self.carClass
                 "scan_time"     :   datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             }
             data_json = json.dumps(data, indent=4)
@@ -145,6 +149,7 @@ class MainWindow(QMainWindow):
         self.carNumberBox.setText("")
         self.teamNameComboBox.clear()
         self.teamNameComboBox.addItems(self.teamNameList)
+        self.carClass = ""
 
     def getCSVData(self):
         with open('PS_2024_Registration.csv', newline='') as csvfile:
@@ -152,9 +157,11 @@ class MainWindow(QMainWindow):
             for row in reader:
                 self.teamNameList.append(row['team_name'])
                 self.carNumberList.append(row['car_number'])
+                self.classList.append(row['class'])
     
     def schoolChanged(self):
         self.carNumberBox.setText(self.carNumberList[self.teamNameComboBox.currentIndex()])
+        self.carClass = self.classList[self.teamNameComboBox.currentIndex()]
 
 class getNickPopUpWindow(QDialog):
     def __init__(self):
