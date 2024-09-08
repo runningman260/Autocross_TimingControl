@@ -239,9 +239,24 @@ def favicon():
 @bp.route('/toplaps', methods=['GET', 'POST'])
 def toplaps():
     
-    query = sa.select(TopLaps)
-    runs = db.session.scalars(query).all()
-    page = request.args.get('page', 1, type=int)
+    query = sa.select(
+        TopLaps.car_number,
+        TopLaps.adjusted_time,
+        CarReg.team_name,
+        CarReg.class_
+    ).join(CarReg, TopLaps.car_number == CarReg.car_number).order_by(TopLaps.adjusted_time)
+    
+    result = db.session.execute(query).all()
+    runs = []
+    for row in result:
+        run = {
+            'team_name': row.team_name,
+            'car_number': row.car_number,
+            'adjusted_time': row.adjusted_time,
+            'class_': row.class_
+        }
+        runs.append(run)
+    
     
     return render_template('toplaps.html', title='Top Laps', runs=runs)
 
@@ -312,17 +327,24 @@ def api_cones_leaderboard():
 #should top laps be limited to a certain number of laps?
 @bp.route('/api/toplaps', methods=['GET'])
 def api_toplaps():
-    query = sa.select(TopLaps).order_by(TopLaps.adjusted_time)
-    runs = db.session.scalars(query).all()
-    runs_data = [
-        {
-            'team_name': run.team_name,
-            'car_number': run.car_number,
-            'adjusted_time': run.adjusted_time
-        }
-        for run in runs
-    ]
-    return jsonify(runs_data)
+        query = sa.select(
+            TopLaps.car_number,
+            TopLaps.adjusted_time,
+            CarReg.team_name,
+            CarReg.class_
+        ).join(CarReg, TopLaps.car_number == CarReg.car_number).order_by(TopLaps.adjusted_time)
+        
+        result = db.session.execute(query).all()
+        runs = []
+        for row in result:
+            run = {
+                'team_name': row.team_name,
+                'car_number': row.car_number,
+                'adjusted_time': row.adjusted_time,
+                'class_': row.class_
+            }
+            runs.append(run)
+        return jsonify(runs)
 # @bp.route('/fixdata', methods=['GET', 'POST']) #this is a temporary function to fill in adjusted times and fix data for runs that were missing them
 # def fixdata():
 #     query = sa.select(RunOrder)

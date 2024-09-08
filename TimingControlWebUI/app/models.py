@@ -39,6 +39,7 @@ class CarReg(db.Model):
     tag_number: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
     car_number: so.Mapped[str] = so.mapped_column(sa.String(128), index=True, unique=True)
     team_name: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    class_: so.Mapped[str] = so.mapped_column(sa.String(128), index=True, name='class')
     created_at: so.Mapped[datetime] = so.mapped_column(sa.DateTime, nullable=False, default=datetime.now)
     updated_at: so.Mapped[datetime] = so.mapped_column(sa.DateTime, nullable=False, default=datetime.now)
 

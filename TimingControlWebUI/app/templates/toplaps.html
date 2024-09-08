@@ -13,6 +13,7 @@
                 <thead>
                     <tr>
                         <th>Team</th>
+                        <th>Class</th>
                         <th>Car Number</th>
                         <th>Adjusted Time</th>
                     </tr>
@@ -40,6 +41,7 @@
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td>${run.team_name}</td>
+                        <td>${run.class_}</td>
                         <td>${run.car_number}</td>
                         <td>${run.adjusted_time}</td>
                     `;
