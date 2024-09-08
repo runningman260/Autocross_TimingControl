@@ -6,16 +6,50 @@
     <div class="row align-items-start">
         <div class="col">
             <table class="table table-hover">
-                <tr>
-<th>Team Name</th>
-<th>Car Number</th>
-<th>Adjusted Time</th>
-<th>Points</th>
-                </tr>
-                {% for run in runs %}
-                    {% include '_point_board_entry.html' %}
-                {% endfor %}
+                <thead>
+                    <tr>
+                        <th>Team Name</th>
+                        <th>Car Number</th>
+                        <th>Adjusted Time</th>
+                        <th>Points</th>
+                    </tr>
+                </thead>
+                <tbody id="points-leaderboard-tbody">
+                    {% for run in runs %}
+                        {% include '_point_board_entry.html' %}
+                    {% endfor %}
+                </tbody>
             </table>
         </div>
     </div>
+
+    <script>
+        async function updatePointsLeaderboard() {
+            try {
+                const response = await fetch('/api/points_leaderboard');
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const data = await response.json();
+                const tbody = document.getElementById('points-leaderboard-tbody');
+                tbody.innerHTML = '';
+                data.forEach(run => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${run.team_name}</td>
+                        <td>${run.car_number}</td>
+                        <td>${run.adjusted_time}</td>
+                        <td>${run.points}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error updating points leaderboard:', error);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            setInterval(updatePointsLeaderboard, 10000); // Update every 10 seconds
+        });
+    </script>
 {% endblock %}

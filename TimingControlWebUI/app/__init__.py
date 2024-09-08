@@ -84,7 +84,10 @@ def create_app(config_class=Config):
         app.logger.setLevel(logging.INFO)
         app.logger.info('timingctrl startup')
 
-    mqtt.init_app(app)
+    try:
+        mqtt.init_app(app)
+    except:
+        print("MQTT not initialized")
 
     return app
 

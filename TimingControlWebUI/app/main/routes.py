@@ -28,7 +28,6 @@ def calculateAdjustedTime(run:RunOrder):
 
 
 @bp.route('/', methods=['GET', 'POST'])
-### Nick Start
 @bp.route('/runtable', methods=['GET', 'POST'])
 def runtable():
     form = RunEditForm()
@@ -107,48 +106,6 @@ def runtable():
     page = request.args.get('page', 1, type=int)
     
     return render_template('runtable.html', title='Run Table', runs=runs, form=form, addRunForm=addRunForm, editRunForm=editRunForm)
-
-@bp.route('/favicon.ico')
-def favicon():
-    return send_from_directory(os.path.join(bp.root_path, 'static'),'favicon.ico', mimetype='image/vnd.microsoft.icon')
-
-@bp.route('/toplaps', methods=['GET', 'POST'])
-def toplaps():
-    
-    query = sa.select(TopLaps)
-    runs = db.session.scalars(query).all()
-    page = request.args.get('page', 1, type=int)
-    
-    return render_template('toplaps.html', title='Top Laps', runs=runs)
-
-@bp.route('/pointsLeaderboard', methods=['GET', 'POST'])
-def pointsLeaderboard():
-    
-    query = sa.select(PointsLeaderboard)
-    runs = db.session.scalars(query).all()
-    page = request.args.get('page', 1, type=int)
-    
-    return render_template('pointsLeaderboard.html', title='Points Leaderboard', runs=runs)
-
-@bp.route('/conesLeaderboard', methods=['GET', 'POST'])
-def conesLeaderboard():
-        
-        query = sa.select(ConesLeaderboard)
-        runs = db.session.scalars(query).all()
-        page = request.args.get('page', 1, type=int)
-        
-        return render_template('conesLeaderboard.html', title='Cones Leaderboard', runs=runs)
-
-@bp.route('/fixdata', methods=['GET', 'POST']) #this is a temporary function to fill in adjusted times and fix data for runs that were missing them
-def fixdata():
-    query = sa.select(RunOrder)
-    runs = db.session.scalars(query).all()
-    for run in runs:
-        run = calculateAdjustedTime(run)  
-        db.session.commit()
-
-    return redirect(url_for('main.runtable'))
-
 
 @bp.route('/add_run', methods=['POST'])
 def add_run():
@@ -258,3 +215,85 @@ def get_run(run_id):
         'adjusted_time': run.adjusted_time
     }
     return jsonify(run_data)
+@bp.route('/favicon.ico')
+def favicon():
+    return send_from_directory(os.path.join(bp.root_path, 'static'),'favicon.ico', mimetype='image/vnd.microsoft.icon')
+
+@bp.route('/toplaps', methods=['GET', 'POST'])
+def toplaps():
+    
+    query = sa.select(TopLaps)
+    runs = db.session.scalars(query).all()
+    page = request.args.get('page', 1, type=int)
+    
+    return render_template('toplaps.html', title='Top Laps', runs=runs)
+
+@bp.route('/pointsLeaderboard', methods=['GET', 'POST'])
+def pointsLeaderboard():
+    
+    query = sa.select(PointsLeaderboard)
+    runs = db.session.scalars(query).all()
+    page = request.args.get('page', 1, type=int)
+    
+    return render_template('pointsLeaderboard.html', title='Points Leaderboard', runs=runs)
+
+@bp.route('/conesLeaderboard', methods=['GET', 'POST'])
+def conesLeaderboard():
+        
+        query = sa.select(ConesLeaderboard)
+        runs = db.session.scalars(query).all()
+        page = request.args.get('page', 1, type=int)
+        
+        return render_template('conesLeaderboard.html', title='Cones Leaderboard', runs=runs)
+
+@bp.route('/api/points_leaderboard', methods=['GET'])
+def api_points_leaderboard():
+    query = sa.select(PointsLeaderboard)
+    runs = db.session.scalars(query).all()
+    runs_data = [
+        {
+            'team_name': run.team_name,
+            'car_number': run.car_number,
+            'adjusted_time': run.adjusted_time,
+            'points': run.points
+        }
+        for run in runs
+    ]
+    return jsonify(runs_data)
+
+@bp.route('/api/cones_leaderboard', methods=['GET'])
+def api_cones_leaderboard():
+    query = sa.select(ConesLeaderboard)
+    runs = db.session.scalars(query).all()
+    runs_data = [
+        {
+            'team_name': run.team_name,
+            'car_number': run.car_number,
+            'cones': run.total_cones
+        }
+        for run in runs
+    ]
+    return jsonify(runs_data)
+#should top laps be limited to a certain number of laps?
+@bp.route('/api/toplaps', methods=['GET'])
+def api_toplaps():
+    query = sa.select(TopLaps).order_by(TopLaps.adjusted_time)
+    runs = db.session.scalars(query).all()
+    runs_data = [
+        {
+            'team_name': run.team_name,
+            'car_number': run.car_number,
+            'adjusted_time': run.adjusted_time
+        }
+        for run in runs
+    ]
+    return jsonify(runs_data)
+# @bp.route('/fixdata', methods=['GET', 'POST']) #this is a temporary function to fill in adjusted times and fix data for runs that were missing them
+# def fixdata():
+#     query = sa.select(RunOrder)
+#     runs = db.session.scalars(query).all()
+#     for run in runs:
+#         run = calculateAdjustedTime(run)  
+#         db.session.commit()
+
+#     return redirect(url_for('main.runtable'))
