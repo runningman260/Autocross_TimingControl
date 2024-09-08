@@ -48,6 +48,51 @@
                 }
                 return true;
             };
+
+            document.getElementById('editRunForm').addEventListener('submit', function(event) {
+                event.preventDefault();
+                const form = event.target;
+                const formData = new FormData(form);
+    
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        showAlert('success', data.message);
+                        // Close the modal
+                        var myModalEl = document.getElementById('editRunModal');
+                        var modal = bootstrap.Modal.getInstance(myModalEl);
+                        modal.hide();
+    
+                        // Update the table row
+                        const row = document.getElementById(data.run.id);
+                        const checkbox = row.querySelector(`input[type="checkbox"]`);
+                        const wasChecked = checkbox.checked;
+
+                        row.innerHTML = `
+                            <td>
+                                <input type="checkbox" id="run_${data.run.id}" name="selected_runs" value="${data.run.id}-${data.run.car_number}" checked>
+                            </td>
+                            <td>${data.run.id}</td>
+                            <td>${data.run.car_number}</td>
+                            <td>${data.run.cones || ''}</td>
+                            <td>${data.run.off_course || ''}</td>
+                            <td><div class="cell-content">${data.run.raw_time !== undefined && data.run.raw_time !== null ? data.run.raw_time : 'None'}<span class="edit-icon" onclick="editRun('${data.run.id}')"><i class="bi bi-pencil-square"></i></span></div></td>
+                            <td class="${data.run.dnf && String(data.run.dnf).toUpperCase().includes('DNF') ? 'table-danger' : (data.run.cones != 0 || data.run.off_course != 0) && (data.run.raw_time == 0 || data.run.raw_time == undefined || data.run.raw_time == null )? 'bg-warning' :  (data.run.raw_time == 0 || data.run.raw_time == undefined || data.run.raw_time == null ) && data.run.cones == 0 && data.run.off_course == 0 ? 'table-success' : ''}">${data.run.adjusted_time !== undefined && data.run.adjusted_time !== null ? data.run.adjusted_time : 'None'}</td>`;
+                            row.querySelector(`input[type="checkbox"]`).checked = wasChecked;
+                            flashRow(row); // Flash the row with success color
+                    } else {
+                        showAlert('danger', 'Error: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('danger', 'An unexpected error occurred.');
+                });
+            });
         });
         </script>
 
@@ -189,7 +234,7 @@
     <td>${run.cones || ''}</td>
     <td>${run.off_course || ''}</td>
      <td><div class="cell-content">${run.raw_time !== undefined && run.raw_time !== null ? run.raw_time : 'None'}<span class="edit-icon" onclick="editRun('${run.id}')"><i class="bi bi-pencil-square"></i></span></div></td>
-    <td class="${run.dnf && String(run.dnf).toUpperCase().includes('DNF') ? 'table-danger' : (run.cones != 0 || run.off_course != 0) && run.raw_time == 0 ? 'bg-warning' : run.raw_time == 0 && run.cones == 0 && run.off_course == 0 ? 'table-success' : ''}">${run.adjusted_time !== undefined && run.adjusted_time !== null ? run.adjusted_time : 'None'}</td>`;
+    <td class="${run.dnf && String(run.dnf).toUpperCase().includes('DNF') ? 'table-danger' : (run.cones != 0 || run.off_course != 0) && (run.raw_time == 0 || run.raw_time == undefined || run.raw_time == null )? 'bg-warning' :  (run.raw_time == 0 || run.raw_time == undefined || run.raw_time == null ) && run.cones == 0 && run.off_course == 0 ? 'table-success' : ''}">${run.adjusted_time !== undefined && run.adjusted_time !== null ? run.adjusted_time : 'None'}</td>`;
                 const rowId = row.id;
                 if (highlightedRows.has(rowId)) {
                     //console.log('Reapplying highlight class to row:', run.id);
@@ -238,8 +283,7 @@
                     <td>${run.cones || ''}</td>
                     <td>${run.off_course || ''}</td>
                      <td><div class="cell-content">${run.raw_time !== undefined && run.raw_time !== null ? run.raw_time : 'None'}<span class="edit-icon" onclick="editRun('${run.id}')"><i class="bi bi-pencil-square"></i></span></div></td>
-    <td class="${run.dnf && String(run.dnf).toUpperCase().includes('DNF') ? 'table-danger' : (run.cones != 0 || run.off_course != 0) && run.raw_time == 0 ? 'bg-warning' : run.raw_time == 0 && run.cones == 0 && run.off_course == 0 ? 'table-success' : ''}">${run.adjusted_time !== undefined && run.adjusted_time !== null ? run.adjusted_time : 'None'}</td>
-                `;
+    <td class="${run.dnf && String(run.dnf).toUpperCase().includes('DNF') ? 'table-danger' : (run.cones != 0 || run.off_course != 0) && (run.raw_time == 0 || run.raw_time == undefined || run.raw_time == null )? 'bg-warning' :  (run.raw_time == 0 || run.raw_time == undefined || run.raw_time == null ) && run.cones == 0 && run.off_course == 0 ? 'table-success' : ''}">${run.adjusted_time !== undefined && run.adjusted_time !== null ? run.adjusted_time : 'None'}</td>            `;
                 flashRow(row); // Flash the row with success color
             });
             } else {

@@ -154,20 +154,35 @@ def edit_run(run_id):
     form = EditRunForm()
     if form.validate_on_submit():
         run = db.session.query(RunOrder).filter_by(id=run_id).first()
-        print(run)
         if run:
             oldtime = run.raw_time
             run.raw_time = form.raw_time.data
             #run = calculateAdjustedTime(run)
             db.session.commit()
-            flash(_('Run '+ str(run.id) + ' car #'+run.car_number+' updated successfully from '+ str(oldtime) + ' to ' + str(run.raw_time)))
-            return redirect(url_for('main.runtable'))
-    flash(_('Error updating run.'))
-    return redirect(url_for('main.runtable'))
+            #flash(_('Run '+ str(run.id) + ' car #'+run.car_number+' updated successfully from '+ str(oldtime) + ' to ' + str(run.raw_time)))
+            response = {
+                'status': 'success',
+                'message': f'Run {run.id} car #{run.car_number} updated successfully from {oldtime} to {run.raw_time}',
+                'run': {
+                    'id': run.id,
+                    'car_number': run.car_number,
+                    'cones': run.cones,
+                    'off_course': run.off_course,
+                    'dnf': run.dnf,
+                    'raw_time': run.raw_time,
+                    'adjusted_time': run.adjusted_time
+                }
+            }
+            return jsonify(response), 200
+    response = {
+        'status': 'danger',
+        'message': 'Form validation failed!'
+    }
+    return jsonify(response), 400
 
 @bp.route('/api/runs', methods=['GET'])
 def get_runs():
-    #fixdata()#to be removed when handled by db insert of finishtime
+    #fixdata()
     since = request.args.get('since')
     lastrun = request.args.get('lastrun')
     if since and lastrun:
