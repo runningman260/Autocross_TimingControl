@@ -10,6 +10,7 @@
     </div>
     <div class="row align-items-start">
         <div class="col">
+            <h3>IC Runs</h3>
             <table class="table table-hover">
                 <thead>
                     <tr>
@@ -19,8 +20,26 @@
                         <th>Points</th>
                     </tr>
                 </thead>
-                <tbody id="points-leaderboard-tbody">
-                    {% for run in runs %}
+                <tbody id="ic-points-leaderboard-tbody">
+                    {% for run in ICruns %}
+                        {% include '_point_board_entry.html' %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="col">
+            <h3>EV Runs</h3>
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Team Name</th>
+                        <th>Car Number</th>
+                        <th>Adjusted Time</th>
+                        <th>Points</th>
+                    </tr>
+                </thead>
+                <tbody id="ev-points-leaderboard-tbody">
+                    {% for run in EVruns %}
                         {% include '_point_board_entry.html' %}
                     {% endfor %}
                 </tbody>
@@ -36,9 +55,11 @@
                     throw new Error('Network response was not ok');
                 }
                 const data = await response.json();
-                const tbody = document.getElementById('points-leaderboard-tbody');
-                tbody.innerHTML = '';
-                data.forEach(run => {
+                
+                // Update IC Runs
+                const icTbody = document.getElementById('ic-points-leaderboard-tbody');
+                icTbody.innerHTML = '';
+                data.IC_runs.forEach(run => {
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td>${run.team_name}</td>
@@ -46,8 +67,23 @@
                         <td>${run.adjusted_time}</td>
                         <td>${run.points}</td>
                     `;
-                    tbody.appendChild(row);
+                    icTbody.appendChild(row);
                 });
+
+                // Update EV Runs
+                const evTbody = document.getElementById('ev-points-leaderboard-tbody');
+                evTbody.innerHTML = '';
+                data.EV_runs.forEach(run => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${run.team_name}</td>
+                        <td>${run.car_number}</td>
+                        <td>${run.adjusted_time}</td>
+                        <td>${run.points}</td>
+                    `;
+                    evTbody.appendChild(row);
+                });
+
                 const timestampElement = document.getElementById('last-refresh-timestamp');
                 const currentTime = new Date();
                 timestampElement.textContent = `Last Refresh: ${currentTime.toLocaleTimeString()}`;

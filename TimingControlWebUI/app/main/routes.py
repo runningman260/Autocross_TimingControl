@@ -5,7 +5,7 @@ from flask_babel import _, get_locale
 import sqlalchemy as sa
 from app import db, mqtt
 from app.main.forms import EmptyForm, PostForm, SearchForm, RunEditForm, AddRunForm, EditRunForm
-from app.models import RunOrder, TopLaps, CarReg, PointsLeaderboard, ConesLeaderboard
+from app.models import RunOrder, TopLaps, CarReg, PointsLeaderboardIC, PointsLeaderboardEV, ConesLeaderboard
 from app.main import bp
 
 def calculateAdjustedTime(run:RunOrder):
@@ -246,11 +246,12 @@ def toplaps():
 @bp.route('/pointsLeaderboard', methods=['GET', 'POST'])
 def pointsLeaderboard():
     
-    query = sa.select(PointsLeaderboard)
-    runs = db.session.scalars(query).all()
-    page = request.args.get('page', 1, type=int)
+    query = sa.select(PointsLeaderboardIC)
+    ICruns = db.session.scalars(query).all()
+    query = sa.select(PointsLeaderboardEV)
+    EVruns = db.session.scalars(query).all()
     
-    return render_template('pointsLeaderboard.html', title='Points Leaderboard', runs=runs)
+    return render_template('pointsLeaderboard.html', title='Points Leaderboard', ICruns=ICruns, EVruns=EVruns)
 
 @bp.route('/conesLeaderboard', methods=['GET', 'POST'])
 def conesLeaderboard():
@@ -263,17 +264,34 @@ def conesLeaderboard():
 
 @bp.route('/api/points_leaderboard', methods=['GET'])
 def api_points_leaderboard():
-    query = sa.select(PointsLeaderboard)
-    runs = db.session.scalars(query).all()
-    runs_data = [
+    query = sa.select(PointsLeaderboardIC)
+    ICruns = db.session.scalars(query).all()
+    query = sa.select(PointsLeaderboardEV)
+    EVRuns = db.session.scalars(query).all()
+    ic_runs_data = [
         {
             'team_name': run.team_name,
             'car_number': run.car_number,
             'adjusted_time': run.adjusted_time,
             'points': run.points
         }
-        for run in runs
+        for run in ICruns
     ]
+    
+    ev_runs_data = [
+        {
+            'team_name': run.team_name,
+            'car_number': run.car_number,
+            'adjusted_time': run.adjusted_time,
+            'points': run.points
+        }
+        for run in EVRuns
+    ]
+    
+    runs_data = {
+        'IC_runs': ic_runs_data,
+        'EV_runs': ev_runs_data
+    }
     return jsonify(runs_data)
 
 @bp.route('/api/cones_leaderboard', methods=['GET'])

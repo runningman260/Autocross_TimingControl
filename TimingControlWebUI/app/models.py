@@ -56,8 +56,18 @@ class TopLaps(db.Model):
     team_name: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
     adjusted_time: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
     
-class PointsLeaderboard(db.Model):
-    __tablename__ = 'points_leaderboard'
+class PointsLeaderboardIC(db.Model):
+    __tablename__ = 'points_leaderboard_ic'
+    __table_args__ = {'info': {'is_view': True}}
+    __mapper_args__ = {'primary_key': ['car_number', 'adjusted_time', 'points']}
+       
+    car_number: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    adjusted_time: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    points: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    team_name: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    
+class PointsLeaderboardEV(db.Model):
+    __tablename__ = 'points_leaderboard_ev'
     __table_args__ = {'info': {'is_view': True}}
     __mapper_args__ = {'primary_key': ['car_number', 'adjusted_time', 'points']}
        

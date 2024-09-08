@@ -35,8 +35,8 @@ def sub_handler(client, userdata, msg):
 		else:
 			print("Registration not successful, radio for Nick")
 
-def build_payload(tag_number, car_number, team_name, scan_time):
-	payload = {"tag_number": tag_number, "car_number": car_number, "team_name": team_name, "scan_time": scan_time}
+def build_payload(tag_number, car_number, team_name, car_class, scan_time):
+	payload = {"tag_number": tag_number, "car_number": car_number, "team_name": team_name, "class": car_class, "scan_time": scan_time,}
 	return json.dumps(payload)
 
 def getCSVData():
@@ -44,7 +44,7 @@ def getCSVData():
 		reader = csv.DictReader(csvfile)
 		row_index = 0
 		for row in reader:
-			test_data.append([test_tags[row_index],row['car_number'],row['team_name']])
+			test_data.append([test_tags[row_index],row['car_number'],row['team_name'],row['class']])
 			row_index = row_index + 1
 
 test_data = []
@@ -74,8 +74,8 @@ if __name__ == '__main__':
 	try:
 		getCSVData()
 		for index,entry in enumerate(test_data):
-			print(str(index) + ": " + entry[2] + "\t" + entry[1] + "\t" + entry[0])
-			client.publish("/timing/carreg/newcar",build_payload(entry[0], entry[1], entry[2], str(datetime.datetime.now())))
+			print(str(index) + ": " + entry[2] + "\t" + entry[1] + "\t" + entry[0] + "\t" + entry[3])
+			client.publish("/timing/carreg/newcar",build_payload(entry[0], entry[1], entry[2], entry[3], str(datetime.datetime.now())))
 			time.sleep(1)
 	except KeyboardInterrupt:
 		pass
