@@ -35,9 +35,9 @@ ORDER BY CASE WHEN pg_input_is_valid(adjusted_time, 'decimal') THEN adjusted_tim
 create_view(sql)
 
 # Create Points Leaderboard based on 2024 SAE Autocross score calc
-print("Creating Points Leaderboard")
+print("Creating IC Points Leaderboard")
 sql = """
-create or replace view points_leaderboard as
+create or replace view points_leaderboard_ic as
 select c.car_number, c.team_name, c.adjusted_time, c.points
 from (
     select
@@ -61,7 +61,43 @@ from (
 					carreg.team_name
                     from runtable
 					join carreg on runtable.car_number=carreg.car_number 
-					where adjusted_time is not null and adjusted_time is distinct from 'DNF' and raw_time is not null and (raw_time::decimal > 0)
+					where carreg.class = 'IC' and adjusted_time is not null and adjusted_time is distinct from 'DNF' and raw_time is not null and (raw_time::decimal > 0)
+                ) s
+        order by points desc
+        ) b
+    order by b.car_number::int, b.points desc
+    ) c
+order by c.points desc;
+"""
+create_view(sql)
+
+print("Creating EV Points Leaderboard")
+sql = """
+create or replace view points_leaderboard_ev as
+select c.car_number, c.team_name, c.adjusted_time, c.points
+from (
+    select
+    distinct on (b.car_number::int) b.car_number, b.team_name, b.adjusted_time, b.points
+    from (
+        select 
+            s.car_number, 
+			s.team_name,
+            s.adjusted_time, 
+            s.tmin as MIN,
+            s.tmax as max,
+            case 
+                when s.adjusted_time::decimal > s.tmax::decimal then 6.5
+                else trunc((118.5*((s.tmax::decimal/s.adjusted_time::decimal)-1)/((s.tmax::decimal/ s.tmin::decimal)-1))+6.5, 3)
+            end as points
+            from (
+                select
+                    runtable.car_number, runtable.adjusted_time, runtable.raw_time,
+                    min(adjusted_time::decimal) over () as tmin,
+                    1.45*min(adjusted_time::decimal) over () as Tmax,
+					carreg.team_name
+                    from runtable
+					join carreg on runtable.car_number=carreg.car_number 
+					where carreg.class = 'EV' and adjusted_time is not null and adjusted_time is distinct from 'DNF' and raw_time is not null and (raw_time::decimal > 0)
                 ) s
         order by points desc
         ) b
@@ -98,3 +134,4 @@ AS
         total_cones DESC)
 """
 create_view(sql)
+
