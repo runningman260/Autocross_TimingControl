@@ -164,6 +164,7 @@
     <script>
         document.getElementById('refresh-button').addEventListener('click', function(event) {
             event.preventDefault();
+            failedAttempts = 0;
             updateRunsTable(true);
         });
         // Function to handle deselect button click
@@ -202,6 +203,9 @@
             try {
                 if (fullyRefresh) {
                     lastUpdateTimestamp = null;
+                    failedAttempts = 0;
+                    update_table_periodically();
+                    
                 }
                 let url = '/api/runs';
                 if (lastUpdateTimestamp) {
