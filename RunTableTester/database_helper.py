@@ -458,16 +458,16 @@ def merge_car(table_name, scan_time, tag_number, car_number, team_name):
 	finally:
 		return id
 
-def upsert_car(table_name, scan_time, tag_number, car_number, team_name):
+def upsert_car(table_name, scan_time, tag_number, car_number, team_name, car_class):
 	sql = """
-		INSERT INTO carreg(scan_time, tag_number, car_number, team_name)
-		values('{scan_time}','{tag_number}','{car_number}','{team_name}')
+		INSERT INTO carreg(scan_time, tag_number, car_number, team_name, class)
+		values('{scan_time}','{tag_number}','{car_number}','{team_name}','{car_class}')
 		ON CONFLICT(car_number)
 		DO UPDATE SET
 		tag_number = EXCLUDED.tag_number,
 		scan_time = EXCLUDED.scan_time
 		RETURNING (xmax = 0) AS _created;
-		""".format(table_name=table_name, scan_time=scan_time, tag_number=tag_number, car_number=car_number, team_name=team_name)
+		""".format(table_name=table_name, scan_time=scan_time, tag_number=tag_number, car_number=car_number, team_name=team_name, car_class=car_class)
 	inserted_flag = -1
 
 	try:
@@ -645,6 +645,7 @@ def create_pg_notify_function(function_name):
 	except (psycopg2.DatabaseError, Exception) as error:
 		print(error)
 
+
 def create_pg_notify_trigger(table_name, function_name, trigger_name):
 	sql = """
 		CREATE OR REPLACE TRIGGER "{trigger_name}" 
@@ -661,6 +662,50 @@ def create_pg_notify_trigger(table_name, function_name, trigger_name):
 				cur.execute(sql)
 	except (psycopg2.DatabaseError, Exception) as error:
 		print(error)
+
+def create_update_adjusted_time_calc_function():
+	sql = """CREATE OR REPLACE FUNCTION update_adjusted_time() 
+		RETURNS TRIGGER AS $$
+		BEGIN
+			IF POSITION('DNF' IN UPPER(NEW.dnf)) > 0 THEN
+				NEW.adjusted_time := 'DNF';
+			ELSE
+				NEW.adjusted_time := (CAST(NEW.raw_time AS NUMERIC) + (2 * CAST(NEW.cones AS NUMERIC)) + (10 * CAST(NEW.off_course AS NUMERIC)))::text;
+			END IF;
+			RETURN NEW;
+		END;
+		$$ LANGUAGE plpgsql;"""
+	try:
+		with psycopg2.connect(
+			host=Config.DB.HOST, 
+			database=Config.DB.NAME, 
+			user=Config.DB.USER, 
+			password=Config.DB.PASS) as conn:
+			with conn.cursor() as cur:
+				# execute
+				cur.execute(sql)
+	except (psycopg2.DatabaseError, Exception) as error:
+		print(error)
+
+
+def create_adjust_time_trigger():
+	sql = """
+		CREATE TRIGGER adjust_time_trigger
+		BEFORE INSERT OR UPDATE ON runtable
+		FOR EACH ROW
+		EXECUTE FUNCTION update_adjusted_time();"""
+	try:
+		with psycopg2.connect(
+			host=Config.DB.HOST, 
+			database=Config.DB.NAME, 
+			user=Config.DB.USER, 
+			password=Config.DB.PASS) as conn:
+			with conn.cursor() as cur:
+				# execute
+				cur.execute(sql)
+	except (psycopg2.DatabaseError, Exception) as error:
+		print(error)
+
 
 def clear_and_create_schema():
 	database_tables = {
@@ -712,8 +757,8 @@ def clear_and_create_schema():
 				startline_scan_status VARCHAR(255),
 				finishline_scan_status VARCHAR(255),
 				raw_time VARCHAR(255),
-				cones VARCHAR(255),
-				off_course VARCHAR(255),
+				cones VARCHAR(255) DEFAULT '0' NOT NULL,
+				off_course VARCHAR(255) NOT NULL DEFAULT '0',
 				dnf VARCHAR(255),
 				adjusted_time VARCHAR(255),
 				created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -736,7 +781,9 @@ def clear_and_create_schema():
 	delete_function("laptimeraw_set_timestamp")
 	delete_function("leaderboard_set_timestamp")
 	delete_view("leaderboard")
-
+	delete_view("points_leaderboard")
+	delete_view("cones_leaderboard")
+	
 	for table_name in database_tables:
 		delete_if_exists = False
 		table_exists = False
@@ -765,4 +812,8 @@ def clear_and_create_schema():
 			trigger_name  = table_name + "_trigger_pg_nofity"
 			create_pg_notify_function(function_name)
 			create_pg_notify_trigger(table_name,function_name,trigger_name)
+			create_update_adjusted_time_calc_function()
+			create_adjust_time_trigger()
+	
+
 

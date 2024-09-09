@@ -458,16 +458,16 @@ def merge_car(table_name, scan_time, tag_number, car_number, team_name):
 	finally:
 		return id
 
-def upsert_car(table_name, scan_time, tag_number, car_number, team_name):
+def upsert_car(table_name, scan_time, tag_number, car_number, team_name, car_class):
 	sql = """
-		INSERT INTO carreg(scan_time, tag_number, car_number, team_name)
-		values('{scan_time}','{tag_number}','{car_number}','{team_name}')
+		INSERT INTO carreg(scan_time, tag_number, car_number, team_name, class)
+		values('{scan_time}','{tag_number}','{car_number}','{team_name}','{car_class}')
 		ON CONFLICT(car_number)
 		DO UPDATE SET
 		tag_number = EXCLUDED.tag_number,
 		scan_time = EXCLUDED.scan_time
 		RETURNING (xmax = 0) AS _created;
-		""".format(table_name=table_name, scan_time=scan_time, tag_number=tag_number, car_number=car_number, team_name=team_name)
+		""".format(table_name=table_name, scan_time=scan_time, tag_number=tag_number, car_number=car_number, team_name=team_name, car_class=car_class)
 	inserted_flag = -1
 
 	try:
@@ -670,7 +670,7 @@ def create_update_adjusted_time_calc_function():
 			IF POSITION('DNF' IN UPPER(NEW.dnf)) > 0 THEN
 				NEW.adjusted_time := 'DNF';
 			ELSE
-				NEW.adjusted_time := (COALESCE(CAST(NEW.raw_time AS NUMERIC),0) + (2 * CAST(NEW.cones AS NUMERIC)) + (10 * CAST(NEW.off_course AS NUMERIC)))::text;
+				NEW.adjusted_time := (CAST(NEW.raw_time AS NUMERIC) + (2 * CAST(NEW.cones AS NUMERIC)) + (10 * CAST(NEW.off_course AS NUMERIC)))::text;
 			END IF;
 			RETURN NEW;
 		END;
@@ -717,7 +717,6 @@ def clear_and_create_schema():
 				tag_number  VARCHAR(255),
 				car_number VARCHAR(255),
 				team_name VARCHAR(255),
-				class VARCHAR(255),
 				created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 				updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 				UNIQUE (car_number)
@@ -784,7 +783,7 @@ def clear_and_create_schema():
 	delete_view("leaderboard")
 	delete_view("points_leaderboard")
 	delete_view("cones_leaderboard")
-
+	
 	for table_name in database_tables:
 		delete_if_exists = False
 		table_exists = False
