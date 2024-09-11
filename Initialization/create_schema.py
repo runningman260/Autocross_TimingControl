@@ -124,10 +124,6 @@ AS
      (runtable.cones IS NOT NULL) 
 	  AND 
 	 (runtable.cones::numeric > 0) 
-	  AND 
-	 (runtable.raw_time IS NOT NULL) 
-	  AND 
-	 ((runtable.raw_time)::numeric >= (0)::numeric)
    )
   GROUP BY runtable.car_number, carreg.team_name
   ORDER BY
