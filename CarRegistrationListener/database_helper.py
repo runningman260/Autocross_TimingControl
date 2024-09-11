@@ -670,7 +670,7 @@ def create_update_adjusted_time_calc_function():
 			IF POSITION('DNF' IN UPPER(NEW.dnf)) > 0 THEN
 				NEW.adjusted_time := 'DNF';
 			ELSE
-				NEW.adjusted_time := (CAST(NEW.raw_time AS NUMERIC) + (2 * CAST(NEW.cones AS NUMERIC)) + (10 * CAST(NEW.off_course AS NUMERIC)))::text;
+				NEW.adjusted_time := (COALESCE(CAST(NEW.raw_time AS NUMERIC),0) + (2 * CAST(NEW.cones AS NUMERIC)) + (10 * CAST(NEW.off_course AS NUMERIC)))::text;
 			END IF;
 			RETURN NEW;
 		END;
@@ -717,6 +717,7 @@ def clear_and_create_schema():
 				tag_number  VARCHAR(255),
 				car_number VARCHAR(255),
 				team_name VARCHAR(255),
+				class VARCHAR(255),
 				created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 				updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 				UNIQUE (car_number)
