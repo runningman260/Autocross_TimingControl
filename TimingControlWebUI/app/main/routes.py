@@ -74,9 +74,11 @@ def runtable():
                 elif 'submit_plus_dnf' in request.form:
                     if "DNF" not in str(run.dnf):
                         run.dnf='DNF (u)'
+                        run.finishline_scan_status = 'Manually DNF at ' + datetime.now().strftime('%H:%M:%S')
                         actionmessage='Did Not Finish'
                     elif "DNF" in str(run.dnf):
                         run.dnf=None
+                        run.finishline_scan_status = None
                         actionmessage='Removed DNF'  
 
                 

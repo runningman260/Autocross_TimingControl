@@ -164,7 +164,7 @@ def retrieve_oldest_active_run_by_raw_time(table_name, column_name):
 	id = -1
 	sql = """
 		SELECT id FROM {table_name} 
-		WHERE {column_name} is null 
+		WHERE {column_name} is null and dnf is null 
 		ORDER BY id LIMIT 1 
 		;""".format(table_name=table_name, column_name=column_name)
 	try:

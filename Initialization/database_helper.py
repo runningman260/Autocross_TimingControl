@@ -770,7 +770,7 @@ def clear_and_create_schema():
 	function_name = "_set_timestamp"
 
 	## Drop table and functions
-	#delete_table("carreg")
+	delete_table("carreg")
 	delete_table("startlinescan")
 	delete_table("finishlinescan")
 	delete_table("runtable")
