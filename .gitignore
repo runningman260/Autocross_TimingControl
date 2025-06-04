@@ -40,3 +40,4 @@ venv
 app.db
 timingctrl.log*
 client_secret.json
+hosted_apps/volumes/
