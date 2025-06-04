@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    {% if title %}
+    <title>{{ title }} - Pittsburgh Shootout Timing Control Interface</title>
+    {% else %}
+    <title>{{ _('Pittsburgh Shootout Timing Control Interface') }}</title>
+    {% endif %}
+    <link
+        href={{ url_for('static', filename='bootstrap.min.css')}}
+        rel="stylesheet"
+        crossorigin="anonymous"> 
+        <link rel="stylesheet" href="/static/bootstrap-icons.css" crossorigin="anonymous">
+        <style>
+          .bottom-fixed {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: white; /* Optional: for better visibility */
+            text-align: center; /* Center the contents. Adjust as needed */
+            padding: 10px 0; /* Add padding to avoid content overlap */
+          }
+          .content-container {
+            padding-bottom: 90px; /* Adjust this value based on the height of your bottom-fixed buttons */
+          }
+          .cone { background-color: #ff8800; } /* Put any color you want */
+
+          .cell-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    
+        .edit-icon {
+            display: none;
+            cursor: pointer;
+        }
+    
+        tr[name="run_row"]:hover .edit-icon {
+            display: inline;
+        }
+        </style>
+  <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+      </head>
+  <body>
+    <nav class="navbar navbar-expand-lg bg-body-tertiary">
+      <div class="container ">
+        <a class="navbar-brand" href="{{ url_for('main.runtable') }}">Timing Control</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <!-- Nav Bar List -->
+          <!-- Left Side of Page -->
+          <!--
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <li class="nav-item">
+              <a class="nav-link" aria-current="page" href=""</a>
+            </li>
+          </ul>
+          -->
+          <!-- Right side of Page -->
+           
+          <ul class="navbar-nav mb-2 mb-lg-0">
+            <li class="nav-item">
+              <a class="nav-link" aria-current="page" href="{{ url_for('main.toplaps') }}">Top Laps</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" aria-current="page" href="{{ url_for('main.pointsLeaderboard') }}">Points Leaderboard</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" aria-current="page" href="{{ url_for('main.conesLeaderboard') }}">Conekillers</a>
+                </li>
+          </ul>
+         
+        </div>
+      </div>
+    </nav>
+    <div class="container mt-3 content-container">
+      <!-- This is where the target page is loaded (example, runtable)-->
+      {% block content %}
+      {% endblock %}
+    </div>
+    <script
+        src={{ url_for('static', filename='bootstrap.bundle.min.js')}}
+        integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+        crossorigin="anonymous">
+    </script>
+    <script src="{{ url_for('static', filename='moment-with-locales.min.js')}}"></script>
+    <script>
+
+    
+      function set_message_count(n) {
+        const count = document.getElementById('message_count');
+        count.innerText = n;
+        count.style.visibility = n ? 'visible' : 'hidden';
+      }
+
+      function set_task_progress(task_id, progress) {
+        const progressElement = document.getElementById(task_id + '-progress');
+        if (progressElement) {
+          progressElement.innerText = progress;
+        }
+      }
+
+      // Polling every 10 seconds to get updated table information
+      
+      function initialize_notifications() {
+        let since = 0;
+        setInterval(async function() {
+          const response = await fetch('{{ url_for('main.runtable') }}?since=' + since);
+          const notifications = await response.json();
+          for (let i = 0; i < notifications.length; i++) {
+            switch (notifications[i].name) {
+              case 'unread_message_count':
+                set_message_count(notifications[i].data);
+                break;
+              case 'task_progress':
+                set_task_progress(notifications[i].data.task_id,
+                    notifications[i].data.progress);
+                break;
+            }
+            since = notifications[i].timestamp;
+          }
+        }, 10000);
+      }
+      //document.addEventListener('DOMContentLoaded', initialize_notifications);
+
+
+      function handleAlertTimeout(alert) {
+        var bsAlert = new bootstrap.Alert(alert);
+        setTimeout(function() {
+          bsAlert.close();
+        }, 5000); // 10000 milliseconds = 10 seconds
+      }
+    
+      // Initialize MutationObserver to detect new alerts
+      document.addEventListener('DOMContentLoaded', function() {
+        var alertContainer = document.getElementById('alert-div');
+        if (alertContainer) {
+          var observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+              mutation.addedNodes.forEach(function(node) {
+                if (node.classList && node.classList.contains('alert-success')) {
+                  handleAlertTimeout(node);
+                }
+              });
+            });
+          });
+    
+          observer.observe(alertContainer, { childList: true });
+    
+          // Check for existing alert on page load
+          var existingAlert = document.getElementById('alert-success');
+          if (existingAlert) {
+            handleAlertTimeout(existingAlert);
+          }
+        }
+      });
+    </script>
+  </body>
+</html>
