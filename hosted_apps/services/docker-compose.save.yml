@@ -1,0 +1,46 @@
+services:
+  mosquitto:
+    container_name: mosquitto
+    build:
+      context: ./.templates/mosquitto/.
+      args:
+      - MOSQUITTO_BASE=eclipse-mosquitto:latest
+    restart: unless-stopped
+    environment:
+    - TZ=${TZ:-Etc/UTC}
+    ports:
+    - "1883:1883"
+    volumes:
+    - ./volumes/mosquitto/config:/mosquitto/config
+    - ./volumes/mosquitto/data:/mosquitto/data
+    - ./volumes/mosquitto/log:/mosquitto/log
+    - ./volumes/mosquitto/pwfile:/mosquitto/pwfile
+
+  postgres:
+    container_name: postgres
+    image: postgres
+    restart: unless-stopped
+    environment:
+    - TZ=${TZ:-Etc/UTC}
+    - POSTGRES_USER=${POSTGRES_USER:-postuser}
+    - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-IOtSt4ckpostgresDbPw}
+    - POSTGRES_DB=${POSTGRES_DB:-postdb}
+    ports:
+    - "5432:5432"
+    volumes:
+    - ./volumes/postgres/data:/var/lib/postgresql/data
+    - ./volumes/postgres/db_backup:/backup
+
+  python:
+    container_name: python
+    build: ./services/python/.
+    restart: unless-stopped
+    environment:
+    - TZ=Etc/UTC
+    - IOTSTACK_UID=1000
+    - IOTSTACK_GID=1000
+    x-ports:
+    - "external:internal"
+    volumes:
+    - ./volumes/python/app:/usr/src/app
+
