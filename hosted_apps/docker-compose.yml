@@ -1,0 +1,133 @@
+
+networks:
+  default:
+    driver: bridge
+    ipam:
+      driver: default
+  nextcloud:
+    driver: bridge
+    internal: true
+    ipam:
+      driver: default
+
+services:
+  mosquitto:
+    container_name: mosquitto
+    build:
+      context: ./.templates/mosquitto/.
+      args:
+      - MOSQUITTO_BASE=eclipse-mosquitto:latest
+    restart: unless-stopped
+    environment:
+    - TZ=${TZ:-Etc/UTC}
+    ports:
+    - "1883:1883"
+    volumes:
+    - ./volumes/mosquitto/config:/mosquitto/config
+    - ./volumes/mosquitto/data:/mosquitto/data
+    - ./volumes/mosquitto/log:/mosquitto/log
+    - ./volumes/mosquitto/pwfile:/mosquitto/pwfile
+
+  postgres:
+    container_name: postgres
+    image: postgres
+    restart: unless-stopped
+    environment:
+    - TZ=${TZ:-Etc/UTC}
+    - POSTGRES_USER=${POSTGRES_USER:-postuser}
+    - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-IOtSt4ckpostgresDbPw}
+    - POSTGRES_DB=${POSTGRES_DB:-postdb}
+    ports:
+    - "5432:5432"
+    volumes:
+    - ./volumes/postgres/data:/var/lib/postgresql/data
+    - ./volumes/postgres/db_backup:/backup
+
+  # Copy and Uncomment below for an additional python container
+  #
+  #python:
+  #  container_name: python
+  #  build: ./services/python/.
+  #  restart: unless-stopped
+  #  environment:
+  #  - TZ=Etc/UTC
+  #  - IOTSTACK_UID=1000
+  #  - IOTSTACK_GID=1000
+  #  devices:
+  #  - /dev/polaris:/dev/polaris
+  #  x-ports:
+  #  - "external:internal"
+  #  volumes:
+  #  - ./volumes/python/app:/usr/src/app
+
+  carregistrationlistener:
+    container_name: carregistrationlistener
+    build: ./services/carregistrationlistener/.
+    restart: unless-stopped
+    environment:
+    - TZ=Etc/UTC
+    - IOTSTACK_UID=1000
+    - IOTSTACK_GID=1000
+    - DOCKER_HOST_IP=172.17.0.1
+    x-ports:
+    - "external:internal"
+    volumes:
+    - ./volumes/carregistrationlistener/app:/usr/src/app
+
+  scanlistener:
+    container_name: scanlistener
+    build: ./services/scanlistener/.
+    restart: unless-stopped
+    environment:
+    - TZ=Etc/UTC
+    - IOTSTACK_UID=1000
+    - IOTSTACK_GID=1000
+    - DOCKER_HOST_IP=172.17.0.1
+    x-ports:
+    - "external:internal"
+    volumes:
+    - ./volumes/scanlistener/app:/usr/src/app
+
+  timingconsolereader:
+    container_name: timingconsolereader
+    build: ./services/timingconsolereader/.
+    restart: unless-stopped
+    environment:
+    - TZ=Etc/UTC
+    - IOTSTACK_UID=1000
+    - IOTSTACK_GID=1000
+    - DOCKER_HOST_IP=172.17.0.1
+    devices:
+    - /dev/polaris:/dev/polaris
+    x-ports:
+    - "external:internal"
+    volumes:
+    - ./volumes/timingconsolereader/app:/usr/src/app
+
+# Uncomment when ready to make this work again
+  timingcontrolwebui:
+    container_name: timingcontrolwebui
+    build: ./services/timingcontrolwebui/.
+    restart: unless-stopped
+    environment:
+    - TZ=Etc/UTC
+    - IOTSTACK_UID=1000
+    - IOTSTACK_GID=1000
+    - DOCKER_HOST_IP=172.17.0.1
+    ports:
+    - 5000:5000
+
+# Commented out to limit GoogleAPI interactions while re-working the repo
+  #sheetupdater:
+  #  container_name: sheetupdater
+  #  build: ./services/sheetupdater/.
+  #  restart: unless-stopped
+  #  environment:
+  #  - TZ=Etc/UTC
+  #  - IOTSTACK_UID=1000
+  #  - IOTSTACK_GID=1000
+  #  - DOCKER_HOST_IP=172.17.0.1
+  #  x-ports:
+  #  - "external:internal"
+  #  volumes:
+  #  - ./volumes/sheetupdater/app:/usr/src/app

@@ -1,0 +1,94 @@
+<div class="modal fade" id="addRunModal" tabindex="-1" aria-labelledby="addRunModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addRunModalLabel">Add New Run</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">             
+                <form id="addRunForm" method="POST" action="{{ url_for('main.add_run') }}">
+                    {{ addRunForm.hidden_tag() }}
+                    <div class="mb-3">
+                        {{ addRunForm.car_number.label(class="form-label") }}
+                        {{ addRunForm.car_number(class="form-select") }}
+                    </div>
+                    <div class="mb-3">
+                        {{ addRunForm.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('addRunForm').addEventListener('submit', function(event) {
+      event.preventDefault();
+      const form = event.target;
+      const formData = new FormData(form);
+    
+      fetch('{{ url_for("main.add_run") }}', {
+        method: 'POST',
+        body: formData,
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.status === 'success' || data.status === 'warning') {
+          showAlert(data.status, data.message);
+          // Close the modal
+          var myModalEl = document.getElementById('addRunModal');
+          var modal = bootstrap.Modal.getInstance(myModalEl);
+          modal.hide();
+          const table = document.getElementById('runs-table-tbody');
+          const firstRow = table.querySelector('tr[name="run_row"]');
+          if (firstRow) {
+            const firstRowId = parseInt(firstRow.getAttribute('id'), 10);
+            if (Math.abs(data.run.id - firstRowId) > 1) {
+              updateRunsTable();
+            }
+            else {
+            
+            const row = document.createElement('tr');
+            row.setAttribute('name', 'run_row');
+            row.setAttribute('id', data.run.id);
+            row.innerHTML = `
+              <td>
+                <input type="checkbox" id="run_${data.run.id}" name="selected_runs" value="${data.run.id}-${data.run.car_number}">
+              </td>
+              <td>${data.run.id}</td>
+              <td>${data.run.car_number}</td>
+              <td>${data.run.cones || ''}</td>
+              <td>${data.run.off_course || ''}</td>
+               <td><div class="cell-content">${data.run.raw_time !== undefined && data.run.raw_time !== null ? data.run.raw_time : 'None'}<span class="edit-icon" onclick="editRun('${data.run.id}')"><i class="bi bi-pencil-square"></i></span></div></td>
+        <td class="${data.run.dnf && String(data.run.dnf).toUpperCase().includes('DNF') ? 'table-danger' : (data.run.cones != 0 || data.run.off_course != 0) && (data.run.raw_time == 0 || data.run.raw_time == undefined || data.run.raw_time == null )? 'bg-warning' :  (data.run.raw_time == 0 || data.run.raw_time == undefined || data.run.raw_time == null ) && data.run.cones == 0 && data.run.off_course == 0 ? 'table-success' : ''}">${data.run.adjusted_time !== undefined && data.run.adjusted_time !== null ? data.run.adjusted_time : 'None'}</td>`;
+            table.insertBefore(row, table.firstChild);
+            }
+          }
+          else {
+            updateRunsTable();
+          }
+        } else {
+          // Handle errors
+          showAlert('danger', 'Error: ' + data.message);
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        showAlert('danger', 'An unexpected error occurred.');
+      });
+    });
+  });
+
+  function showAlert(type, message) {
+    const alertContainer = document.getElementById('alert-div');
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${type} alert-dismissible fade show`;
+    alert.role = 'alert';
+    alert.innerHTML = `
+      ${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+    alertContainer.appendChild(alert);
+  }
+</script>
