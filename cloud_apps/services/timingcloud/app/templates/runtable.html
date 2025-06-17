@@ -5,9 +5,7 @@
     <div class="d-flex justify-content-between align-items-center">
         <h2 class="mb-0">All Runs</h2>
         <div id="last-refresh-timestamp">Last Refresh: Never</div>
-        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#addRunModal">
-            <i class="bi bi-plus-circle-fill"></i>        Add Missed Start
-        </button>
+
     </div>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -50,56 +48,11 @@
                 return true;
             };
 
-            document.getElementById('editRunForm').addEventListener('submit', function(event) {
-                event.preventDefault();
-                const form = event.target;
-                const formData = new FormData(form);
-    
-                fetch(form.action, {
-                    method: 'POST',
-                    body: formData,
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        showAlert('success', data.message);
-                        // Close the modal
-                        var myModalEl = document.getElementById('editRunModal');
-                        var modal = bootstrap.Modal.getInstance(myModalEl);
-                        modal.hide();
-    
-                        // Update the table row
-                        const row = document.getElementById(data.run.id);
-                        const checkbox = row.querySelector(`input[type="checkbox"]`);
-                        const wasChecked = checkbox.checked;
-
-                        row.innerHTML = `
-                            <td>
-                                <input type="checkbox" id="run_${data.run.id}" name="selected_runs" value="${data.run.id}-${data.run.car_number}" checked>
-                            </td>
-                            <td>${data.run.id}</td>
-                            <td>${data.run.car_number}</td>
-                            <td>${data.run.cones || ''}</td>
-                            <td>${data.run.off_course || ''}</td>
-                            <td><div class="cell-content">${data.run.raw_time !== undefined && data.run.raw_time !== null ? data.run.raw_time : 'None'}<span class="edit-icon" onclick="editRun('${data.run.id}')"><i class="bi bi-pencil-square"></i></span></div></td>
-                            <td class="${data.run.dnf && String(data.run.dnf).toUpperCase().includes('DNF') ? 'table-danger' : (data.run.cones != 0 || data.run.off_course != 0) && (data.run.raw_time == 0 || data.run.raw_time == undefined || data.run.raw_time == null )? 'bg-warning' :  (data.run.raw_time == 0 || data.run.raw_time == undefined || data.run.raw_time == null ) && data.run.cones == 0 && data.run.off_course == 0 ? 'table-success' : ''}">${data.run.adjusted_time !== undefined && data.run.adjusted_time !== null ? data.run.adjusted_time : 'None'}</td>`;
-                            row.querySelector(`input[type="checkbox"]`).checked = wasChecked;
-                            flashRow(row); // Flash the row with success color
-                    } else {
-                        showAlert('danger', 'Error: ' + data.message);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showAlert('danger', 'An unexpected error occurred.');
-                });
-            });
+            
         });
         </script>
 
-    {% if form %}
-    <form method="POST" action="/runtable">
-        {{ form.hidden_tag() }}
+
         <div class="row align-items-start">
             <div class="col">
                 <table id="runs-table" class="table table-hover">
@@ -128,40 +81,19 @@
             </div>
             <div class="row">
                 <div class="col-lg d-flex flex-wrap justify-content-center align-items-center">
-                    <button class="btn btn-default cone mb-2 mx-1 btn-lg flex-fill" id="submit_plus_cone" name="submit_plus_cone" type="submit">
-                        <i class="bi bi-plus"></i><i class="bi bi-cone-striped"></i><br> Cone
-                    </button>
-                    
-                    <button class="btn btn-default cone mb-2 mx-1 btn-lg flex-fill" id="submit_minus_cone" name="submit_minus_cone" type="submit">
-                        <i class="bi bi-dash"></i> <i class="bi bi-cone-striped"></i><br>Cone
-                    </button>
-                    <button class="btn btn-info mb-2 mx-1 btn-lg flex-fill" id="submit_plus_oc" name="submit_plus_oc" type="submit">
-                        <i class="bi bi-plus"></i><i class="bi bi-flag"></i><br> Off Course
-                    </button>
-                    <button class="btn btn-info mb-2 mx-1 btn-lg flex-fill" id="submit_minus_oc" name="submit_minus_oc" type="submit">
-                        <i class="bi bi-dash"></i><i class="bi bi-flag"></i><br> Off Course
-                    </button>
-                    <button class="btn btn-danger mb-2 mx-1 btn-lg flex-fill" id="submit_plus_dnf" name="submit_plus_dnf" type="submit">
-                        <i class="bi bi-flag-fill"></i><br> DNF
-                    </button>
-                    
 
-                    </button>                    
-                    <button class="btn btn-dark mb-2 btn-lg mx-1 flex-fill" id="deselect" name="deselect" type="reset">
-                        <i class="bi bi-x-circle-fill"></i><br/>Deselect
-                    </button>
                     <a class="btn btn-success mb-2 btn-lg mx-1 flex-fill" href="#" id="refresh-button"><i class="bi bi-arrow-clockwise"></i><br> Refresh</a>
                 </div>
             </div>
             </div>
         </div>
-    </form>
-    {% endif %}
+
+
 
 
     <!-- Modal -->
-    {% include '_edit_run_modal.html' %}
-    {% include '_add_run_modal.html' %}
+
+
     <script>
         document.getElementById('refresh-button').addEventListener('click', function(event) {
             event.preventDefault();
@@ -247,7 +179,7 @@
                     <td>${run.car_number}</td>
                     <td>${run.cones || ''}</td>
                     <td>${run.off_course || ''}</td>
-                    <td><div class="cell-content">${run.raw_time !== undefined && run.raw_time !== null ? run.raw_time : 'None'}<span class="edit-icon" onclick="editRun('${run.id}')"><i class="bi bi-pencil-square"></i></span></div></td>
+                    <td><div class="cell-content">${run.raw_time !== undefined && run.raw_time !== null ? run.raw_time : 'None'}</div></td>
                     <td class="${run.dnf && String(run.dnf).toUpperCase().includes('DNF') ? 'table-danger' : (run.cones != 0 || run.off_course != 0) && (run.raw_time == 0 || run.raw_time == undefined || run.raw_time == null )? 'bg-warning' :  (run.raw_time == 0 || run.raw_time == undefined || run.raw_time == null ) && run.cones == 0 && run.off_course == 0 ? 'table-success' : ''}">${run.adjusted_time !== undefined && run.adjusted_time !== null ? run.adjusted_time : 'None'}</td>`;
                 const rowId = row.id;
                 if (highlightedRows.has(rowId)) {
@@ -303,7 +235,7 @@
                     <td>${run.car_number}</td>
                     <td>${run.cones || ''}</td>
                     <td>${run.off_course || ''}</td>
-                    <td><div class="cell-content">${run.raw_time !== undefined && run.raw_time !== null ? run.raw_time : 'None'}<span class="edit-icon" onclick="editRun('${run.id}')"><i class="bi bi-pencil-square"></i></span></div></td>
+                    <td><div class="cell-content">${run.raw_time !== undefined && run.raw_time !== null ? run.raw_time : 'None'}</div></td>
                     <td class="${run.dnf && String(run.dnf).toUpperCase().includes('DNF') ? 'table-danger' : (run.cones != 0 || run.off_course != 0) && (run.raw_time == 0 || run.raw_time == undefined || run.raw_time == null )? 'bg-warning' :  (run.raw_time == 0 || run.raw_time == undefined || run.raw_time == null ) && run.cones == 0 && run.off_course == 0 ? 'table-success' : ''}">${run.adjusted_time !== undefined && run.adjusted_time !== null ? run.adjusted_time : 'None'}</td>            `;
                 flashRow(row); // Flash the row with success color
             });

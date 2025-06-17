@@ -58,9 +58,9 @@ services:
     networks:
       - webproxy
 
-  timingcontrolwebui:
-    container_name: timingcontrolwebui
-    build: ./services/timingcontrolwebui/.
+  tmingcloud:
+    container_name: timingcloud
+    build: ./services/timingcloud/.
     restart: unless-stopped
     environment:
       - TZ=Etc/UTC
