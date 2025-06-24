@@ -174,7 +174,6 @@
                 }
     
                 row.innerHTML = `
-                    <td><input type="checkbox" id="run_${run.id}" name="selected_runs" value="${run.id}-${run.car_number}" ${selectedRuns.has(`${run.id}-${run.car_number}`) ? 'checked' : ''}></td>
                     <td>${run.id}</td>
                     <td>${run.car_number}</td>
                     <td>${run.cones || ''}</td>
@@ -228,9 +227,6 @@
                 const row = document.getElementById(run.id);
                 //TODO update
                 row.innerHTML = `
-                    <td>
-                        <input type="checkbox" id="run_${run.id}" name="selected_runs" value="${run.id}-${run.car_number}" checked>
-                    </td>
                     <td>${run.id}</td>
                     <td>${run.car_number}</td>
                     <td>${run.cones || ''}</td>

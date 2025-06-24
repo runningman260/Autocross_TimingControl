@@ -24,7 +24,8 @@ class RunOrder(db.Model):
     startline_scan_status: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
     finishline_scan_status: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
     created_at: so.Mapped[datetime] = so.mapped_column(sa.DateTime, nullable=False, default=datetime.now) 
-    updated_at: so.Mapped[datetime] = so.mapped_column(sa.DateTime, nullable=False, default=datetime.now)     
+    updated_at: so.Mapped[datetime] = so.mapped_column(sa.DateTime, nullable=False, default=datetime.now)    
+    last_synced_at: so.Mapped[datetime] = so.mapped_column(sa.DateTime, nullable=True) 
     
     def __repr__(self):
         return '<RunOrder {}>'.format(self.id)
