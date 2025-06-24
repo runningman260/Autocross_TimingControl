@@ -76,6 +76,24 @@ services:
     networks:
       - webproxy
 
+trackapi:
+    container_name: trackapi
+    build: ./services/trackapi/.
+    restart: unless-stopped
+    environment:
+      - TZ=Etc/UTC
+      - IOTSTACK_UID=1000
+      - IOTSTACK_GID=1000
+      - DOCKER_HOST_IP=172.17.0.1
+      - VIRTUAL_HOST=trackapi.guttenp.land
+      - VIRTUAL_PORT=5000
+      - LETSENCRYPT_HOST=trackapi.guttenp.land
+      - LETSENCRYPT_EMAIL=admin@guttenp.land
+    expose:
+      - "5000"
+    networks:
+      - webproxy
+
 
   # Copy and Uncomment below for an additional python container
   #
@@ -93,21 +111,3 @@ services:
   #  - "external:internal"
   #  volumes:
   #  - ./volumes/python/app:/usr/src/app
-
-
-
-
-# Commented out to limit GoogleAPI interactions while re-working the repo
-  #sheetupdater:
-  #  container_name: sheetupdater
-  #  build: ./services/sheetupdater/.
-  #  restart: unless-stopped
-  #  environment:
-  #  - TZ=Etc/UTC
-  #  - IOTSTACK_UID=1000
-  #  - IOTSTACK_GID=1000
-  #  - DOCKER_HOST_IP=172.17.0.1
-  #  x-ports:
-  #  - "external:internal"
-  #  volumes:
-  #  - ./volumes/sheetupdater/app:/usr/src/app
