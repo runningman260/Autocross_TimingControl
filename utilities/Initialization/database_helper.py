@@ -763,7 +763,8 @@ def clear_and_create_schema():
 				dnf VARCHAR(255),
 				adjusted_time VARCHAR(255),
 				created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-				updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+				updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+				last_synced_at TIMESTAMPTZ
 				);"""
 	}
 	trigger_name = "_trigger_set_timestamp"
