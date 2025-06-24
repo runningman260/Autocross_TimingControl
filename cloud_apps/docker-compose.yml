@@ -16,9 +16,9 @@ services:
     restart: unless-stopped
     environment:
       - TZ=${TZ:-Etc/UTC}
-      - POSTGRES_USER=${POSTGRES_USER:-postuser}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-IOtSt4ckpostgresDbPw}
-      - POSTGRES_DB=${POSTGRES_DB:-postdb}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
     ports:
       - "5432:5432"
     volumes:
@@ -58,7 +58,7 @@ services:
     networks:
       - webproxy
 
-  tmingcloud:
+  timingcloud:
     container_name: timingcloud
     build: ./services/timingcloud/.
     restart: unless-stopped
