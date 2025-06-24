@@ -76,7 +76,7 @@ services:
     networks:
       - webproxy
 
-trackapi:
+  trackapi:
     container_name: trackapi
     build: ./services/trackapi/.
     restart: unless-stopped
