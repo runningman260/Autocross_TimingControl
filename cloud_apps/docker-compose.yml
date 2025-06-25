@@ -48,8 +48,6 @@ services:
     environment:
       - NGINX_PROXY_CONTAINER=nginx-proxy
       - DEFAULT_EMAIL=admin@guttenp.land
-    volumes_from:
-      - nginx-proxy
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./certs:/etc/nginx/certs:rw
@@ -70,7 +68,7 @@ services:
       - VIRTUAL_HOST=timing.guttenp.land
       - VIRTUAL_PORT=5000
       - LETSENCRYPT_HOST=timing.guttenp.land
-      - LETSENCRYPT_EMAIL=admin@guttenp.land
+      - LETSENCRYPT_EMAIL=adming@guttenp.land
     expose:
       - "5000"
     networks:
@@ -88,7 +86,7 @@ services:
       - VIRTUAL_HOST=trackapi.guttenp.land
       - VIRTUAL_PORT=5000
       - LETSENCRYPT_HOST=trackapi.guttenp.land
-      - LETSENCRYPT_EMAIL=admin@guttenp.land
+      - LETSENCRYPT_EMAIL=adming@guttenp.land
     expose:
       - "5000"
     networks:
