@@ -4,9 +4,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     {% if title %}
-    <title>{{ title }} - Pittsburgh Shootout Timing Control Interface</title>
+    <title>{{ title }} - Pittsburgh Shootout</title>
     {% else %}
-    <title>{{ _('Pittsburgh Shootout Timing Control Interface') }}</title>
+    <title>{{ _('Pittsburgh Shootout Autocross Timing') }}</title>
     {% endif %}
     <link
         href={{ url_for('static', filename='bootstrap.min.css')}}
@@ -48,7 +48,7 @@
   <body>
     <nav class="navbar navbar-expand-lg bg-body-tertiary">
       <div class="container ">
-        <a class="navbar-brand" href="{{ url_for('main.runtable') }}">Timing Control</a>
+        <a class="navbar-brand" href="{{ url_for('main.runtable') }}">Pittsburgh Shootout</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>

@@ -7,50 +7,6 @@
         <div id="last-refresh-timestamp">Last Refresh: Never</div>
 
     </div>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            function editRun(runId) {
-                fetch(`/api/runs/${runId}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.error) {
-                            alert(data.error);
-                            return;
-                        }
-        
-                        // Populate the modal with the run data
-                        var editRunForm = document.getElementById('editRunForm');
-                        if (editRunForm) {
-                            editRunForm.action = `/edit_run/${runId}`;
-                            editRunForm.raw_time.value = data.raw_time;
-                            editRunForm.run_id.value = data.id;
-                            editRunForm.car_number.value = data.car_number;
-        
-                            // Open the modal
-                            var myModal = new bootstrap.Modal(document.getElementById('editRunModal'));
-                            myModal.show();
-                        } else {
-                            console.error('Error: editRunForm not found');
-                        }
-                    })
-                    .catch(error => console.error('Error:', error));
-            }
-        
-            // Make the editRun function globally accessible
-            window.editRun = editRun;
-
-            window.validateForm = function() {
-                var rawTime = document.getElementById('raw_time').value;
-                if (isNaN(rawTime) || rawTime < 0) {
-                    alert('Please enter a valid positive decimal number for raw time.');
-                    return false;
-                }
-                return true;
-            };
-
-            
-        });
-        </script>
 
 
         <div class="row align-items-start">
@@ -128,7 +84,10 @@
             //console.log('Removing highlight from row:', rowId);
           }, 3000); // Adjust the timeout duration as needed
         }
-        let lastUpdateTimestamp = null;
+        let lastUpdateTimestamp = new Date(Date.now() - 15000);
+        const timestampElement = document.getElementById('last-refresh-timestamp');
+        const currentTime = new Date();
+        timestampElement.textContent = `Last Refresh: ${currentTime.toLocaleTimeString()}`;
         let lastrun=0;
         let failedAttempts = 0;
         let intervalId;
@@ -171,6 +130,7 @@
                     row.setAttribute('name', 'run_row');
                     row.setAttribute('id', run.id);
                     table.insertBefore(row, table.firstChild);
+                    
                 }
     
                 row.innerHTML = `
@@ -182,8 +142,8 @@
                     <td class="${run.dnf && String(run.dnf).toUpperCase().includes('DNF') ? 'table-danger' : (run.cones != 0 || run.off_course != 0) && (run.raw_time == 0 || run.raw_time == undefined || run.raw_time == null )? 'bg-warning' :  (run.raw_time == 0 || run.raw_time == undefined || run.raw_time == null ) && run.cones == 0 && run.off_course == 0 ? 'table-success' : ''}">${run.adjusted_time !== undefined && run.adjusted_time !== null ? run.adjusted_time : 'None'}</td>`;
                 const rowId = row.id;
                 if (highlightedRows.has(rowId)) {
-                    //console.log('Reapplying highlight class to row:', run.id);
                     row.classList.add('table-success');
+                    flashRow(row);
                 }
                 if (!isNaN(rowId) && Number(rowId) > lastrun) { //keep track of last run number as a backup catch for edge cases. If either are missing, entire page will refresh
                     lastrun = Number(rowId);
@@ -194,10 +154,7 @@
             const currentTime = new Date();
             timestampElement.textContent = `Last Refresh: ${currentTime.toLocaleTimeString()}`;
             
-            if (deselectButton) {
-                deselectButton.removeEventListener('click', handleDeselectClick);
-                deselectButton.addEventListener('click', handleDeselectClick);
-              }
+
               // Reset failed attempts counter on successful fetch
                 failedAttempts = 0;
             } catch (error) {
@@ -207,40 +164,7 @@
         }
     }
         
-        document.querySelector('form').addEventListener('submit', function(event) {
-        event.preventDefault();
-        const formData = new FormData(this);
-        const submitButton = event.submitter;
-        if (submitButton) {
-            formData.append(submitButton.name, submitButton.value);
-        }
-        fetch('/runtable', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                showAlert('success', data.message);
-                data.runs.forEach(run => {
-
-                const row = document.getElementById(run.id);
-                //TODO update
-                row.innerHTML = `
-                    <td>${run.id}</td>
-                    <td>${run.car_number}</td>
-                    <td>${run.cones || ''}</td>
-                    <td>${run.off_course || ''}</td>
-                    <td><div class="cell-content">${run.raw_time !== undefined && run.raw_time !== null ? run.raw_time : 'None'}</div></td>
-                    <td class="${run.dnf && String(run.dnf).toUpperCase().includes('DNF') ? 'table-danger' : (run.cones != 0 || run.off_course != 0) && (run.raw_time == 0 || run.raw_time == undefined || run.raw_time == null )? 'bg-warning' :  (run.raw_time == 0 || run.raw_time == undefined || run.raw_time == null ) && run.cones == 0 && run.off_course == 0 ? 'table-success' : ''}">${run.adjusted_time !== undefined && run.adjusted_time !== null ? run.adjusted_time : 'None'}</td>            `;
-                flashRow(row); // Flash the row with success color
-            });
-            } else {
-                showAlert('danger', 'An error occurred. Please try again.');
-            }
-
-        });
-    });
+        
 
     function update_table_periodically() {
         let since = 0;
