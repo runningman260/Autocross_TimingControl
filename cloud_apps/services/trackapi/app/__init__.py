@@ -4,7 +4,6 @@ import os
 from flask import Flask, request, current_app, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-from flask_mqtt import Mqtt
 from flask_login import LoginManager
 from flask_mail import Mail
 from flask_moment import Moment
@@ -27,7 +26,6 @@ migrate = Migrate()
 mail = Mail()
 moment = Moment()
 babel = Babel()
-mqtt = Mqtt()
 
 
 def create_app(config_class=Config):
@@ -40,11 +38,7 @@ def create_app(config_class=Config):
     mail.init_app(app)
     moment.init_app(app)
     babel.init_app(app, locale_selector=get_locale)
-    app.elasticsearch = Elasticsearch([app.config['ELASTICSEARCH_URL']]) \
-        if app.config['ELASTICSEARCH_URL'] else None
-    app.redis = Redis.from_url(app.config['REDIS_URL'])
-    app.task_queue = rq.Queue('timingctrl-tasks', connection=app.redis)
-
+    
     from app.main import bp as main_bp
     app.register_blueprint(main_bp)
 
@@ -84,10 +78,6 @@ def create_app(config_class=Config):
         app.logger.setLevel(logging.INFO)
         app.logger.info('timingctrl startup')
 
-    try:
-        mqtt.init_app(app)
-    except:
-        print("MQTT not initialized")
 
     return app
 

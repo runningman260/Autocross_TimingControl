@@ -35,7 +35,6 @@ Flask-Login==0.6.3
 Flask-Mail==0.9.1
 Flask-Migrate==4.0.5
 Flask-Moment==1.0.5
-Flask-MQTT==1.2.1
 Flask-SQLAlchemy==3.1.1
 Flask-WTF==1.2.1
 future==1.0.0
@@ -68,7 +67,6 @@ netifaces==0.11.0
 oauthlib==3.2.0
 olefile==0.46
 packaging==23.2
-paho-mqtt==2.1.0
 pexpect==4.8.0
 Pillow==9.0.1
 platformdirs==2.5.1

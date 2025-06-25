@@ -3,7 +3,7 @@ import os
 from flask import render_template, flash, redirect, send_from_directory, url_for, request, g, current_app, jsonify
 from flask_babel import _, get_locale
 import sqlalchemy as sa
-from app import db, mqtt
+from app import db
 from app.main.forms import EmptyForm, PostForm, SearchForm, RunEditForm
 from app.models import RunOrder, TopLaps, CarReg, PointsLeaderboardIC, PointsLeaderboardEV, ConesLeaderboard
 from app.main import bp
