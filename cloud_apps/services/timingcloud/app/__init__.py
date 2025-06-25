@@ -3,13 +3,7 @@ from logging.handlers import SMTPHandler, RotatingFileHandler
 import os
 from flask import Flask, request, current_app, url_for
 from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
-from flask_login import LoginManager
-from flask_mail import Mail
-from flask_moment import Moment
 from flask_babel import Babel, lazy_gettext as _l
-from elasticsearch import Elasticsearch
-from redis import Redis
 import rq
 from config import Config
 import sqlalchemy as sa
@@ -19,7 +13,6 @@ def get_locale():
 
 
 db = SQLAlchemy()
-migrate = Migrate()
 
 babel = Babel()
 
