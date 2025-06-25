@@ -53,6 +53,7 @@ services:
       - ./certs:/etc/nginx/certs:rw
       - ./vhost.d:/etc/nginx/vhost.d
       - ./html:/usr/share/nginx/html
+      - ./acme:/etc/acme.sh
     networks:
       - webproxy
 
