@@ -12,7 +12,13 @@
             <table class="table table-hover">
                 <thead>
                     <tr>
-                        <th>Team</th>
+                        <th>
+                            Team
+                            <button id="filter-team-btn" class="btn btn-sm btn-outline-secondary" type="button">Filter</button>
+                            <select id="team-filter-select" style="display:none; margin-top:5px;">
+                                <option value="">All</option>
+                            </select>
+                        </th>
                         <th>Class</th>
                         <th>Car Number</th>
                         <th>Adjusted Time</th>
@@ -28,6 +34,8 @@
     </div>
 
     <script>
+        let toplapsData = [];
+
         async function updateTopLaps() {
             try {
                 const response = await fetch('/api/toplaps');
@@ -35,18 +43,9 @@
                     throw new Error('Network response was not ok');
                 }
                 const data = await response.json();
-                const tbody = document.getElementById('toplaps-tbody');
-                tbody.innerHTML = '';
-                data.forEach(run => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${run.team_name}</td>
-                        <td>${run.class_}</td>
-                        <td>${run.car_number}</td>
-                        <td>${run.adjusted_time}</td>
-                    `;
-                    tbody.appendChild(row);
-                });
+                toplapsData = data;
+                renderTopLapsTable();
+                updateTeamFilterOptions();
                 const timestampElement = document.getElementById('last-refresh-timestamp');
                 const currentTime = new Date();
                 timestampElement.textContent = `Last Refresh: ${currentTime.toLocaleTimeString()}`;
@@ -55,8 +54,51 @@
             }
         }
 
+        function renderTopLapsTable() {
+            const tbody = document.getElementById('toplaps-tbody');
+            const selectedTeam = document.getElementById('team-filter-select').value;
+            tbody.innerHTML = '';
+            toplapsData.forEach(run => {
+                if (!selectedTeam || run.team_name === selectedTeam) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${run.team_name}</td>
+                        <td>${run.class_}</td>
+                        <td>${run.car_number}</td>
+                        <td>${run.adjusted_time}</td>
+                    `;
+                    tbody.appendChild(row);
+                }
+            });
+        }
+
+        function updateTeamFilterOptions() {
+            const select = document.getElementById('team-filter-select');
+            const teams = Array.from(new Set(toplapsData.map(run => run.team_name).filter(Boolean))).sort();
+            // Only update if options are different
+            if (select.options.length - 1 !== teams.length) {
+                select.innerHTML = '<option value="">All</option>';
+                teams.forEach(team => {
+                    const option = document.createElement('option');
+                    option.value = team;
+                    option.textContent = team;
+                    select.appendChild(option);
+                });
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             setInterval(updateTopLaps, 10000); // Update every 10 seconds
+            updateTopLaps();
+
+            const filterBtn = document.getElementById('filter-team-btn');
+            const filterSelect = document.getElementById('team-filter-select');
+            filterBtn.addEventListener('click', function() {
+                filterSelect.style.display = filterSelect.style.display === 'none' ? 'inline-block' : 'none';
+            });
+            filterSelect.addEventListener('change', function() {
+                renderTopLapsTable();
+            });
         });
     </script>
 {% endblock %}
