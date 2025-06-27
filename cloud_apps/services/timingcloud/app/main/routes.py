@@ -14,16 +14,20 @@ from app.main import bp
 @bp.route('/', methods=['GET', 'POST'])
 @bp.route('/runtable', methods=['GET', 'POST'])
 def runtable():
-
-    query = sa.select(RunOrder).order_by(-RunOrder.id)
-    runs = db.session.scalars(query).all()
+    # Join RunOrder and CarReg to get team_name for each run
+    query = sa.select(RunOrder, CarReg.team_name).join(CarReg, RunOrder.car_number == CarReg.car_number, isouter=True).order_by(-RunOrder.id)
+    results = db.session.execute(query).all()
+    # Compose car_number with team_name in the same field
+    runs = []
+    for run, team_name in results:
+        run_display = run
+        run_display.car_number = run.car_number + (f" – {team_name}" if team_name else "")
+        runs.append(run_display)
     page = request.args.get('page', 1, type=int)
-    
     return render_template('runtable.html', title='Run Table', runs=runs)
 
 @bp.route('/api/runs', methods=['GET'])
 def get_runs():
-    #fixdata()
     since = request.args.get('since')
     lastrun = request.args.get('lastrun')
     if since and lastrun:
@@ -31,27 +35,28 @@ def get_runs():
             since_timestamp = datetime.fromisoformat(since)
             try:
                 int(lastrun)
-                query = sa.select(RunOrder).where(sa.or_(RunOrder.updated_at > since_timestamp,RunOrder.id > lastrun)).order_by(RunOrder.id)
+                query = sa.select(RunOrder, CarReg.team_name).join(CarReg, RunOrder.car_number == CarReg.car_number, isouter=True).where(
+                    sa.or_(RunOrder.updated_at > since_timestamp, RunOrder.id > lastrun)
+                ).order_by(RunOrder.id)
             except:
-                query = sa.select(RunOrder).order_by(-RunOrder.id)
+                query = sa.select(RunOrder, CarReg.team_name).join(CarReg, RunOrder.car_number == CarReg.car_number, isouter=True).order_by(-RunOrder.id)
         except:
-            query = sa.select(RunOrder).order_by(-RunOrder.id)        
+            query = sa.select(RunOrder, CarReg.team_name).join(CarReg, RunOrder.car_number == CarReg.car_number, isouter=True).order_by(-RunOrder.id)
     else:
-        query = sa.select(RunOrder).order_by(-RunOrder.id)
-    
-    
-    runs=db.session.scalars(query).all()
+        query = sa.select(RunOrder, CarReg.team_name).join(CarReg, RunOrder.car_number == CarReg.car_number, isouter=True).order_by(-RunOrder.id)
+
+    results = db.session.execute(query).all()
     runs_data = [
         {
             'id': run.id,
-            'car_number': run.car_number,
+            'car_number': run.car_number + (f" – {team_name}" if team_name else ""),
             'cones': run.cones,
             'off_course': run.off_course,
             'dnf': run.dnf,
             'raw_time': run.raw_time,
             'adjusted_time': run.adjusted_time
         }
-        for run in runs
+        for run, team_name in results
     ]
     return jsonify(runs_data)
 

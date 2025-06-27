@@ -54,7 +54,6 @@ def update_car_regs():
             car.car_number = car_data.get('car_number', car.car_number)
             car.team_name = car_data.get('team_name', car.team_name)
             car.class_ = car_data.get('class_', car.class_)
-            car.updated_at = datetime.fromisoformat(car_data.get('updated_at', car.updated_at.isoformat()))
         else:
             # Insert new row
             new_car = CarReg(**car_data)
