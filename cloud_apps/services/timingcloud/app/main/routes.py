@@ -88,7 +88,7 @@ def toplaps():
         TopLaps.adjusted_time,
         CarReg.team_name,
         CarReg.class_
-    ).join(CarReg, TopLaps.car_number == CarReg.car_number).order_by(TopLaps.adjusted_time)
+    ).join(CarReg, TopLaps.car_number == CarReg.car_number)#.order_by(TopLaps.adjusted_time)
     
     result = db.session.execute(query).all()
     runs = []
@@ -176,7 +176,7 @@ def api_toplaps():
             TopLaps.adjusted_time,
             CarReg.team_name,
             CarReg.class_
-        ).join(CarReg, TopLaps.car_number == CarReg.car_number).order_by(TopLaps.adjusted_time)
+        ).join(CarReg, TopLaps.car_number == CarReg.car_number)#.order_by(TopLaps.adjusted_time)
         
         result = db.session.execute(query).all()
         runs = []
