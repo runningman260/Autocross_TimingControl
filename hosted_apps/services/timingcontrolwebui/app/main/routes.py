@@ -7,6 +7,8 @@ from app import db, mqtt
 from app.main.forms import EmptyForm, PostForm, SearchForm, RunEditForm, AddRunForm, EditRunForm
 from app.models import RunOrder, TopLaps, CarReg, PointsLeaderboardIC, PointsLeaderboardEV, ConesLeaderboard
 from app.main import bp
+import requests
+
 
 def calculateAdjustedTime(run:RunOrder):
     # I hate that this is at the top here
@@ -108,6 +110,60 @@ def runtable():
     
     return render_template('runtable.html', title='Run Table', runs=runs, form=form, addRunForm=addRunForm, editRunForm=editRunForm)
 
+
+
+
+def sync_with_cloud():
+    # Query rows that need to be synced
+    query = sa.select(RunOrder).where(
+        sa.or_(
+            RunOrder.updated_at > RunOrder.last_synced_at,
+            RunOrder.last_synced_at.is_(None)
+        )
+    ).order_by(RunOrder.updated_at)
+    runs_to_sync = db.session.scalars(query).all()
+
+    # Prepare data for batch update
+    batch_size = 50  # Number of rows per batch
+    batches = [runs_to_sync[i:i + batch_size] for i in range(0, len(runs_to_sync), batch_size)]
+
+    for batch in batches:
+        runs_data = [
+            {
+                'id': run.id,
+                'car_number': run.car_number,
+                'cones': run.cones,
+                'off_course': run.off_course,
+                'dnf': run.dnf,
+                'raw_time': run.raw_time,
+                'adjusted_time': run.adjusted_time,
+                'updated_at': run.updated_at.isoformat()
+            }
+            for run in batch
+        ]
+        print(f"Syncing batch with {len(runs_data)} runs:")
+        for run_data in runs_data:
+            print(f"  Updating Run ID {run_data['id']} (Car {run_data['car_number']}) - Cones: {run_data['cones']}, Off Course: {run_data['off_course']}, DNF: {run_data['dnf']}, Raw Time: {run_data['raw_time']}, Adjusted Time: {run_data['adjusted_time']}, Updated At: {run_data['updated_at']}")
+        try:
+            response = requests.post(
+                'https://trackapi.guttenp.land/api/update_runs',
+                json={'runs': runs_data},
+                headers={'Authorization': 'qwertyuiop'}
+            )
+            if response.status_code == 200:
+                # Update last_synced_at for successfully synced rows
+                for run in batch:
+                    run.last_synced_at = datetime.now(timezone.utc)
+                db.session.commit()
+            else:
+                print(f"Error syncing batch: {response.json()}")
+        except requests.exceptions.RequestException as e:
+            print(f"Network error: {e}")
+            break  # Stop processing batches if there's a network error
+
+
+
+
 @bp.route('/add_run', methods=['POST'])
 def add_run():
     form = AddRunForm()
@@ -176,6 +232,7 @@ def edit_run(run_id):
                     'adjusted_time': run.adjusted_time
                 }
             }
+            sync_with_cloud()
             return jsonify(response), 200
     response = {
         'status': 'danger',

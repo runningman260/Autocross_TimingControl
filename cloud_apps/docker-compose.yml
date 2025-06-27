@@ -16,9 +16,9 @@ services:
     restart: unless-stopped
     environment:
       - TZ=${TZ:-Etc/UTC}
-      - POSTGRES_USER=${POSTGRES_USER:-postuser}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-IOtSt4ckpostgresDbPw}
-      - POSTGRES_DB=${POSTGRES_DB:-postdb}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
     ports:
       - "5432:5432"
     volumes:
@@ -48,19 +48,18 @@ services:
     environment:
       - NGINX_PROXY_CONTAINER=nginx-proxy
       - DEFAULT_EMAIL=admin@guttenp.land
-    volumes_from:
-      - nginx-proxy
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./certs:/etc/nginx/certs:rw
       - ./vhost.d:/etc/nginx/vhost.d
       - ./html:/usr/share/nginx/html
+      - ./acme:/etc/acme.sh
     networks:
       - webproxy
 
-  timingcontrolwebui:
-    container_name: timingcontrolwebui
-    build: ./services/timingcontrolwebui/.
+  timingcloud:
+    container_name: timingcloud
+    build: ./services/timingcloud/.
     restart: unless-stopped
     environment:
       - TZ=Etc/UTC
@@ -70,7 +69,25 @@ services:
       - VIRTUAL_HOST=timing.guttenp.land
       - VIRTUAL_PORT=5000
       - LETSENCRYPT_HOST=timing.guttenp.land
-      - LETSENCRYPT_EMAIL=admin@guttenp.land
+      - LETSENCRYPT_EMAIL=adming@guttenp.land
+    expose:
+      - "5000"
+    networks:
+      - webproxy
+
+  trackapi:
+    container_name: trackapi
+    build: ./services/trackapi/.
+    restart: unless-stopped
+    environment:
+      - TZ=Etc/UTC
+      - IOTSTACK_UID=1000
+      - IOTSTACK_GID=1000
+      - DOCKER_HOST_IP=172.17.0.1
+      - VIRTUAL_HOST=trackapi.guttenp.land
+      - VIRTUAL_PORT=5000
+      - LETSENCRYPT_HOST=trackapi.guttenp.land
+      - LETSENCRYPT_EMAIL=adming@guttenp.land
     expose:
       - "5000"
     networks:
@@ -93,21 +110,3 @@ services:
   #  - "external:internal"
   #  volumes:
   #  - ./volumes/python/app:/usr/src/app
-
-
-
-
-# Commented out to limit GoogleAPI interactions while re-working the repo
-  #sheetupdater:
-  #  container_name: sheetupdater
-  #  build: ./services/sheetupdater/.
-  #  restart: unless-stopped
-  #  environment:
-  #  - TZ=Etc/UTC
-  #  - IOTSTACK_UID=1000
-  #  - IOTSTACK_GID=1000
-  #  - DOCKER_HOST_IP=172.17.0.1
-  #  x-ports:
-  #  - "external:internal"
-  #  volumes:
-  #  - ./volumes/sheetupdater/app:/usr/src/app

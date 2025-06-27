@@ -24,8 +24,7 @@ class RunOrder(db.Model):
     startline_scan_status: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
     finishline_scan_status: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
     created_at: so.Mapped[datetime] = so.mapped_column(sa.DateTime, nullable=False, default=datetime.now) 
-    updated_at: so.Mapped[datetime] = so.mapped_column(sa.DateTime, nullable=False, default=datetime.now)    
-    last_synced_at: so.Mapped[datetime] = so.mapped_column(sa.DateTime, nullable=True) 
+    updated_at: so.Mapped[datetime] = so.mapped_column(sa.DateTime, nullable=False, default=datetime.now)     
     
     def __repr__(self):
         return '<RunOrder {}>'.format(self.id)
@@ -49,45 +48,3 @@ class CarReg(db.Model):
     
     
 
-class TopLaps(db.Model):
-    __tablename__ = 'leaderboard'
-    __table_args__ = {'info': {'is_view': True}}
-    __mapper_args__ = {'primary_key': ['car_number', 'adjusted_time', 'team_name']}
-      
-    car_number: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
-    team_name: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
-    adjusted_time: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
-    
-class PointsLeaderboardIC(db.Model):
-    __tablename__ = 'points_leaderboard_ic'
-    __table_args__ = {'info': {'is_view': True}}
-    __mapper_args__ = {'primary_key': ['car_number', 'adjusted_time', 'points']}
-       
-    car_number: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
-    adjusted_time: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
-    points: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
-    team_name: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
-    
-class PointsLeaderboardEV(db.Model):
-    __tablename__ = 'points_leaderboard_ev'
-    __table_args__ = {'info': {'is_view': True}}
-    __mapper_args__ = {'primary_key': ['car_number', 'adjusted_time', 'points']}
-       
-    car_number: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
-    adjusted_time: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
-    points: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
-    team_name: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
-    
-    
-    
-class ConesLeaderboard(db.Model):
-    __tablename__ = 'cones_leaderboard'
-    __table_args__ = {'info': {'is_view': True}}
-    __mapper_args__ = {'primary_key': ['car_number', 'total_cones']}
-       
-    car_number: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
-    total_cones: so.Mapped[int] = so.mapped_column(sa.Integer, index=True)
-    team_name: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
-    
-   
-    
