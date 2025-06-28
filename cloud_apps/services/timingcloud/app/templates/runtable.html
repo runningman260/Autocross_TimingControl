@@ -88,6 +88,7 @@
         let lastrun=0;
         let failedAttempts = 0;
         let intervalId;
+        let firstRun = true;
         async function updateRunsTable(fullyRefresh = false) {
             try {
                 if (fullyRefresh) {
@@ -99,6 +100,9 @@
                 let url = '/api/runs';
                 if (lastUpdateTimestamp) {
                     url += `?since=${lastUpdateTimestamp.toISOString()}&lastrun=${lastrun}`;
+                }
+                if (lastrun>0) {
+                    let firstRun=false;
                 }
                 failedAttempts++;
                 if (failedAttempts > 4) {
@@ -139,7 +143,7 @@
                     <td class="${run.dnf && String(run.dnf).toUpperCase().includes('DNF') ? 'table-danger' : (run.cones != 0 || run.off_course != 0) && (run.raw_time == 0 || run.raw_time == undefined || run.raw_time == null )? 'bg-warning' :  (run.raw_time == 0 || run.raw_time == undefined || run.raw_time == null ) && run.cones == 0 && run.off_course == 0 ? 'table-success' : ''}">${run.adjusted_time !== undefined && run.adjusted_time !== null ? run.adjusted_time : 'None'}</td>`;
 
                 // Flash every row that is updated
-                if (lastrun > 0){
+                if (!firstRun){
                     flashRow(row);
                 }
 
