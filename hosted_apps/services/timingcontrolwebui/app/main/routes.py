@@ -339,6 +339,7 @@ def edit_run(run_id):
             oldtime = run.raw_time
             run.raw_time = form.raw_time.data
             db.session.commit()
+            car = db.session.query(CarReg).filter_by(car_number=run.car_number).first()
             #flash(_('Run '+ str(run.id) + ' car #'+run.car_number+' updated successfully from '+ str(oldtime) + ' to ' + str(run.raw_time)))
             response = {
                 'status': 'success',
