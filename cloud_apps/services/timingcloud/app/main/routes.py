@@ -81,14 +81,19 @@ def favicon():
 
 @bp.route('/toplaps', methods=['GET', 'POST'])
 def toplaps():
-    
     query = sa.select(
         TopLaps.car_number,
         TopLaps.adjusted_time,
         CarReg.team_name,
-        CarReg.class_
-    ).join(CarReg, TopLaps.car_number == CarReg.car_number)#.order_by(TopLaps.adjusted_time)
-    
+        CarReg.class_,
+        RunOrder.cones,
+        RunOrder.off_course,
+        RunOrder.id
+    ).join(CarReg, TopLaps.car_number == CarReg.car_number
+    ).join(RunOrder, sa.and_(
+        TopLaps.car_number == RunOrder.car_number,
+        TopLaps.adjusted_time == RunOrder.adjusted_time
+    ))
     result = db.session.execute(query).all()
     runs = []
     for row in result:
@@ -96,11 +101,12 @@ def toplaps():
             'team_name': row.team_name,
             'car_number': row.car_number,
             'adjusted_time': row.adjusted_time,
-            'class_': row.class_
+            'class_': row.class_,
+            'cones': row.cones,
+            'off_course': row.off_course,
+            'id': row.id
         }
         runs.append(run)
-    
-    
     return render_template('toplaps.html', title='Top Laps', runs=runs)
 
 @bp.route('/pointsLeaderboard', methods=['GET', 'POST'])
@@ -170,24 +176,33 @@ def api_cones_leaderboard():
 #should top laps be limited to a certain number of laps?
 @bp.route('/api/toplaps', methods=['GET'])
 def api_toplaps():
-        query = sa.select(
-            TopLaps.car_number,
-            TopLaps.adjusted_time,
-            CarReg.team_name,
-            CarReg.class_
-        ).join(CarReg, TopLaps.car_number == CarReg.car_number)#.order_by(TopLaps.adjusted_time)
-        
-        result = db.session.execute(query).all()
-        runs = []
-        for row in result:
-            run = {
-                'team_name': row.team_name,
-                'car_number': row.car_number,
-                'adjusted_time': row.adjusted_time,
-                'class_': row.class_
-            }
-            runs.append(run)
-        return jsonify(runs)
+    query = sa.select(
+        TopLaps.car_number,
+        TopLaps.adjusted_time,
+        CarReg.team_name,
+        CarReg.class_,
+        RunOrder.cones,
+        RunOrder.off_course,
+        RunOrder.id
+    ).join(CarReg, TopLaps.car_number == CarReg.car_number
+    ).join(RunOrder, sa.and_(
+        TopLaps.car_number == RunOrder.car_number,
+        TopLaps.adjusted_time == RunOrder.adjusted_time
+    ))
+    result = db.session.execute(query).all()
+    runs = []
+    for row in result:
+        run = {
+            'team_name': row.team_name,
+            'car_number': row.car_number,
+            'adjusted_time': row.adjusted_time,
+            'class_': row.class_,
+            'cones': row.cones,
+            'off_course': row.off_course,
+            'id': row.id
+        }
+        runs.append(run)
+    return jsonify(runs)
 
 @bp.route('/carreg', methods=['GET'])
 def carreg():

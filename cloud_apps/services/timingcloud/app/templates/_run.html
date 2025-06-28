@@ -7,21 +7,18 @@
         {{ run.car_number }}
     </td>
     <td>
-        {% if run.cones is not none and run.cones != 0 %}
-            {{ run.cones }}
-        {% endif %}
-    </td>
-    <td>
-        {% if run.off_course is not none and run.off_course != 0 %}
-            {{ run.off_course }}
-        {% endif %}
-    </td>
-    <td>
         <div class="cell-content">
             {{ run.raw_time if run.raw_time is not none else 'None' }}
         </div>
     </td>
-
+    <td>
+        {% if run.cones is not none and run.cones != 0 %}
+        {{ run.cones }}
+        {% endif %} +
+        {% if run.off_course is not none and run.off_course != 0 %}
+            {{ run.off_course }}
+        {% endif %}
+    </td>
     <td class="{% if  run.dnf is not none and 'dnf' in run.dnf|lower %} table-danger {% elif (run.raw_time is none) and run.cones|int == 0 and run.off_course|int == 0 %}table-success{% elif (run.cones != 0 or run.off_course != 0) and (run.raw_time|float < 1) %}bg-warning{% endif %}">
         {{ run.adjusted_time if run.adjusted_time is not none else 'None' }}
     </td>

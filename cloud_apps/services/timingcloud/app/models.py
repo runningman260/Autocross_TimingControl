@@ -56,6 +56,9 @@ class TopLaps(db.Model):
     car_number: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
     team_name: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
     adjusted_time: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    cones: so.Mapped[int] = so.mapped_column(sa.Integer)
+    off_course: so.Mapped[int] = so.mapped_column(sa.Integer)
+    id: so.Mapped[int] = so.mapped_column(sa.Integer)
     
 class PointsLeaderboardIC(db.Model):
     __tablename__ = 'points_leaderboard_ic'
@@ -87,6 +90,5 @@ class ConesLeaderboard(db.Model):
     car_number: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
     total_cones: so.Mapped[int] = so.mapped_column(sa.Integer, index=True)
     team_name: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
-    
-   
-    
+
+

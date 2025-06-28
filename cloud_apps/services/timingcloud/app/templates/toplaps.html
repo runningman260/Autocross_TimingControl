@@ -13,15 +13,15 @@
                 <thead>
                     <tr>
                         <th>
-                            Team
+                            Run / Team / Car
                             <button id="filter-team-btn" class="btn btn-sm btn-outline-secondary" type="button">Filter</button>
                             <select id="team-filter-select" style="display:none; margin-top:5px;">
                                 <option value="">All</option>
                             </select>
                         </th>
-                        <th>Class</th>
-                        <th>Car Number</th>
                         <th>Adjusted Time</th>
+                        <th>Cones</th>
+                        <th>Off Course</th>
                     </tr>
                 </thead>
                 <tbody id="toplaps-tbody">
@@ -62,10 +62,10 @@
                 if (!selectedTeam || run.team_name === selectedTeam) {
                     const row = document.createElement('tr');
                     row.innerHTML = `
-                        <td>${run.team_name}</td>
-                        <td>${run.class_}</td>
-                        <td>${run.car_number}</td>
+                        <td>#${run.id}: ${run.team_name} - ${run.car_number} ${run.class_}</td>
                         <td>${run.adjusted_time}</td>
+                        <td>${run.cones}</td>
+                        <td>${run.off_course}</td>
                     `;
                     tbody.appendChild(row);
                 }

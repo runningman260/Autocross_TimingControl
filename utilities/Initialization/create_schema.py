@@ -20,13 +20,13 @@ def exit_handler():
 	print(' Cleaning Up!')
 	exit(1)
 
-clear_and_create_schema()
+#clear_and_create_schema()
 
 # Create Leaderboard based on Adjusted_time
 print("Creating Leaderboard")
 sql = """
 create or replace view leaderboard as 
-Select runtable.car_number, carreg.team_name, runtable.adjusted_time
+Select runtable.car_number, carreg.team_name, runtable.adjusted_time, runtable.cones, runtable.off_course, runtable.id
 from runtable 
 join carreg on runtable.car_number=carreg.car_number 
 where adjusted_time is not null and adjusted_time is distinct from 'DNF' and raw_time is not null and (raw_time::decimal > 0)
