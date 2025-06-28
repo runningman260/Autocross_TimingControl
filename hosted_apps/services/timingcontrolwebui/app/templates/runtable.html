@@ -62,7 +62,8 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'success') {
-                        showAlert('success', data.message);
+                        if (data.message && data.message.trim() !== "")
+                            showAlert('success', data.message);
                         // Close the modal
                         var myModalEl = document.getElementById('editRunModal');
                         var modal = bootstrap.Modal.getInstance(myModalEl);
@@ -159,7 +160,10 @@
                     <div class="card mt-2">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <span>Cloud Sync Status: <span id="sync-status">Loading...</span></span>
-                            <button class="btn btn-sm btn-secondary" id="sync-toggle-btn">Pause/Resume</button>
+                            <div>
+                                <button class="btn btn-sm btn-warning" id="force-sync-btn" type="button" title="Force all runs to sync to cloud">Force Cloud Sync</button>
+                                <button class="btn btn-sm btn-secondary" id="sync-toggle-btn" type="button">Pause/Resume</button>
+                            </div>
                         </div>
                         <div class="card-body" style="background: #222; color: #0f0; font-family: monospace; max-height: 200px; overflow-y: auto; font-size: 0.95em;">
                             <pre id="sync-log" style="margin:0; background:transparent; color:inherit;"></pre>
@@ -257,8 +261,7 @@
                 }
     
                 row.innerHTML = `
-                    <td><input type="checkbox" id="run_${run.id}" name="selected_runs" value="${run.id}-${run.car_number}" ${selectedRuns.has(`${run.id}-${run.car_number}`) ? 'checked' : ''}></td>
-                    <td>${run.id}</td>
+                    <td><input type="checkbox" id="run_${run.id}" name="selected_runs" value="${run.id}-${run.car_number}" ${selectedRuns.has(`${run.id}-${run.car_number}`) ? 'checked' : ''}> ${run.id}</td>
                     <td>${run.car_number}</td>
                     <td>${run.cones || ''}</td>
                     <td>${run.off_course || ''}</td>
@@ -305,16 +308,15 @@
         .then(response => response.json())
         .then(data => {
             if (data.status === 'success') {
-                showAlert('success', data.message);
+                if (data.message && data.message.trim() !== "")
+                    showAlert('success', data.message);
                 data.runs.forEach(run => {
 
                 const row = document.getElementById(run.id);
                 //TODO update
                 row.innerHTML = `
                     <td>
-                        <input type="checkbox" id="run_${run.id}" name="selected_runs" value="${run.id}-${run.car_number}" checked>
-                    </td>
-                    <td>${run.id}</td>
+                        <input type="checkbox" id="run_${run.id}" name="selected_runs" value="${run.id}-${run.car_number}" checked> ${run.id}</td>
                     <td>${run.car_number}</td>
                     <td>${run.cones || ''}</td>
                     <td>${run.off_course || ''}</td>
@@ -362,6 +364,18 @@
                 fetchSyncLog();
             });
     });
+
+    // Force Cloud Sync button handler
+    document.getElementById('force-sync-btn').addEventListener('click', function() {
+        fetch('/api/force_sync', {method: 'POST'})
+            .then(r => r.json())
+            .then(data => {
+                showAlert(data.status === "success" ? "success" : "danger", data.message || "Force sync triggered.");
+                fetchSyncLog();
+            })
+            .catch(() => showAlert("danger", "Failed to trigger force sync."));
+    });
+
     setInterval(fetchSyncLog, 2000);
     fetchSyncLog();
         

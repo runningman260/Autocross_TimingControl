@@ -105,12 +105,13 @@ def append_sync_log(line):
     with sync_log_lock:
         sync_log.append(f"[{datetime.now().strftime('%H:%M:%S')}] {line}")
 
-def log_no_runs_to_sync():
+def log_no_runs_to_sync(newline):
     with sync_log_lock:
         msg = "No runs to sync."
         if sync_log and sync_log[-1].endswith(msg):
             sync_log.pop()
-        sync_log.append(f"[{datetime.now().strftime('%H:%M:%S')}] {msg}")
+        if newline:
+            sync_log.append(f"[{datetime.now().strftime('%H:%M:%S')}] {msg}")
 
 def sync_with_cloud_loop(app):
     global sync_thread_running, sync_thread_paused
@@ -130,15 +131,19 @@ def sync_with_cloud_loop(app):
                     )
                 ).order_by(RunOrder.updated_at)
                 runs_to_sync = db.session.scalars(query).all()
-                #append_sync_log(f"Found {len(runs_to_sync)} runs to sync.")
+                # Capture updated_at at sync start
+                runs_to_sync_info = [
+                    (run, run.updated_at)
+                    for run in runs_to_sync
+                ]
                 batch_size = 50
-                batches = [runs_to_sync[i:i + batch_size] for i in range(0, len(runs_to_sync), batch_size)]
-
-                if not runs_to_sync:
-                    log_no_runs_to_sync()
+                batches = [runs_to_sync_info[i:i + batch_size] for i in range(0, len(runs_to_sync_info), batch_size)]
+                
+                if not runs_to_sync_info:
+                    log_no_runs_to_sync(True)
                     time.sleep(5)
                     continue  # No runs to sync, skip to next cycle
-
+                log_no_runs_to_sync(False)
                 for batch in batches:
                     runs_data = [
                         {
@@ -149,9 +154,9 @@ def sync_with_cloud_loop(app):
                             'dnf': run.dnf,
                             'raw_time': run.raw_time,
                             'adjusted_time': run.adjusted_time,
-                            'updated_at': run.updated_at.isoformat()
+                            'updated_at': updated_at.isoformat()
                         }
-                        for run in batch
+                        for run, updated_at in batch
                     ]
                     append_sync_log(f"Syncing batch with {len(runs_data)} runs: " +
                         ", ".join([f"ID {r['id']} (Car {r['car_number']})" for r in runs_data]))
@@ -162,9 +167,14 @@ def sync_with_cloud_loop(app):
                             headers={'Authorization': 'P59d46bV5Xy40TblyzZR6J4dz4TlJ12lIswu2iiDYw2Hr8RqtPHoAWyWC8aevdDwVLJUsurbOo4M2aSSOFmmJ5DgaItek34yHYGTAyosU7GIBYhKBuihv3GyDPlCcr6fiKk7J3w0JE1yQeqbP2UPhjfyq63Azjd1wKK8Uhl3CUqJ4BPjipvzA1W1rQXFW1xc9Qdjqcs9IwrQ3edfPXSivYL'}
                         )
                         if response.status_code == 200:
-                            for run in batch:
-                                run.last_synced_at = datetime.now(timezone.utc)
-                                append_sync_log(f"Run {run.id} (Car {run.car_number}) marked as synced at {run.last_synced_at.isoformat()}")
+                            for run, orig_updated_at in batch:
+                                # Re-fetch run to check for concurrent updates
+                                db.session.refresh(run)
+                                if run.updated_at == orig_updated_at:
+                                    run.last_synced_at = datetime.now(timezone.utc)
+                                    append_sync_log(f"Run {run.id} (Car {run.car_number}) marked as synced at {run.last_synced_at.isoformat()}")
+                                else:
+                                    append_sync_log(f"Run {run.id} (Car {run.car_number}) was updated during sync, skipping last_synced_at update.")
                             db.session.commit()
                             append_sync_log("Batch synced successfully.")
                         else:
@@ -206,6 +216,17 @@ def api_sync_toggle():
     append_sync_log(f"Sync {status.lower()} by user.")
     return jsonify({"status": status})
 
+@bp.route('/api/force_sync', methods=['POST'])
+def api_force_sync():
+    try:
+        # Set last_synced_at to None for all runs so they will be re-synced
+        num_updated = db.session.query(RunOrder).update({RunOrder.last_synced_at: None})
+        db.session.commit()
+        append_sync_log(f"Force sync triggered: {num_updated} runs marked for sync.")
+        return jsonify({"status": "success", "message": f"Force sync triggered for {num_updated} runs."})
+    except Exception as e:
+        append_sync_log(f"Force sync error: {e}")
+        return jsonify({"status": "error", "message": f"Force sync failed: {e}"}), 500
 
 @bp.route('/add_run', methods=['POST'])
 def add_run():
