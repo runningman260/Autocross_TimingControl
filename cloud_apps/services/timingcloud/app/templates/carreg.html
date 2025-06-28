@@ -8,22 +8,20 @@
         <th>Car Number</th>
         <th>Team Name</th>
         <th>Class</th>
+        <th>Year</th>
         <th>Tag Number</th>
         <th>Scan Time</th>
-        <th>Created At</th>
-        <th>Updated At</th>
       </tr>
     </thead>
     <tbody>
       {% for car in cars %}
       <tr>
         <td>{{ car.car_number }}</td>
-        <td>{{ car.team_name }}</td>
+        <td>{{ car.team_name }}{% if car.team_abbreviation %} ({{ car.team_abbreviation }}){% endif %}</td>
         <td>{{ car.class_ }}</td>
+        <td>{{ car.year }}</td>
         <td>{{ car.tag_number }}</td>
         <td>{{ car.scan_time }}</td>
-        <td>{{ car.created_at }}</td>
-        <td>{{ car.updated_at }}</td>
       </tr>
       {% endfor %}
     </tbody>

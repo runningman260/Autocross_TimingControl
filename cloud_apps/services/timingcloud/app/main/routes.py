@@ -4,7 +4,7 @@ from flask import render_template, flash, redirect, send_from_directory, url_for
 from flask_babel import _, get_locale
 import sqlalchemy as sa
 from app import db
-from app.models import RunOrder, TopLaps, CarReg, PointsLeaderboardIC, PointsLeaderboardEV, ConesLeaderboard
+from app.models import RunOrder, TopLaps, CarReg, PointsLeaderboardIC, PointsLeaderboardEV, ConesLeaderboard, Team
 from app.main import bp
 
 
@@ -13,14 +13,23 @@ from app.main import bp
 @bp.route('/', methods=['GET', 'POST'])
 @bp.route('/runtable', methods=['GET', 'POST'])
 def runtable():
-    # Join RunOrder and CarReg to get team_name for each run
-    query = sa.select(RunOrder, CarReg.team_name).join(CarReg, RunOrder.car_number == CarReg.car_number, isouter=True).order_by(-RunOrder.id)
+    # Join RunOrder, CarReg, and Team to get team name and abbreviation for each run
+    query = (
+        sa.select(RunOrder, Team.name, Team.abbreviation)
+        .join(CarReg, RunOrder.car_number == CarReg.car_number, isouter=True)
+        .join(Team, CarReg.team_id == Team.id, isouter=True)
+        .order_by(-RunOrder.id)
+    )
     results = db.session.execute(query).all()
-    # Compose car_number with team_name in the same field
     runs = []
-    for run, team_name in results:
+    for run, team_name, team_abbr in results:
         run_display = run
-        run_display.car_number = run.car_number + (f" – {team_name}" if team_name else "")
+        if team_name and team_abbr:
+            run_display.car_number = f"{run.car_number} – {team_name} ({team_abbr})"
+        elif team_name:
+            run_display.car_number = f"{run.car_number} – {team_name}"
+        else:
+            run_display.car_number = run.car_number
         runs.append(run_display)
     page = request.args.get('page', 1, type=int)
     return render_template('runtable.html', title='Autocross', runs=runs)
@@ -34,28 +43,49 @@ def get_runs():
             since_timestamp = datetime.fromisoformat(since)
             try:
                 int(lastrun)
-                query = sa.select(RunOrder, CarReg.team_name).join(CarReg, RunOrder.car_number == CarReg.car_number, isouter=True).where(
-                    sa.or_(RunOrder.updated_at > since_timestamp, RunOrder.id > lastrun)
-                ).order_by(RunOrder.id)
+                query = (
+                    sa.select(RunOrder, Team.name, Team.abbreviation)
+                    .join(CarReg, RunOrder.car_number == CarReg.car_number, isouter=True)
+                    .join(Team, CarReg.team_id == Team.id, isouter=True)
+                    .where(sa.or_(RunOrder.updated_at > since_timestamp, RunOrder.id > lastrun))
+                    .order_by(RunOrder.id)
+                )
             except:
-                query = sa.select(RunOrder, CarReg.team_name).join(CarReg, RunOrder.car_number == CarReg.car_number, isouter=True).order_by(-RunOrder.id)
+                query = (
+                    sa.select(RunOrder, Team.name, Team.abbreviation)
+                    .join(CarReg, RunOrder.car_number == CarReg.car_number, isouter=True)
+                    .join(Team, CarReg.team_id == Team.id, isouter=True)
+                    .order_by(-RunOrder.id)
+                )
         except:
-            query = sa.select(RunOrder, CarReg.team_name).join(CarReg, RunOrder.car_number == CarReg.car_number, isouter=True).order_by(-RunOrder.id)
+            query = (
+                sa.select(RunOrder, Team.name, Team.abbreviation)
+                .join(CarReg, RunOrder.car_number == CarReg.car_number, isouter=True)
+                .join(Team, CarReg.team_id == Team.id, isouter=True)
+                .order_by(-RunOrder.id)
+            )
     else:
-        query = sa.select(RunOrder, CarReg.team_name).join(CarReg, RunOrder.car_number == CarReg.car_number, isouter=True).order_by(-RunOrder.id)
+        query = (
+            sa.select(RunOrder, Team.name, Team.abbreviation)
+            .join(CarReg, RunOrder.car_number == CarReg.car_number, isouter=True)
+            .join(Team, CarReg.team_id == Team.id, isouter=True)
+            .order_by(-RunOrder.id)
+        )
 
     results = db.session.execute(query).all()
     runs_data = [
         {
             'id': run.id,
-            'car_number': run.car_number + (f" – {team_name}" if team_name else ""),
+            'car_number': run.car_number,
+            'team_name': team_name,
+            'team_abbreviation': team_abbr,
             'cones': run.cones,
             'off_course': run.off_course,
             'dnf': run.dnf,
             'raw_time': run.raw_time,
             'adjusted_time': run.adjusted_time
         }
-        for run, team_name in results
+        for run, team_name, team_abbr in results
     ]
     return jsonify(runs_data)
 
@@ -182,8 +212,25 @@ def api_toplaps():
 
 @bp.route('/carreg', methods=['GET'])
 def carreg():
-    query = sa.select(CarReg)
-    cars = db.session.scalars(query).all()
+    query = sa.select(CarReg, Team.name, Team.abbreviation).join(Team, CarReg.team_id == Team.id, isouter=True)
+    results = db.session.execute(query).all()
+    cars = []
+    for car, team_name, team_abbr in results:
+        car_display = {
+            'id': car.id,
+            'scan_time': car.scan_time.isoformat() if car.scan_time else None,
+            'tag_number': car.tag_number,
+            'car_number': car.car_number,
+            'team_id': car.team_id,
+            'team_name': team_name,
+            'team_abbreviation': team_abbr,
+            'class_': car.class_,
+            'year': car.year
+        }
+        cars.append(car_display)
+    # Return JSON if requested, otherwise render template
+    if request.accept_mimetypes['application/json'] >= request.accept_mimetypes['text/html']:
+        return jsonify(cars)
     return render_template('carreg.html', title='Car Registration', cars=cars)
 
 # @bp.route('/fixdata', methods=['GET', 'POST']) #this is a temporary function to fill in adjusted times and fix data for runs that were missing them

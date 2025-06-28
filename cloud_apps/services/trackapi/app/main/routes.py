@@ -30,7 +30,6 @@ def update_runs():
             run.dnf = run_data.get('dnf', run.dnf)
             run.raw_time = run_data.get('raw_time', run.raw_time)
             run.adjusted_time = run_data.get('adjusted_time', run.adjusted_time)
-            run.updated_at = datetime.fromisoformat(run_data['updated_at'])
         else:
             # Insert new row
             new_run = RunOrder(**run_data)
@@ -48,19 +47,84 @@ def update_car_regs():
     for car_data in data['car_regs']:
         car = db.session.query(CarReg).filter_by(id=car_data.get('id')).first()
         if car:
-            # Update existing row
             car.scan_time = datetime.fromisoformat(car_data.get('scan_time', car.scan_time.isoformat()))
             car.tag_number = car_data.get('tag_number', car.tag_number)
             car.car_number = car_data.get('car_number', car.car_number)
-            car.team_name = car_data.get('team_name', car.team_name)
+            car.team_id = car_data.get('team_id', car.team_id)
             car.class_ = car_data.get('class_', car.class_)
+            car.year = car_data.get('year', car.year)
         else:
-            # Insert new row
-            new_car = CarReg(**car_data)
+            new_car = CarReg(
+                scan_time=datetime.fromisoformat(car_data['scan_time']),
+                tag_number=car_data['tag_number'],
+                car_number=car_data['car_number'],
+                team_id=car_data['team_id'],
+                class_=car_data['class_'],
+                year=car_data.get('year', '')
+            )
             db.session.add(new_car)
 
     db.session.commit()
     return jsonify({'status': 'success'}), 200
+
+from app.models import Team
+
+@bp.route('/api/teams', methods=['GET'])
+def get_teams():
+    teams = db.session.query(Team).all()
+    result = [
+        {
+            'id': team.id,
+            'name': team.name,
+            'abbreviation': team.abbreviation
+        }
+        for team in teams
+    ]
+    return jsonify(result)
+
+@bp.route('/api/car_regs', methods=['GET'])
+def get_car_regs():
+    car_regs = db.session.query(CarReg).all()
+    result = [
+        {
+            'id': car.id,
+            'scan_time': car.scan_time.isoformat() if car.scan_time else None,
+            'tag_number': car.tag_number,
+            'car_number': car.car_number,
+            'team_id': car.team_id,
+            'class_': car.class_,
+            'year': car.year
+        }
+        for car in car_regs
+    ]
+    return jsonify(result)
+
+@bp.route('/api/car_regs/modified_since', methods=['GET'])
+def get_car_regs_modified_since():
+    timestamp = request.args.get('since')
+    if not timestamp:
+        return jsonify({'status': 'error', 'message': 'Missing "since" query parameter'}), 400
+    try:
+        since_dt = datetime.fromisoformat(timestamp)
+    except Exception:
+        return jsonify({'status': 'error', 'message': 'Invalid timestamp format'}), 400
+
+    car_regs = db.session.query(CarReg).filter(CarReg.updated_at > since_dt).all()
+    result = [
+        {
+            'id': car.id,
+            'scan_time': car.scan_time.isoformat() if car.scan_time else None,
+            'tag_number': car.tag_number,
+            'car_number': car.car_number,
+            'team_id': car.team_id,
+            'class_': car.class_,
+            'year': getattr(car, 'year', None),
+            'created_at': car.created_at.isoformat() if car.created_at else None,
+            'updated_at': car.updated_at.isoformat() if car.updated_at else None
+        }
+        for car in car_regs
+    ]
+    return jsonify(result)
 
 # @bp.route('/api/runs', methods=['GET'])
 # def get_runs():

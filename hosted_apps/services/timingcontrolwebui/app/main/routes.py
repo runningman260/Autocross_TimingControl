@@ -5,7 +5,7 @@ from flask_babel import _, get_locale
 import sqlalchemy as sa
 from app import db, mqtt
 from app.main.forms import EmptyForm, PostForm, SearchForm, RunEditForm, AddRunForm, EditRunForm
-from app.models import RunOrder, TopLaps, CarReg, PointsLeaderboardIC, PointsLeaderboardEV, ConesLeaderboard
+from app.models import RunOrder, TopLaps, CarReg, PointsLeaderboardIC, PointsLeaderboardEV, ConesLeaderboard, Team
 from app.main import bp
 import requests
 import threading
@@ -38,11 +38,6 @@ def runtable():
                     run.off_course = int(run.off_course)
                 except:
                     run.off_course = 0
-                # if run.raw_time is None: 
-                #     run.raw_time = 0.0 
-                
-
-
                 if 'submit_plus_cone' in request.form:
                     run.cones+=1
                     actionmessage='Added Cone'
@@ -65,8 +60,6 @@ def runtable():
                     elif "DNF" in str(run.dnf):
                         run.dnf=None
                         actionmessage='Removed DNF'  
-
-                
                 carmessage += "Run " + f"{run.id}"+ " Car " +f"{run.car_number} - " + actionmessage + "<br>"
                 db.session.commit()
                 updated_runs.append(run)
@@ -87,8 +80,20 @@ def runtable():
             return jsonify(response)
             #flash?
             #somehow return via ajax and keep current pageview/selections
-    query = sa.select(RunOrder).order_by(-RunOrder.id)
-    runs = db.session.scalars(query).all()
+    # Updated GET logic: join RunOrder, CarReg, Team
+    query = (
+        sa.select(RunOrder, Team.name, Team.abbreviation)
+        .join(CarReg, RunOrder.car_number == CarReg.car_number, isouter=True)
+        .join(Team, CarReg.team_id == Team.id, isouter=True)
+        .order_by(-RunOrder.id)
+    )
+    results = db.session.execute(query).all()
+    runs = []
+    for run, team_name, team_abbr in results:
+        run_display = run
+        run_display.team_name = team_name
+        run_display.team_abbreviation = team_abbr
+        runs.append(run_display)
     page = request.args.get('page', 1, type=int)
     
     return render_template('runtable.html', title='Run Table', runs=runs, form=form, addRunForm=addRunForm, editRunForm=editRunForm)
@@ -100,6 +105,9 @@ sync_thread_running = True
 sync_thread_paused = True
 sync_log = deque(maxlen=100)  # use deque for thread-safe rolling log
 sync_log_lock = threading.Lock()
+
+last_carreg_sync_time = time.time()
+carreg_sync_interval = 10  # seconds
 
 def append_sync_log(line):
     with sync_log_lock:
@@ -187,6 +195,54 @@ def sync_with_cloud_loop(app):
                 append_sync_log(f"Sync thread error: {e}")
                 time.sleep(25)
 
+            # --- Sync CarReg with Cloud ---
+            global last_carreg_sync_time
+            now = time.time()
+            if now - last_carreg_sync_time > carreg_sync_interval:
+                try:
+                    # Get the most recent updated_at in local CarReg
+                    most_recent = db.session.query(CarReg).order_by(CarReg.updated_at.desc()).first()
+                    since = most_recent.updated_at.isoformat() if most_recent and most_recent.updated_at else "1970-01-01T00:00:00+00:00"
+                    url = "https://trackapi.guttenp.land/api/car_regs/modified_since"
+                    params = {"since": since}
+                    response = requests.get(url, params=params, timeout=10)
+                    if response.status_code == 200:
+                        car_regs = response.json()
+                        for car in car_regs:
+                            # Ensure team exists
+                            team = db.session.query(Team).filter_by(id=car['team_id']).first()
+                            if not team:
+                                # Optionally fetch team info from /api/teams or skip/add logic to fetch team
+                                continue
+                            # Upsert CarReg
+                            local_car = db.session.query(CarReg).filter_by(car_number=car['car_number']).first()
+                            if local_car:
+                                local_car.scan_time = datetime.fromisoformat(car['scan_time']) if car['scan_time'] else None
+                                local_car.tag_number = car['tag_number']
+                                local_car.team_id = car['team_id']
+                                local_car.class_ = car['class_']
+                                local_car.year = car.get('year', '')
+                                local_car.updated_at = datetime.fromisoformat(car['updated_at']) if car['updated_at'] else datetime.now(timezone.utc)
+                            else:
+                                new_car = CarReg(
+                                    scan_time=datetime.fromisoformat(car['scan_time']) if car['scan_time'] else None,
+                                    tag_number=car['tag_number'],
+                                    car_number=car['car_number'],
+                                    team_id=car['team_id'],
+                                    class_=car['class_'],
+                                    year=car.get('year', ''),
+                                    created_at=datetime.fromisoformat(car['created_at']) if car['created_at'] else datetime.now(timezone.utc),
+                                    updated_at=datetime.fromisoformat(car['updated_at']) if car['updated_at'] else datetime.now(timezone.utc)
+                                )
+                                db.session.add(new_car)
+                        db.session.commit()
+                        append_sync_log(f"CarReg sync: {len(car_regs)} records updated from cloud.")
+                    else:
+                        append_sync_log(f"CarReg sync error: {response.text}")
+                except Exception as e:
+                    append_sync_log(f"CarReg sync error: {e}")
+                last_carreg_sync_time = now
+
 @bp.record_once
 def on_load(state):
     # Use the app from the state
@@ -251,7 +307,9 @@ def add_run():
                     'off_course': new_run.off_course,
                     'dnf': new_run.dnf,
                     'raw_time': new_run.raw_time,
-                    'adjusted_time': new_run.adjusted_time
+                    'adjusted_time': new_run.adjusted_time,
+                    'team_name': car.team.name if car.team else None,
+                    'team_abbreviation': car.team.abbreviation if car.team else None
                 }
             }
             # Let the Traffic Light Controller know to unlock the red->yellow transition
@@ -292,7 +350,9 @@ def edit_run(run_id):
                     'off_course': run.off_course,
                     'dnf': run.dnf,
                     'raw_time': run.raw_time,
-                    'adjusted_time': run.adjusted_time
+                    'adjusted_time': run.adjusted_time,
+                    'team_name': car.team.name if car.team else None,
+                    'team_abbreviation': car.team.abbreviation if car.team else None
                 }
             }
             return jsonify(response), 200
@@ -304,7 +364,6 @@ def edit_run(run_id):
 
 @bp.route('/api/runs', methods=['GET'])
 def get_runs():
-    #fixdata()
     since = request.args.get('since')
     lastrun = request.args.get('lastrun')
     if since and lastrun:
@@ -312,27 +371,49 @@ def get_runs():
             since_timestamp = datetime.fromisoformat(since)
             try:
                 int(lastrun)
-                query = sa.select(RunOrder).where(sa.or_(RunOrder.updated_at > since_timestamp,RunOrder.id > lastrun)).order_by(RunOrder.id)
+                query = (
+                    sa.select(RunOrder, Team.name, Team.abbreviation)
+                    .join(CarReg, RunOrder.car_number == CarReg.car_number, isouter=True)
+                    .join(Team, CarReg.team_id == Team.id, isouter=True)
+                    .where(sa.or_(RunOrder.updated_at > since_timestamp, RunOrder.id > lastrun))
+                    .order_by(RunOrder.id)
+                )
             except:
-                query = sa.select(RunOrder).order_by(-RunOrder.id)
+                query = (
+                    sa.select(RunOrder, Team.name, Team.abbreviation)
+                    .join(CarReg, RunOrder.car_number == CarReg.car_number, isouter=True)
+                    .join(Team, CarReg.team_id == Team.id, isouter=True)
+                    .order_by(-RunOrder.id)
+                )
         except:
-            query = sa.select(RunOrder).order_by(-RunOrder.id)        
+            query = (
+                sa.select(RunOrder, Team.name, Team.abbreviation)
+                .join(CarReg, RunOrder.car_number == CarReg.car_number, isouter=True)
+                .join(Team, CarReg.team_id == Team.id, isouter=True)
+                .order_by(-RunOrder.id)
+            )
     else:
-        query = sa.select(RunOrder).order_by(-RunOrder.id)
-    
-    
-    runs=db.session.scalars(query).all()
+        query = (
+            sa.select(RunOrder, Team.name, Team.abbreviation)
+            .join(CarReg, RunOrder.car_number == CarReg.car_number, isouter=True)
+            .join(Team, CarReg.team_id == Team.id, isouter=True)
+            .order_by(-RunOrder.id)
+        )
+
+    results = db.session.execute(query).all()
     runs_data = [
         {
             'id': run.id,
             'car_number': run.car_number,
+            'team_name': team_name,
+            'team_abbreviation': team_abbr,
             'cones': run.cones,
             'off_course': run.off_course,
             'dnf': run.dnf,
             'raw_time': run.raw_time,
             'adjusted_time': run.adjusted_time
         }
-        for run in runs
+        for run, team_name, team_abbr in results
     ]
     return jsonify(runs_data)
 

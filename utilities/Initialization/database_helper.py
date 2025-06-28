@@ -707,8 +707,69 @@ def create_adjust_time_trigger():
 		print(error)
 
 
+def insert_teams():
+	teams = [
+		("Clarkson University Clarkson FSAE", "CLARK"),
+		("Wayne State University Warrior Racing", "WARR"),
+		("Ecole de technologie superieure - Formule ETS", "ETS"),
+		("MRacing Formula SAE", "MR"),
+		("Univ of Connecticut Formula SAE", "UCON"),
+		("University of Waterloo Formula Electric", "UWFE"),
+		("University of Ottawa", "FUO"),
+		("University of Virginia Virginia Motorsports", "UVA"),
+		("The Ohio State University - Formula Buckeyes", "OSU"),
+		("North Carolina State University, Pack Motorsports FSAE", "PACK"),
+		("Oakland University Grizzlies Racing", "GRIZZ"),
+		("Temple University Temple Formula Racing", "TMPL"),
+		("Michigan Technological University Racing", "MTUR"),
+		("Northern Illinois University Huskie Motorsports", "NIU"),
+		("Villanova University NovaRacing", "NOVA"),
+		("University of Cincinnati's Bearcats Racing", "CINCI"),
+		("Michigan State University State Racing", "MSUR"),
+		("University of Toledo Rocket Motorsports", "OTRM"),
+		("Polytechnique Montreal Formule Polytechnique Montreal", "FPM"),
+		("Pellissippi State Community College Pellissippi State Motorsports Team", "PELL"),
+		("Western University Western Formula Racing", "WFR"),
+		("Penn State University Nittany Motorsports", "PSU"),
+		("University of Windsor Lancer Motorsports", "UWLM"),
+		("Rochester Institute of Technology RIT Racing", "RIT"),
+		("University of Pittsburgh Panther Racing", "PITT"),
+		("Western Michigan University Bronco Racing", "WMBR"),
+		("The University of Akron Zips Racing", "AKRON"),
+		("Rutgers Formula Racing", "RUT"),
+		("Drexel University Formula SAE", "DREXL"),
+		("Virginia Tech, VT Motorsports", "VTM"),
+		("UIC Formula SAE", "UIC"),
+		("York College of Pennsylvania YC Racing", "YCR"),
+		("Liberty University Flames Racing", "LUFR"),
+		("Carnegie Mellon Racing", "CMR"),
+		("Kennesaw State University Kennesaw Motorsports", "KSUM")
+	]
+	try:
+		with psycopg2.connect(
+			host=Config.DB.HOST,
+			database=Config.DB.NAME,
+			user=Config.DB.USER,
+			password=Config.DB.PASS) as conn:
+			with conn.cursor() as cur:
+				for name, abbr in teams:
+					cur.execute(
+						"INSERT INTO team (name, abbreviation) VALUES (%s, %s) ON CONFLICT (abbreviation) DO NOTHING;",
+						(name, abbr)
+					)
+				conn.commit()
+	except (psycopg2.DatabaseError, Exception) as error:
+		print(error)
+
 def clear_and_create_schema():
 	database_tables = {
+		"team":
+		"""
+			CREATE TABLE team(
+				id SERIAL PRIMARY KEY,
+				name VARCHAR(255) NOT NULL,
+				abbreviation VARCHAR(32) UNIQUE NOT NULL
+			);""",
 		"carreg":
 		"""
 			CREATE TABLE carreg(
@@ -716,8 +777,9 @@ def clear_and_create_schema():
 				scan_time VARCHAR(255),
 				tag_number  VARCHAR(255),
 				car_number VARCHAR(255),
-				team_name VARCHAR(255),
+				team_id INTEGER REFERENCES team(id),
 				class VARCHAR(255),
+				year VARCHAR(4),
 				created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 				updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 				UNIQUE (car_number)
@@ -777,13 +839,14 @@ def clear_and_create_schema():
 	delete_table("runtable")
 	delete_table("laptimeraw")
 	delete_table("leaderboard")
+	delete_table("team")
 	delete_function("startlinescan_set_timestamp")
 	delete_function("finishlinescan_set_timestamp")
 	delete_function("runtable_set_timestamp")
 	delete_function("laptimeraw_set_timestamp")
 	delete_function("leaderboard_set_timestamp")
 	delete_view("leaderboard")
-	delete_view("points_leaderboard")
+	delete_table("points_leaderboard")
 	delete_view("cones_leaderboard")
 	
 	for table_name in database_tables:
@@ -816,6 +879,8 @@ def clear_and_create_schema():
 			create_pg_notify_trigger(table_name,function_name,trigger_name)
 			create_update_adjusted_time_calc_function()
 			create_adjust_time_trigger()
-	
+	insert_teams()
+
+
 
 

@@ -33,14 +33,23 @@ class RunOrder(db.Model):
     def print_row(self):
         return f'{self.id}; {self.car_number}; {self.cones}; {self.off_course}; {self.dnf}; {self.raw_time}; {self.adjusted_time};'
 
+class Team(db.Model):
+    __tablename__ = 'team'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    name = db.Column(db.String(128), unique=True, nullable=False)
+    abbreviation = db.Column(db.String(16), unique=True, nullable=False)
+    car_regs = db.relationship("CarReg", back_populates="team")
+
 class CarReg(db.Model):
     __tablename__ = 'carreg'
     id: so.Mapped[int] = so.mapped_column(primary_key=True, autoincrement=True)
     scan_time: so.Mapped[datetime] = so.mapped_column(sa.DateTime)
     tag_number: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
     car_number: so.Mapped[str] = so.mapped_column(sa.String(128), index=True, unique=True)
-    team_name: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    team_id: so.Mapped[int] = so.mapped_column(sa.Integer, sa.ForeignKey('team.id'), index=True)
+    team = so.relationship("Team", back_populates="car_regs")
     class_: so.Mapped[str] = so.mapped_column(sa.String(128), index=True, name='class')
+    year: so.Mapped[str] = so.mapped_column(sa.String(16))
     created_at: so.Mapped[datetime] = so.mapped_column(sa.DateTime, nullable=False, default=datetime.now)
     updated_at: so.Mapped[datetime] = so.mapped_column(sa.DateTime, nullable=False, default=datetime.now)
 
