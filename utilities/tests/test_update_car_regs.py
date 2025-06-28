@@ -29,12 +29,19 @@ def main():
                 payload = {"car_regs": [car_reg]}
                 print("Payload:", payload)
                 headers = {"Authorization": f"{AUTH}"}
-                response = requests.post(API_URL, json=payload, headers=headers)
-                print("Status Code:", response.status_code)
-                print("Response JSON:", response.json())
-                time.sleep(3)  # Delay 1 second between requests
+                try:
+                    response = requests.post(API_URL, json=payload, headers=headers)
+                    print("Status Code:", response.status_code)
+                    try:
+                        print("Response JSON:", response.json())
+                    except Exception as e:
+                        print(f"Error decoding JSON response: {e}")
+                except Exception as e:
+                    print(f"Request failed: {e}")
+                time.sleep(1)  # Delay 1 second between requests
     except Exception as e:
         print(f"An error occurred: {e}")
+        
 
 if __name__ == "__main__":
     main()

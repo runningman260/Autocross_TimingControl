@@ -4,7 +4,6 @@ from flask import render_template, flash, redirect, send_from_directory, url_for
 from flask_babel import _, get_locale
 import sqlalchemy as sa
 from app import db
-from app.main.forms import EmptyForm, PostForm, SearchForm, RunEditForm
 from app.models import RunOrder, TopLaps, CarReg, PointsLeaderboardIC, PointsLeaderboardEV, ConesLeaderboard
 from app.main import bp
 
@@ -189,6 +188,13 @@ def api_toplaps():
             }
             runs.append(run)
         return jsonify(runs)
+
+@bp.route('/carreg', methods=['GET'])
+def carreg():
+    query = sa.select(CarReg)
+    cars = db.session.scalars(query).all()
+    return render_template('carreg.html', title='Car Registration', cars=cars)
+
 # @bp.route('/fixdata', methods=['GET', 'POST']) #this is a temporary function to fill in adjusted times and fix data for runs that were missing them
 # def fixdata():
 #     query = sa.select(RunOrder)

@@ -172,11 +172,10 @@ def sync_with_cloud_loop(app):
                     except requests.exceptions.RequestException as e:
                         append_sync_log(f"Network error: {e}")
                         break
-                #append_sync_log("Sync cycle complete. Sleeping 20 seconds.")
                 time.sleep(5)
             except Exception as e:
                 append_sync_log(f"Sync thread error: {e}")
-                time.sleep(5)
+                time.sleep(25)
 
 @bp.record_once
 def on_load(state):
@@ -345,7 +344,7 @@ def toplaps():
         TopLaps.adjusted_time,
         CarReg.team_name,
         CarReg.class_
-    ).join(CarReg, TopLaps.car_number == CarReg.car_number).order_by(TopLaps.adjusted_time)
+    ).join(CarReg, TopLaps.car_number == CarReg.car_number)
     
     result = db.session.execute(query).all()
     runs = []
@@ -433,7 +432,7 @@ def api_toplaps():
             TopLaps.adjusted_time,
             CarReg.team_name,
             CarReg.class_
-        ).join(CarReg, TopLaps.car_number == CarReg.car_number).order_by(TopLaps.adjusted_time)
+        ).join(CarReg, TopLaps.car_number == CarReg.car_number)
         
         result = db.session.execute(query).all()
         runs = []
