@@ -23,7 +23,7 @@ def runtable():
         run_display.car_number = run.car_number + (f" – {team_name}" if team_name else "")
         runs.append(run_display)
     page = request.args.get('page', 1, type=int)
-    return render_template('runtable.html', title='Run Table', runs=runs)
+    return render_template('runtable.html', title='Autocross', runs=runs)
 
 @bp.route('/api/runs', methods=['GET'])
 def get_runs():
