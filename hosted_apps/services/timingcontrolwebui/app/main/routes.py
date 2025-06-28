@@ -337,30 +337,18 @@ def favicon():
 
 @bp.route('/toplaps', methods=['GET', 'POST'])
 def toplaps():
-    query = sa.select(
-        TopLaps.car_number,
-        TopLaps.adjusted_time,
-        CarReg.team_name,
-        CarReg.class_,
-        RunOrder.cones,
-        RunOrder.off_course,
-        RunOrder.id
-    ).join(CarReg, TopLaps.car_number == CarReg.car_number
-    ).join(RunOrder, sa.and_(
-        TopLaps.car_number == RunOrder.car_number,
-        TopLaps.adjusted_time == RunOrder.adjusted_time
-    ))
-    result = db.session.execute(query).all()
+    query = sa.select(TopLaps)
+    toplaps_data = db.session.scalars(query).all()
     runs = []
-    for row in result:
+    for lap in toplaps_data:
         run = {
-            'team_name': row.team_name,
-            'car_number': row.car_number,
-            'adjusted_time': row.adjusted_time,
-            'class_': row.class_,
-            'cones': row.cones,
-            'off_course': row.off_course,
-            'id': row.id
+            'team_name': lap.team_name,
+            'car_number': lap.car_number,
+            'adjusted_time': lap.adjusted_time,
+            'class_': lap.class_,
+            'cones': lap.cones,
+            'off_course': lap.off_course,
+            'id': lap.id
         }
         runs.append(run)
     return render_template('toplaps.html', title='Top Laps', runs=runs)
@@ -432,30 +420,18 @@ def api_cones_leaderboard():
 #should top laps be limited to a certain number of laps?
 @bp.route('/api/toplaps', methods=['GET'])
 def api_toplaps():
-    query = sa.select(
-        TopLaps.car_number,
-        TopLaps.adjusted_time,
-        CarReg.team_name,
-        CarReg.class_,
-        RunOrder.cones,
-        RunOrder.off_course,
-        RunOrder.id
-    ).join(CarReg, TopLaps.car_number == CarReg.car_number
-    ).join(RunOrder, sa.and_(
-        TopLaps.car_number == RunOrder.car_number,
-        TopLaps.adjusted_time == RunOrder.adjusted_time
-    ))
-    result = db.session.execute(query).all()
+    query = sa.select(TopLaps)
+    toplaps_data = db.session.scalars(query).all()
     runs = []
-    for row in result:
+    for lap in toplaps_data:
         run = {
-            'team_name': row.team_name,
-            'car_number': row.car_number,
-            'adjusted_time': row.adjusted_time,
-            'class_': row.class_,
-            'cones': row.cones,
-            'off_course': row.off_course,
-            'id': row.id
+            'team_name': lap.team_name,
+            'car_number': lap.car_number,
+            'adjusted_time': lap.adjusted_time,
+            'class_': lap.class_,
+            'cones': lap.cones,
+            'off_course': lap.off_course,
+            'id': lap.id
         }
         runs.append(run)
     return jsonify(runs)

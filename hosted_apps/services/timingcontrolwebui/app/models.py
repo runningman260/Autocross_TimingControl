@@ -60,6 +60,7 @@ class TopLaps(db.Model):
     cones: so.Mapped[int] = so.mapped_column(sa.Integer)
     off_course: so.Mapped[int] = so.mapped_column(sa.Integer)
     id: so.Mapped[int] = so.mapped_column(sa.Integer)
+    class_: so.Mapped[str] = so.mapped_column(sa.String(128), index=True, name='class')
     
 class PointsLeaderboardIC(db.Model):
     __tablename__ = 'points_leaderboard_ic'
