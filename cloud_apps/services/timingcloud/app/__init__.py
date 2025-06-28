@@ -7,6 +7,7 @@ from flask_babel import Babel, lazy_gettext as _l
 import rq
 from config import Config
 import sqlalchemy as sa
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 def get_locale():
     return request.accept_languages.best_match(current_app.config['LANGUAGES'])
@@ -28,6 +29,7 @@ def create_app(config_class=Config):
     from app.main import bp as main_bp
     app.register_blueprint(main_bp)
 
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)
 
     if not app.debug and not app.testing:
 
