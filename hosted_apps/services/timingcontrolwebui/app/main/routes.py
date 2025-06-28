@@ -107,7 +107,7 @@ sync_log = deque(maxlen=100)  # use deque for thread-safe rolling log
 sync_log_lock = threading.Lock()
 
 last_carreg_sync_time = time.time()
-carreg_sync_interval = 10  # seconds
+carreg_sync_interval = 30  # seconds
 
 def append_sync_log(line):
     with sync_log_lock:
@@ -212,7 +212,6 @@ def sync_with_cloud_loop(app):
                             # Ensure team exists
                             team = db.session.query(Team).filter_by(id=car['team_id']).first()
                             if not team:
-                                # Optionally fetch team info from /api/teams or skip/add logic to fetch team
                                 continue
                             # Upsert CarReg
                             local_car = db.session.query(CarReg).filter_by(car_number=car['car_number']).first()
@@ -223,6 +222,7 @@ def sync_with_cloud_loop(app):
                                 local_car.class_ = car['class_']
                                 local_car.year = car.get('year', '')
                                 local_car.updated_at = datetime.fromisoformat(car['updated_at']) if car['updated_at'] else datetime.now(timezone.utc)
+                                print(f"[CarReg Sync] Updated car_number={local_car.car_number}, team_id={local_car.team_id}")
                             else:
                                 new_car = CarReg(
                                     scan_time=datetime.fromisoformat(car['scan_time']) if car['scan_time'] else None,
@@ -235,6 +235,7 @@ def sync_with_cloud_loop(app):
                                     updated_at=datetime.fromisoformat(car['updated_at']) if car['updated_at'] else datetime.now(timezone.utc)
                                 )
                                 db.session.add(new_car)
+                                print(f"[CarReg Sync] Added car_number={new_car.car_number}, team_id={new_car.team_id}")
                         db.session.commit()
                         append_sync_log(f"CarReg sync: {len(car_regs)} records updated from cloud.")
                     else:
