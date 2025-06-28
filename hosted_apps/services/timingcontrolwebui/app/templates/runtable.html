@@ -153,6 +153,21 @@
                     <a class="btn btn-success mb-2 btn-lg mx-1 flex-fill" href="#" id="refresh-button"><i class="bi bi-arrow-clockwise"></i><br> Refresh</a>
                 </div>
             </div>
+            <!-- Sync Log Row -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card mt-2">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span>Cloud Sync Status: <span id="sync-status">Loading...</span></span>
+                            <button class="btn btn-sm btn-secondary" id="sync-toggle-btn">Pause/Resume</button>
+                        </div>
+                        <div class="card-body" style="background: #222; color: #0f0; font-family: monospace; max-height: 200px; overflow-y: auto; font-size: 0.95em;">
+                            <pre id="sync-log" style="margin:0; background:transparent; color:inherit;"></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- End Sync Log Row -->
             </div>
         </div>
     </form>
@@ -319,10 +334,36 @@
         
         intervalId = setInterval(async function() {
             await updateRunsTable(); 
-          }, 5000);
+          }, 2000);
       }
       document.addEventListener('DOMContentLoaded', update_table_periodically);
 
+    // --- Cloud Sync Log UI ---
+    function fetchSyncLog() {
+        fetch('/api/sync_log')
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('sync-status').textContent = data.status;
+                var syncLogElem = document.getElementById('sync-log');
+                // Use innerText for better compatibility
+                syncLogElem.innerText = data.log.join('\n');
+                // Scroll after DOM update
+                setTimeout(function() {
+                    syncLogElem.scrollTop = syncLogElem.scrollHeight;
+                }, 0);
+                document.getElementById('sync-toggle-btn').textContent = (data.status === "Paused" ? "Resume" : "Pause");
+            });
+    }
+    document.getElementById('sync-toggle-btn').addEventListener('click', function() {
+        fetch('/api/sync_toggle', {method: 'POST'})
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('sync-status').textContent = data.status;
+                fetchSyncLog();
+            });
+    });
+    setInterval(fetchSyncLog, 2000);
+    fetchSyncLog();
         
     </script>
     {% endblock %}

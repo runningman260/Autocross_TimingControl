@@ -8,25 +8,9 @@ from app.main.forms import EmptyForm, PostForm, SearchForm, RunEditForm, AddRunF
 from app.models import RunOrder, TopLaps, CarReg, PointsLeaderboardIC, PointsLeaderboardEV, ConesLeaderboard
 from app.main import bp
 import requests
-
-
-def calculateAdjustedTime(run:RunOrder):
-    # I hate that this is at the top here
-
-    if "DNF" in str(run.dnf):
-        run.adjusted_time = "DNF"
-    else:
-        if run.adjusted_time==0.0: 
-            run.adjusted_time=run.raw_time
-        offset:int = 0
-        #run.adjusted_time = float(run.raw_time)
-        offset += int(run.cones) * 2
-        offset += int(run.off_course) * 20
-        offset += float(run.raw_time)
-        offset = round(offset, 3)
-        run.adjusted_time = offset
-        #print(f"Adjusted Time: {run.adjusted_time}")
-    return run
+import threading
+import time
+from collections import deque
 
 
 @bp.route('/', methods=['GET', 'POST'])
@@ -84,7 +68,6 @@ def runtable():
 
                 
                 carmessage += "Run " + f"{run.id}"+ " Car " +f"{run.car_number} - " + actionmessage + "<br>"
-                #run = calculateAdjustedTime(run)
                 db.session.commit()
                 updated_runs.append(run)
             message = carmessage
@@ -111,57 +94,118 @@ def runtable():
     return render_template('runtable.html', title='Run Table', runs=runs, form=form, addRunForm=addRunForm, editRunForm=editRunForm)
 
 
+# --- Sync Thread Globals ---
+sync_thread = None
+sync_thread_running = True
+sync_thread_paused = True
+sync_log = deque(maxlen=100)  # use deque for thread-safe rolling log
+sync_log_lock = threading.Lock()
 
+def append_sync_log(line):
+    with sync_log_lock:
+        sync_log.append(f"[{datetime.now().strftime('%H:%M:%S')}] {line}")
 
-def sync_with_cloud():
-    # Query rows that need to be synced
-    query = sa.select(RunOrder).where(
-        sa.or_(
-            RunOrder.updated_at > RunOrder.last_synced_at,
-            RunOrder.last_synced_at.is_(None)
-        )
-    ).order_by(RunOrder.updated_at)
-    runs_to_sync = db.session.scalars(query).all()
+def log_no_runs_to_sync():
+    with sync_log_lock:
+        msg = "No runs to sync."
+        if sync_log and sync_log[-1].endswith(msg):
+            sync_log.pop()
+        sync_log.append(f"[{datetime.now().strftime('%H:%M:%S')}] {msg}")
 
-    # Prepare data for batch update
-    batch_size = 50  # Number of rows per batch
-    batches = [runs_to_sync[i:i + batch_size] for i in range(0, len(runs_to_sync), batch_size)]
+def sync_with_cloud_loop(app):
+    global sync_thread_running, sync_thread_paused
+    with app.app_context():
+        append_sync_log("Sync thread Paused.")
+        while sync_thread_running:
+            if sync_thread_paused:
+                time.sleep(1)
+                continue
+            try:
+                #append_sync_log("Sync cycle started.")
+                # Query rows that need to be synced
+                query = sa.select(RunOrder).where(
+                    sa.or_(
+                        RunOrder.updated_at > RunOrder.last_synced_at,
+                        RunOrder.last_synced_at.is_(None)
+                    )
+                ).order_by(RunOrder.updated_at)
+                runs_to_sync = db.session.scalars(query).all()
+                #append_sync_log(f"Found {len(runs_to_sync)} runs to sync.")
+                batch_size = 50
+                batches = [runs_to_sync[i:i + batch_size] for i in range(0, len(runs_to_sync), batch_size)]
 
-    for batch in batches:
-        runs_data = [
-            {
-                'id': run.id,
-                'car_number': run.car_number,
-                'cones': run.cones,
-                'off_course': run.off_course,
-                'dnf': run.dnf,
-                'raw_time': run.raw_time,
-                'adjusted_time': run.adjusted_time,
-                'updated_at': run.updated_at.isoformat()
-            }
-            for run in batch
-        ]
-        print(f"Syncing batch with {len(runs_data)} runs:")
-        for run_data in runs_data:
-            print(f"  Updating Run ID {run_data['id']} (Car {run_data['car_number']}) - Cones: {run_data['cones']}, Off Course: {run_data['off_course']}, DNF: {run_data['dnf']}, Raw Time: {run_data['raw_time']}, Adjusted Time: {run_data['adjusted_time']}, Updated At: {run_data['updated_at']}")
-        try:
-            response = requests.post(
-                'https://trackapi.guttenp.land/api/update_runs',
-                json={'runs': runs_data},
-                headers={'Authorization': 'qwertyuiop'}
-            )
-            if response.status_code == 200:
-                # Update last_synced_at for successfully synced rows
-                for run in batch:
-                    run.last_synced_at = datetime.now(timezone.utc)
-                db.session.commit()
-            else:
-                print(f"Error syncing batch: {response.json()}")
-        except requests.exceptions.RequestException as e:
-            print(f"Network error: {e}")
-            break  # Stop processing batches if there's a network error
+                if not runs_to_sync:
+                    log_no_runs_to_sync()
+                    time.sleep(5)
+                    continue  # No runs to sync, skip to next cycle
 
+                for batch in batches:
+                    runs_data = [
+                        {
+                            'id': run.id,
+                            'car_number': run.car_number,
+                            'cones': run.cones,
+                            'off_course': run.off_course,
+                            'dnf': run.dnf,
+                            'raw_time': run.raw_time,
+                            'adjusted_time': run.adjusted_time,
+                            'updated_at': run.updated_at.isoformat()
+                        }
+                        for run in batch
+                    ]
+                    append_sync_log(f"Syncing batch with {len(runs_data)} runs: " +
+                        ", ".join([f"ID {r['id']} (Car {r['car_number']})" for r in runs_data]))
+                    try:
+                        response = requests.post(
+                            'https://trackapi.guttenp.land/api/update_runs',
+                            json={'runs': runs_data},
+                            headers={'Authorization': 'P59d46bV5Xy40TblyzZR6J4dz4TlJ12lIswu2iiDYw2Hr8RqtPHoAWyWC8aevdDwVLJUsurbOo4M2aSSOFmmJ5DgaItek34yHYGTAyosU7GIBYhKBuihv3GyDPlCcr6fiKk7J3w0JE1yQeqbP2UPhjfyq63Azjd1wKK8Uhl3CUqJ4BPjipvzA1W1rQXFW1xc9Qdjqcs9IwrQ3edfPXSivYL'}
+                        )
+                        if response.status_code == 200:
+                            for run in batch:
+                                run.last_synced_at = datetime.now(timezone.utc)
+                                append_sync_log(f"Run {run.id} (Car {run.car_number}) marked as synced at {run.last_synced_at.isoformat()}")
+                            db.session.commit()
+                            append_sync_log("Batch synced successfully.")
+                        else:
+                            append_sync_log(f"Error syncing batch: {response.text}")
+                    except requests.exceptions.RequestException as e:
+                        append_sync_log(f"Network error: {e}")
+                        break
+                #append_sync_log("Sync cycle complete. Sleeping 20 seconds.")
+                time.sleep(5)
+            except Exception as e:
+                append_sync_log(f"Sync thread error: {e}")
+                time.sleep(5)
 
+@bp.record_once
+def on_load(state):
+    # Use the app from the state
+    app = state.app
+    # Start the thread with the app context
+    global sync_thread
+    if sync_thread is None or not sync_thread.is_alive():
+        sync_thread_obj = threading.Thread(target=sync_with_cloud_loop, args=(app,), daemon=True)
+        sync_thread = sync_thread_obj
+        sync_thread_obj.start()
+
+@bp.route('/api/sync_log', methods=['GET'])
+def api_sync_log():
+    with sync_log_lock:
+        log_copy = list(sync_log)[::-1]  # reverse the log so newest is first
+    status = "Paused" if sync_thread_paused else "Running"
+    return jsonify({
+        "log": log_copy,
+        "status": status
+    })
+
+@bp.route('/api/sync_toggle', methods=['POST'])
+def api_sync_toggle():
+    global sync_thread_paused
+    sync_thread_paused = not sync_thread_paused
+    status = "Paused" if sync_thread_paused else "Running"
+    append_sync_log(f"Sync {status.lower()} by user.")
+    return jsonify({"status": status})
 
 
 @bp.route('/add_run', methods=['POST'])
@@ -216,7 +260,6 @@ def edit_run(run_id):
         if run:
             oldtime = run.raw_time
             run.raw_time = form.raw_time.data
-            #run = calculateAdjustedTime(run)
             db.session.commit()
             #flash(_('Run '+ str(run.id) + ' car #'+run.car_number+' updated successfully from '+ str(oldtime) + ' to ' + str(run.raw_time)))
             response = {
@@ -403,12 +446,4 @@ def api_toplaps():
             }
             runs.append(run)
         return jsonify(runs)
-# @bp.route('/fixdata', methods=['GET', 'POST']) #this is a temporary function to fill in adjusted times and fix data for runs that were missing them
-# def fixdata():
-#     query = sa.select(RunOrder)
-#     runs = db.session.scalars(query).all()
-#     for run in runs:
-#         run = calculateAdjustedTime(run)  
-#         db.session.commit()
 
-#     return redirect(url_for('main.runtable'))
