@@ -75,15 +75,12 @@
 
         function flashRow(row) {
           const rowId = row.id;
-          highlightedRows.add(rowId);
-          //console.log('Flashing row:', rowId);
           row.classList.add('table-success');
           setTimeout(() => {
             row.classList.remove('table-success');
-            highlightedRows.delete(rowId);
-            //console.log('Removing highlight from row:', rowId);
-          }, 3000); // Adjust the timeout duration as needed
+          }, 3000);
         }
+
         let lastUpdateTimestamp = new Date(Date.now() - 15000);
         const timestampElement = document.getElementById('last-refresh-timestamp');
         const currentTime = new Date();
@@ -125,6 +122,7 @@
         
               data.forEach(run => {
                 let row = document.getElementById(run.id);
+
                 if (!row) {
                     row = document.createElement('tr');
                     row.setAttribute('name', 'run_row');
@@ -139,13 +137,12 @@
                     <td><div class="cell-content">${run.raw_time !== undefined && run.raw_time !== null ? run.raw_time : 'None'}</div></td>
                     <td>${run.cones || ''} + ${run.off_course || ''}</td>
                     <td class="${run.dnf && String(run.dnf).toUpperCase().includes('DNF') ? 'table-danger' : (run.cones != 0 || run.off_course != 0) && (run.raw_time == 0 || run.raw_time == undefined || run.raw_time == null )? 'bg-warning' :  (run.raw_time == 0 || run.raw_time == undefined || run.raw_time == null ) && run.cones == 0 && run.off_course == 0 ? 'table-success' : ''}">${run.adjusted_time !== undefined && run.adjusted_time !== null ? run.adjusted_time : 'None'}</td>`;
-                const rowId = row.id;
-                if (highlightedRows.has(rowId)) {
-                    row.classList.add('table-success');
-                    flashRow(row);
-                }
-                if (!isNaN(rowId) && Number(rowId) > lastrun) { //keep track of last run number as a backup catch for edge cases. If either are missing, entire page will refresh
-                    lastrun = Number(rowId);
+
+                // Flash every row that is updated
+                flashRow(row);
+
+                if (!isNaN(row.id) && Number(row.id) > lastrun) {
+                    lastrun = Number(row.id);
                 }
             });
             lastUpdateTimestamp = new Date(Date.now() - 15000); //15 second lookback just in case one or two update calls are missed

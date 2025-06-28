@@ -76,9 +76,7 @@
 
                         row.innerHTML = `
                             <td>
-                                <input type="checkbox" id="run_${data.run.id}" name="selected_runs" value="${data.run.id}-${data.run.car_number}" checked>
-                            </td>
-                            <td>${data.run.id}</td>
+                                <input type="checkbox" id="run_${data.run.id}" name="selected_runs" value="${data.run.id}-${data.run.car_number}" checked> ${data.run.id}</td>
                             <td>${data.run.car_number}</td>
                             <td>${data.run.cones || ''}</td>
                             <td>${data.run.off_course || ''}</td>
@@ -151,7 +149,7 @@
                     <button class="btn btn-dark mb-2 btn-lg mx-1 flex-fill" id="deselect" name="deselect" type="reset">
                         <i class="bi bi-x-circle-fill"></i><br/>Deselect
                     </button>
-                    <a class="btn btn-success mb-2 btn-lg mx-1 flex-fill" href="#" id="refresh-button"><i class="bi bi-arrow-clockwise"></i><br> Refresh</a>
+                    <a class="btn btn-success mb-2 btn-lg mx-1 flex-fill visually-hidden" href="#" id="refresh-button"><i class="bi bi-arrow-clockwise"></i><br> Refresh</a>
                 </div>
             </div>
             <!-- Sync Log Row -->

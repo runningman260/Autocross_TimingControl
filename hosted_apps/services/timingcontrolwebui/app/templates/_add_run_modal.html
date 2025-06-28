@@ -54,9 +54,7 @@
             row.setAttribute('id', data.run.id);
             row.innerHTML = `
               <td>
-                <input type="checkbox" id="run_${data.run.id}" name="selected_runs" value="${data.run.id}-${data.run.car_number}">
-              </td>
-              <td>${data.run.id}</td>
+                <input type="checkbox" id="run_${data.run.id}" name="selected_runs" value="${data.run.id}-${data.run.car_number}"> ${data.run.id}</td>
               <td>${data.run.car_number}</td>
               <td>${data.run.cones || ''}</td>
               <td>${data.run.off_course || ''}</td>
