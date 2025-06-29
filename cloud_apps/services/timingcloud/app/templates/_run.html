@@ -2,9 +2,13 @@
     <td>
         {{ run.id }}
     </td>
-    </td>
     <td>
         {{ run.car_number }}
+        {% if run.team_name or run.team_abbreviation %}
+            –
+            <span class="team-name d-none d-sm-inline">{{ run.team_name }}</span>
+            <span class="team-abbr d-inline d-sm-none">{{ run.team_abbreviation }}</span>
+        {% endif %}
     </td>
     <td>
         <div class="cell-content">

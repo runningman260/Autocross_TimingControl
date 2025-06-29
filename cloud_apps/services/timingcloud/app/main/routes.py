@@ -218,7 +218,7 @@ def carreg():
     for car, team_name, team_abbr in results:
         car_display = {
             'id': car.id,
-            'scan_time': car.scan_time.isoformat() if car.scan_time else None,
+            'scan_time': car.scan_time,
             'tag_number': car.tag_number,
             'car_number': car.car_number,
             'team_id': car.team_id,
