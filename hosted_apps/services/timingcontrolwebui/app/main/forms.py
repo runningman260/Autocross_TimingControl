@@ -48,7 +48,13 @@ class AddRunForm(FlaskForm):
         super(AddRunForm, self).__init__(*args, **kwargs)
         cars = db.session.query(CarReg).all()
         sorted_cars = sorted(cars, key=lambda car: int(car.car_number))#sorts string as int
-        self.car_number.choices = [(car.car_number, car.car_number + " - " + car.team_name + " - " + car.class_) for car in sorted_cars]
+        self.car_number.choices = [
+            (
+                car.car_number,
+                f"{car.car_number} - {car.team.name if car.team else ''} ({car.team.abbreviation if car.team else ''}) - {car.class_}"
+            )
+            for car in sorted_cars
+        ]
 
 class EditRunForm(FlaskForm):
     raw_time = StringField(_l('Raw Time'), validators=[DataRequired()])
@@ -56,4 +62,3 @@ class EditRunForm(FlaskForm):
     car_number = HiddenField(_l(validators=[DataRequired()]))
     submit = SubmitField(_l('Submit'))
 
-    

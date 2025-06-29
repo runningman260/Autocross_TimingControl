@@ -157,10 +157,14 @@
                 <div class="col-12">
                     <div class="card mt-2">
                         <div class="card-header d-flex justify-content-between align-items-center">
-                            <span>Cloud Sync Status: <span id="sync-status">Loading...</span></span>
+                            <span>
+                                <strong>Cloud Sync Log</strong>
+                                <span id="sync-status" class="badge bg-secondary ms-2">Loading...</span>
+                            </span>
                             <div>
-                                <button class="btn btn-sm btn-warning" id="force-sync-btn" type="button" title="Force all runs to sync to cloud">Force Cloud Sync</button>
-                                <button class="btn btn-sm btn-secondary" id="sync-toggle-btn" type="button">Pause/Resume</button>
+                                <button class="btn btn-primary btn-sm" id="carreg-sync-btn">CarReg Sync</button>
+                                <button class="btn btn-warning btn-sm me-2" id="force-sync-btn">Force Run Sync</button>
+                                <button class="btn btn-secondary btn-sm me-2" id="sync-toggle-btn">Pause</button>
                             </div>
                         </div>
                         <div class="card-body" style="background: #222; color: #0f0; font-family: monospace; max-height: 200px; overflow-y: auto; font-size: 0.95em;">
@@ -372,6 +376,17 @@
                 fetchSyncLog();
             })
             .catch(() => showAlert("danger", "Failed to trigger force sync."));
+    });
+
+    // Manual CarReg Sync button handler
+    document.getElementById('carreg-sync-btn').addEventListener('click', function() {
+        fetch('/api/carreg_sync', {method: 'POST'})
+            .then(r => r.json())
+            .then(data => {
+                showAlert(data.status === "success" ? "success" : "danger", data.message || "CarReg sync triggered.");
+                fetchSyncLog();
+            })
+            .catch(() => showAlert("danger", "Failed to trigger CarReg sync."));
     });
 
     setInterval(fetchSyncLog, 2000);
