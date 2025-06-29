@@ -23,14 +23,10 @@ def runtable():
     results = db.session.execute(query).all()
     runs = []
     for run, team_name, team_abbr in results:
-        run_display = run
-        if team_name and team_abbr:
-            run_display.car_number = f"{run.car_number} – {team_name} ({team_abbr})"
-        elif team_name:
-            run_display.car_number = f"{run.car_number} – {team_name}"
-        else:
-            run_display.car_number = run.car_number
-        runs.append(run_display)
+        # Attach team_name and team_abbreviation as attributes for template use
+        setattr(run, 'team_name', team_name)
+        setattr(run, 'team_abbreviation', team_abbr)
+        runs.append(run)
     page = request.args.get('page', 1, type=int)
     return render_template('runtable.html', title='Autocross', runs=runs)
 

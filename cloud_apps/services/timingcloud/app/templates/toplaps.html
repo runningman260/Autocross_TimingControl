@@ -65,7 +65,12 @@
             if (!selectedTeam || run.team_name === selectedTeam) {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>#${run.id}: ${run.team_name} - ${run.car_number} ${run.class_}</td>
+                    <td>
+                        #${run.id}:
+                        <span class="team-name d-none d-sm-inline">${run.team_name ? run.team_name : ''}</span>
+                        <span class="team-abbr d-inline d-sm-none">${run.team_abbreviation ? run.team_abbreviation : ''}</span>
+                        - ${run.car_number} ${run.class_}
+                    </td>
                     <td>${run.adjusted_time}</td>
                     <td>${run.cones}</td>
                     <td>${run.off_course}</td>
