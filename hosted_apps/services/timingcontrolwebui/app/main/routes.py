@@ -125,32 +125,41 @@ def sync_with_cloud_loop(app):
     global sync_thread_running, sync_thread_paused
     with app.app_context():
         append_sync_log("Sync thread Paused.")
+        last_checked_updated_at = None
         while sync_thread_running:
             if sync_thread_paused:
                 time.sleep(1)
                 continue
             try:
-                #append_sync_log("Sync cycle started.")
-                # Query rows that need to be synced
+                # Track the latest updated_at at the start of the sync cycle
+                last_checked_updated_at = db.session.query(sa.func.max(RunOrder.updated_at)).scalar()
+                if not last_checked_updated_at:
+                    last_checked_updated_at = datetime.now(timezone.utc)
+
+                # Query rows that need to be synced, but only up to last_checked_updated_at
                 query = sa.select(RunOrder).where(
-                    sa.or_(
-                        RunOrder.updated_at > RunOrder.last_synced_at,
-                        RunOrder.last_synced_at.is_(None)
+                    sa.and_(
+                        sa.or_(
+                            RunOrder.updated_at > RunOrder.last_synced_at,
+                            RunOrder.last_synced_at.is_(None)
+                        ),
+                        RunOrder.updated_at <= last_checked_updated_at
                     )
                 ).order_by(RunOrder.updated_at)
                 runs_to_sync = db.session.scalars(query).all()
-                # Capture updated_at at sync start
+
+                # Prepare batch info with orig_updated_at
                 runs_to_sync_info = [
                     (run, run.updated_at)
                     for run in runs_to_sync
                 ]
                 batch_size = 50
                 batches = [runs_to_sync_info[i:i + batch_size] for i in range(0, len(runs_to_sync_info), batch_size)]
-                
+
                 if not runs_to_sync_info:
                     log_no_runs_to_sync(True)
                     time.sleep(5)
-                    continue  # No runs to sync, skip to next cycle
+                    continue
                 log_no_runs_to_sync(False)
                 for batch in batches:
                     runs_data = [
@@ -161,10 +170,9 @@ def sync_with_cloud_loop(app):
                             'off_course': run.off_course,
                             'dnf': run.dnf,
                             'raw_time': run.raw_time,
-                            'adjusted_time': run.adjusted_time,
-                            'updated_at': updated_at.isoformat()
+                            'adjusted_time': run.adjusted_time
                         }
-                        for run, updated_at in batch
+                        for run, orig_updated_at in batch
                     ]
                     append_sync_log(f"Syncing batch with {len(runs_data)} runs: " +
                         ", ".join([f"ID {r['id']} (Car {r['car_number']})" for r in runs_data]))
@@ -176,7 +184,6 @@ def sync_with_cloud_loop(app):
                         )
                         if response.status_code == 200:
                             for run, orig_updated_at in batch:
-                                # Re-fetch run to check for concurrent updates
                                 db.session.refresh(run)
                                 if run.updated_at == orig_updated_at:
                                     run.last_synced_at = datetime.now(timezone.utc)
@@ -231,6 +238,7 @@ def api_force_sync():
         # Set last_synced_at to None for all runs so they will be re-synced
         num_updated = db.session.query(RunOrder).update({RunOrder.last_synced_at: None})
         db.session.commit()
+        log_no_runs_to_sync(False)
         append_sync_log(f"Force sync triggered: {num_updated} runs marked for sync.")
         return jsonify({"status": "success", "message": f"Force sync triggered for {num_updated} runs."})
     except Exception as e:
@@ -496,6 +504,7 @@ def api_toplaps():
 
 def sync_carreg_with_cloud():
     try:
+        log_no_runs_to_sync(False)
         append_sync_log("Manual CarReg sync started.")
         try:
             # Get the most recent updated_at in local CarReg
