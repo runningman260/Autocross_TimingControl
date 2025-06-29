@@ -47,7 +47,12 @@ def update_car_regs():
     for car_data in data['car_regs']:
         car = db.session.query(CarReg).filter_by(id=car_data.get('id')).first()
         if car:
-            car.scan_time = datetime.fromisoformat(car_data.get('scan_time', car.scan_time.isoformat()))
+            scan_time_val = car_data.get('scan_time')
+            if scan_time_val is not None:
+                if isinstance(scan_time_val, str):
+                    car.scan_time = datetime.fromisoformat(scan_time_val)
+                elif isinstance(scan_time_val, datetime):
+                    car.scan_time = scan_time_val
             car.tag_number = car_data.get('tag_number', car.tag_number)
             car.car_number = car_data.get('car_number', car.car_number)
             car.team_id = car_data.get('team_id', car.team_id)
@@ -99,6 +104,11 @@ def get_car_regs():
     ]
     return jsonify(result)
 
+def safe_isoformat(dt):
+    if isinstance(dt, datetime):
+        return dt.isoformat()
+    return dt if isinstance(dt, str) else None
+
 @bp.route('/api/car_regs/modified_since', methods=['GET'])
 def get_car_regs_modified_since():
     timestamp = request.args.get('since')
@@ -113,14 +123,14 @@ def get_car_regs_modified_since():
     result = [
         {
             'id': car.id,
-            'scan_time': car.scan_time.isoformat() if car.scan_time else None,
+            'scan_time': safe_isoformat(car.scan_time),
             'tag_number': car.tag_number,
             'car_number': car.car_number,
             'team_id': car.team_id,
             'class_': car.class_,
             'year': getattr(car, 'year', None),
-            'created_at': car.created_at.isoformat() if car.created_at else None,
-            'updated_at': car.updated_at.isoformat() if car.updated_at else None
+            'created_at': safe_isoformat(getattr(car, 'created_at', None)),
+            'updated_at': safe_isoformat(getattr(car, 'updated_at', None))
         }
         for car in car_regs
     ]
