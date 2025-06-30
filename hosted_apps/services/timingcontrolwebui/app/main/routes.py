@@ -291,12 +291,22 @@ def add_run():
     }
     return jsonify(response), 400
 
+def car_sort_key(car):
+    # Accepts either a model object or a dict
+    car_number = getattr(car, 'car_number', None)
+    if car_number is None and isinstance(car, dict):
+        car_number = car.get('car_number')
+    try:
+        return (0, int(car_number))
+    except (ValueError, TypeError):
+        return (1, str(car_number))
+
 @bp.route('/edit_run/<int:run_id>', methods=['POST'])
 def edit_run(run_id):
     form = EditRunForm()
     # Always set choices before validation
     cars = db.session.query(CarReg).all()
-    sorted_cars = sorted(cars, key=lambda car: int(car.car_number))
+    sorted_cars = sorted(cars, key=car_sort_key)
     form.car_number.choices = [
         ('', '-- Select Car Number --')
     ] + [
@@ -549,7 +559,7 @@ def carreg():
     query = (
         sa.select(CarReg, Team.name, Team.abbreviation)
         .join(Team, CarReg.team_id == Team.id, isouter=True)
-        .order_by(sa.cast(CarReg.car_number, sa.Integer)))
+    )
     results = db.session.execute(query).all()
     cars = []
     for car, team_name, team_abbr in results:
@@ -565,6 +575,8 @@ def carreg():
             'year': car.year
         }
         cars.append(car_display)
+    # Sort cars using the custom sort key
+    cars = sorted(cars, key=car_sort_key)
     # Return JSON if requested, otherwise render template
     if request.accept_mimetypes['application/json'] >= request.accept_mimetypes['text/html']:
         return jsonify(cars)

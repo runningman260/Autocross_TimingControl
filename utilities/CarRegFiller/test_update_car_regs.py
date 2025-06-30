@@ -30,51 +30,39 @@ def main():
         print(f"Failed to fetch teams: {e}")
         return
 
-    # Read data from the CSV file
-    csv_file_path = os.path.join(os.path.dirname(__file__), "2025_reg.csv")
-    if not os.path.exists(csv_file_path):
-        print(f"CSV file not found at {csv_file_path}")
-        exit(1)
+    # Hardcoded values for Montreal 2024, class 'PGE'
+    car_number = "F99"
+    team_name = "Polytechnique Montreal Formule Polytechnique Montreal"
+    class_ = "PGE"  # Override to 'PGE'
+    year = "2024"
 
+    # Normalize team name for matching
+    norm_team_name = team_name.lower()
+    team = team_lookup.get(norm_team_name)
+    if not team:
+        print(f"WARNING: Team not found for '{team_name}'. Skipping car_number {car_number}.")
+        return
+
+    car_reg = {
+        "scan_time": datetime.now().isoformat(),
+        "tag_number": car_number,
+        "car_number": car_number,
+        "team_id": team['id'],
+        "class_": class_,
+        "year": year
+    }
+    payload = {"car_regs": [car_reg]}
+    print("Payload:", payload)
+    headers = {"Authorization": AUTH}
     try:
-        with open(csv_file_path, mode="r", newline='') as file:
-            reader = csv.reader(file)
-            for row in reader:
-                car_number = row[0].strip()
-                team_name = row[1].strip()
-                class_ = row[2].strip()
-                year = row[3].strip() if len(row) > 3 else ""
-
-                # Normalize team name for matching
-                norm_team_name = team_name.lower()
-                team = team_lookup.get(norm_team_name)
-                if not team:
-                    print(f"WARNING: Team not found for '{team_name}'. Skipping car_number {car_number}.")
-                    continue
-
-                car_reg = {
-                    "scan_time": datetime.now().isoformat(),
-                    "tag_number": car_number,
-                    "car_number": car_number,
-                    "team_id": team['id'],
-                    "class_": class_,
-                    "year": year
-                }
-                payload = {"car_regs": [car_reg]}
-                print("Payload:", payload)
-                headers = {"Authorization": AUTH}
-                try:
-                    response = requests.post(API_URL, json=payload, headers=headers)
-                    print("Status Code:", response.status_code)
-                    try:
-                        print("Response JSON:", response.json())
-                    except Exception as e:
-                        print(f"Error decoding JSON response: {e}")
-                except Exception as e:
-                    print(f"Request failed: {e}")
-                time.sleep(1)  # Delay 1 second between requests
+        response = requests.post(API_URL, json=payload, headers=headers)
+        print("Status Code:", response.status_code)
+        try:
+            print("Response JSON:", response.json())
+        except Exception as e:
+            print(f"Error decoding JSON response: {e}")
     except Exception as e:
-        print(f"An error occurred: {e}")
+        print(f"Request failed: {e}")
 
 if __name__ == "__main__":
     main()

@@ -8,7 +8,15 @@ from app.models import RunOrder, TopLaps, CarReg, PointsLeaderboardIC, PointsLea
 from app.main import bp
 
 
-
+def car_sort_key(car):
+    # Accepts either a model object or a dict
+    car_number = getattr(car, 'car_number', None)
+    if car_number is None and isinstance(car, dict):
+        car_number = car.get('car_number')
+    try:
+        return (0, int(car_number))
+    except (ValueError, TypeError):
+        return (1, str(car_number))
 
 @bp.route('/', methods=['GET', 'POST'])
 @bp.route('/runtable', methods=['GET', 'POST'])
@@ -210,9 +218,10 @@ def api_toplaps():
 def carreg():
     query = (
         sa.select(CarReg, Team.name, Team.abbreviation)
-        .join(Team, CarReg.team_id == Team.id, isouter=True)
-        .order_by(sa.cast(CarReg.car_number, sa.Integer)))
+        .join(Team, CarReg.team_id == Team.id, isouter=True))
+    
     results = db.session.execute(query).all()
+    results = sorted(results, key=lambda row: car_sort_key(row[0]))
     cars = []
     for car, team_name, team_abbr in results:
         car_display = {

@@ -10,6 +10,11 @@ from app.models import CarReg
 class EmptyForm(FlaskForm):
     submit = SubmitField('Submit')
 
+def car_sort_key(car):
+    try:
+        return (0, int(car.car_number))
+    except (ValueError, TypeError):
+        return (1, str(car.car_number))
 
 class PostForm(FlaskForm):
     post = TextAreaField(_l('Say something'), validators=[
@@ -47,7 +52,7 @@ class AddRunForm(FlaskForm):
     def __init__(self, *args, **kwargs):
         super(AddRunForm, self).__init__(*args, **kwargs)
         cars = db.session.query(CarReg).all()
-        sorted_cars = sorted(cars, key=lambda car: int(car.car_number))  # sorts string as int
+        sorted_cars = sorted(cars, key=car_sort_key)
         self.car_number.choices = [
             ('', '-- Select Car Number --')
         ] + [
@@ -67,7 +72,7 @@ class EditRunForm(FlaskForm):
     def __init__(self, *args, **kwargs):
         super(EditRunForm, self).__init__(*args, **kwargs)
         cars = db.session.query(CarReg).all()
-        sorted_cars = sorted(cars, key=lambda car: int(car.car_number))
+        sorted_cars = sorted(cars, key=car_sort_key)
         self.car_number.choices = [
             ('', '-- Select Car Number --')
         ] + [
