@@ -398,7 +398,7 @@
         
         intervalId = setInterval(async function() {
             await updateRunsTable(); 
-          }, 2000);
+          }, 975);
       }
       document.addEventListener('DOMContentLoaded', update_table_periodically);
 
@@ -495,7 +495,7 @@
 
 
     //Finally, start the page updates 
-    setInterval(fetchSyncLog, 2000);
+    setInterval(fetchSyncLog, 2500);
     fetchSyncLog();
         
     // Call this after a successful CarReg sync to refresh the car number dropdown

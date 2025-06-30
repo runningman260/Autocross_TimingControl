@@ -42,6 +42,15 @@
         tr[name="run_row"]:hover .edit-icon {
             display: inline;
         }
+        @media (min-width: 700px) {
+          .team-abbr.custom-break { display: none !important; }
+          .team-name.custom-break { display: inline !important; }
+        }
+        /* Hide team name below 700px, show abbr */
+        @media (max-width: 699.98px) {
+          .team-abbr.custom-break { display: inline !important; }
+          .team-name.custom-break { display: none !important; }
+        }
         </style>
   <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
       </head>

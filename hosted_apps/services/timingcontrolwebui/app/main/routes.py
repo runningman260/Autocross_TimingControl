@@ -187,7 +187,7 @@ def sync_with_cloud_loop(app):
                                 db.session.refresh(run)
                                 if run.updated_at == orig_updated_at:
                                     run.last_synced_at = datetime.now(timezone.utc)
-                                    append_sync_log(f"Run {run.id} (Car {run.car_number}) marked as synced at {run.last_synced_at.isoformat()}")
+                                    append_sync_log(f"Run {run.id} (Car {run.car_number}) marked as synced at {run.last_synced_at.strftime('%H:%M:%S')}")
                                 else:
                                     append_sync_log(f"Run {run.id} (Car {run.car_number}) was updated during sync, skipping last_synced_at update.")
                             db.session.commit()
