@@ -133,13 +133,47 @@ def toplaps():
 
 @bp.route('/pointsLeaderboard', methods=['GET', 'POST'])
 def pointsLeaderboard():
-    
     query = sa.select(PointsLeaderboardIC)
     ICruns = db.session.scalars(query).all()
     query = sa.select(PointsLeaderboardEV)
     EVruns = db.session.scalars(query).all()
-    
-    return render_template('pointsLeaderboard.html', title='Points Leaderboard', ICruns=ICruns, EVruns=EVruns)
+
+    ic_runs_data = [
+        {
+            'team_name': run.team_name,
+            'car_number': run.car_number,
+            'adjusted_time': run.adjusted_time,
+            'points': run.points
+        }
+        for run in ICruns
+    ]
+    ev_runs_data = [
+        {
+            'team_name': run.team_name,
+            'car_number': run.car_number,
+            'adjusted_time': run.adjusted_time,
+            'points': run.points
+        }
+        for run in EVruns
+    ]
+
+    # Calculate tmax for IC and EV
+    ic_times = [float(run.adjusted_time) for run in ICruns if run.adjusted_time is not None and str(run.adjusted_time).replace('.', '', 1).isdigit()]
+    IC_tmax = round(1.45 * min(ic_times), 3) if ic_times else None
+
+    ev_times = [float(run.adjusted_time) for run in EVruns if run.adjusted_time is not None and str(run.adjusted_time).replace('.', '', 1).isdigit()]
+    EV_tmax = round(1.45 * min(ev_times), 3) if ev_times else None
+
+    if request.accept_mimetypes['application/json'] >= request.accept_mimetypes['text/html']:
+        runs_data = {
+            'IC_runs': ic_runs_data,
+            'EV_runs': ev_runs_data,
+            'IC_tmax': IC_tmax,
+            'EV_tmax': EV_tmax
+        }
+        return jsonify(runs_data)
+    else:
+        return render_template('pointsLeaderboard.html', title='Points Leaderboard', ICruns=ICruns, EVruns=EVruns, IC_tmax=IC_tmax, EV_tmax=EV_tmax)
 
 @bp.route('/conesLeaderboard', methods=['GET', 'POST'])
 def conesLeaderboard():
@@ -150,37 +184,45 @@ def conesLeaderboard():
         
         return render_template('conesLeaderboard.html', title='Cones Leaderboard', runs=runs)
 
-@bp.route('/api/points_leaderboard', methods=['GET'])
-def api_points_leaderboard():
-    query = sa.select(PointsLeaderboardIC)
-    ICruns = db.session.scalars(query).all()
-    query = sa.select(PointsLeaderboardEV)
-    EVRuns = db.session.scalars(query).all()
-    ic_runs_data = [
-        {
-            'team_name': run.team_name,
-            'car_number': run.car_number,
-            'adjusted_time': run.adjusted_time,
-            'points': run.points
-        }
-        for run in ICruns
-    ]
-    
-    ev_runs_data = [
-        {
-            'team_name': run.team_name,
-            'car_number': run.car_number,
-            'adjusted_time': run.adjusted_time,
-            'points': run.points
-        }
-        for run in EVRuns
-    ]
-    
-    runs_data = {
-        'IC_runs': ic_runs_data,
-        'EV_runs': ev_runs_data
-    }
-    return jsonify(runs_data)
+# @bp.route('/api/points_leaderboard', methods=['GET'])
+# def api_points_leaderboard():
+#     query = sa.select(PointsLeaderboardIC)
+#     ICruns = db.session.scalars(query).all()
+#     query = sa.select(PointsLeaderboardEV)
+#     EVRuns = db.session.scalars(query).all()
+#     ic_runs_data = [
+#         {
+#             'team_name': run.team_name,
+#             'car_number': run.car_number,
+#             'adjusted_time': run.adjusted_time,
+#             'points': run.points
+#         }
+#         for run in ICruns
+#     ]
+#     ev_runs_data = [
+#         {
+#             'team_name': run.team_name,
+#             'car_number': run.car_number,
+#             'adjusted_time': run.adjusted_time,
+#             'points': run.points
+#         }
+#         for run in EVRuns
+#     ]
+
+#     # Calculate tmax for IC and EV
+#     ic_times = [float(run.adjusted_time) for run in ICruns if run.adjusted_time is not None and str(run.adjusted_time).replace('.', '', 1).isdigit()]
+#     IC_tmax = round(1.45 * min(ic_times), 3) if ic_times else None
+
+#     ev_times = [float(run.adjusted_time) for run in EVRuns if run.adjusted_time is not None and str(run.adjusted_time).replace('.', '', 1).isdigit()]
+#     EV_tmax = round(1.45 * min(ev_times), 3) if ev_times else None
+
+#     runs_data = {
+#         'IC_runs': ic_runs_data,
+#         'EV_runs': ev_runs_data,
+#         'IC_tmax': IC_tmax,
+#         'EV_tmax': EV_tmax
+#     }
+#     return jsonify(runs_data)
 
 @bp.route('/api/cones_leaderboard', methods=['GET'])
 def api_cones_leaderboard():
