@@ -75,6 +75,7 @@ services:
       - "5000"
     networks:
       - webproxy
+      - default
 
   trackapi:
     container_name: trackapi
@@ -93,6 +94,7 @@ services:
       - "5000"
     networks:
       - webproxy
+      - default
 
 
   # Copy and Uncomment below for an additional python container
