@@ -287,7 +287,6 @@
                     lastUpdateTimestamp = null;
                     failedAttempts = 0;
                     update_table_periodically();
-                    
                 }
                 let url = '/api/runs';
                 if (lastUpdateTimestamp) {
@@ -295,9 +294,14 @@
                 }
                 failedAttempts++;
                 if (failedAttempts > 4) {
-                  console.error('Max failed attempts reached. Stopping refresh attempts.');
-                  showAlert('danger', 'Failed Refresh limit reached. Please refresh the page.');
-                  clearInterval(intervalId); // Stop the interval
+                    console.error('Max failed attempts reached. Stopping refresh attempts.');
+                    showAlert('danger', 'Failed Refresh limit reached. Please refresh the page.');
+                    clearInterval(intervalId); // Stop the interval
+
+                    // Set Cloud Sync Log badge to yellow and "Disconnected"
+                    const syncStatusElem = document.getElementById('sync-status');
+                    syncStatusElem.textContent = "Disconnected";
+                    syncStatusElem.className = "badge bg-warning ms-2";
                     return;
                 }
            
@@ -349,10 +353,17 @@
               }
               // Reset failed attempts counter on successful fetch
                 failedAttempts = 0;
+                fetchSyncLog(); // This will update the badge/status as normal
             } catch (error) {
             console.error('Error updating runs table:', error);
               showAlert('danger', 'An error occurred while updating the runs table. Please try again.');
             
+              // If failedAttempts just exceeded 4, set the badge to yellow/disconnected
+              if (failedAttempts > 4) {
+                const syncStatusElem = document.getElementById('sync-status');
+                syncStatusElem.textContent = "Disconnected";
+                syncStatusElem.className = "badge bg-warning ms-2";
+            }
         }
     }
         
@@ -404,6 +415,9 @@
 
     // --- Cloud Sync Log UI ---
     function fetchSyncLog() {
+        // If disconnected, don't update the badge/status
+        if (failedAttempts > 4) return;
+
         fetch('/api/sync_log')
             .then(r => r.json())
             .then(data => {
@@ -417,9 +431,7 @@
                     syncStatusElem.className = "badge bg-secondary ms-2";
                 }
                 var syncLogElem = document.getElementById('sync-log');
-                // Use innerText for better compatibility
                 syncLogElem.innerText = data.log.join('\n');
-                // Scroll after DOM update
                 setTimeout(function() {
                     syncLogElem.scrollTop = syncLogElem.scrollHeight;
                 }, 0);
