@@ -20,7 +20,7 @@ def exit_handler():
 	print(' Cleaning Up!')
 	exit(1)
 
-clear_and_create_schema()
+#clear_and_create_schema()
 
 #create_view and create_table are identical lol
 
@@ -101,7 +101,8 @@ FROM (
     ) b
     ORDER BY b.car_number::int, b.points DESC
 ) c
-ORDER BY c.points DESC;
+ORDER BY c.points DESC,
+CASE WHEN points = 6.5 THEN adjusted_time::decimal END ASC;
 """
 create_view(sql)
 
@@ -155,7 +156,8 @@ FROM (
     ) b
     ORDER BY b.car_number::int, b.points DESC
 ) c
-ORDER BY c.points DESC;
+ORDER BY c.points DESC,
+CASE WHEN points = 6.5 THEN adjusted_time::decimal END ASC;
 """
 create_view(sql)
 
