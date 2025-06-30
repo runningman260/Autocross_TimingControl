@@ -208,7 +208,10 @@ def api_toplaps():
 
 @bp.route('/carreg', methods=['GET'])
 def carreg():
-    query = sa.select(CarReg, Team.name, Team.abbreviation).join(Team, CarReg.team_id == Team.id, isouter=True)
+    query = (
+        sa.select(CarReg, Team.name, Team.abbreviation)
+        .join(Team, CarReg.team_id == Team.id, isouter=True)
+        .order_by(sa.cast(CarReg.car_number, sa.Integer)))
     results = db.session.execute(query).all()
     cars = []
     for car, team_name, team_abbr in results:

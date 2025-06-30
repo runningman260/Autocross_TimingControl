@@ -47,8 +47,10 @@ class AddRunForm(FlaskForm):
     def __init__(self, *args, **kwargs):
         super(AddRunForm, self).__init__(*args, **kwargs)
         cars = db.session.query(CarReg).all()
-        sorted_cars = sorted(cars, key=lambda car: int(car.car_number))#sorts string as int
+        sorted_cars = sorted(cars, key=lambda car: int(car.car_number))  # sorts string as int
         self.car_number.choices = [
+            ('', '-- Select Car Number --')
+        ] + [
             (
                 car.car_number,
                 f"{car.car_number} - {car.team.name if car.team else ''} ({car.team.abbreviation if car.team else ''}) - {car.class_}"
@@ -58,7 +60,21 @@ class AddRunForm(FlaskForm):
 
 class EditRunForm(FlaskForm):
     raw_time = StringField(_l('Raw Time'), validators=[DataRequired()])
-    run_id = HiddenField(_l(validators=[DataRequired()]))
-    car_number = HiddenField(_l(validators=[DataRequired()]))
+    run_id = HiddenField(_l('Run ID'), validators=[DataRequired()])
+    car_number = SelectField(_l('Car Number'), validators=[DataRequired()])
     submit = SubmitField(_l('Submit'))
+
+    def __init__(self, *args, **kwargs):
+        super(EditRunForm, self).__init__(*args, **kwargs)
+        cars = db.session.query(CarReg).all()
+        sorted_cars = sorted(cars, key=lambda car: int(car.car_number))
+        self.car_number.choices = [
+            ('', '-- Select Car Number --')
+        ] + [
+            (
+                car.car_number,
+                f"{car.car_number} - {car.team.name if car.team else ''} ({car.team.abbreviation if car.team else ''}) - {car.class_}"
+            )
+            for car in sorted_cars
+        ]
 

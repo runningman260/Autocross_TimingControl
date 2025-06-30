@@ -9,11 +9,16 @@
             <div class="modal-body">             
                 
                     {{ editRunForm.hidden_tag() }}
-                    <input type="hidden" id="run_id" name="run_id">
-                    <input type="hidden" id="car_number" name="car_number">
                     <div class="mb-3">
                         {{ editRunForm.raw_time.label(class="form-label") }}
                         <input type="number" id="raw_time" name="raw_time" class="form-control" step="0.001" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_car_number" class="form-label">Car Number</label>
+                        <select id="edit_car_number" name="car_number" class="form-select" required>
+                            <option value="">-- Select Car Number --</option>
+                            <!-- Options will be populated by JS -->
+                        </select>
                     </div>
                     <div class="mb-3">
                         {{ editRunForm.submit(class="btn btn-primary") }}
@@ -23,4 +28,31 @@
         </div>
     </div>
 </div>
+
+<script>
+function populateEditCarNumberDropdown(selectedCarNumber = null) {
+  fetch('/carreg', { headers: { 'Accept': 'application/json' } })
+    .then(response => response.json())
+    .then(cars => {
+      const select = document.getElementById('edit_car_number');
+      if (!select) return;
+      select.innerHTML = '';
+      const placeholder = document.createElement('option');
+      placeholder.value = '';
+      placeholder.textContent = '-- Select Car Number --';
+      select.appendChild(placeholder);
+      cars.forEach(car => {
+        const option = document.createElement('option');
+        option.value = car.car_number;
+        let nameAbbr = car.team_abbreviation ? car.team_abbreviation : (car.team_name ? car.team_name : '');
+        let classStr = car.class ? `(${car.class})` : '';
+        option.textContent = `${car.car_number} - ${nameAbbr} ${classStr}`.trim();
+        if (selectedCarNumber && car.car_number == selectedCarNumber) {
+          option.selected = true;
+        }
+        select.appendChild(option);
+      });
+    });
+}
+</script>
 

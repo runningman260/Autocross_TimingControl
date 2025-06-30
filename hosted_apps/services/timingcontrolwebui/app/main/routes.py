@@ -294,29 +294,73 @@ def add_run():
 @bp.route('/edit_run/<int:run_id>', methods=['POST'])
 def edit_run(run_id):
     form = EditRunForm()
+    # Always set choices before validation
+    cars = db.session.query(CarReg).all()
+    sorted_cars = sorted(cars, key=lambda car: int(car.car_number))
+    form.car_number.choices = [
+        ('', '-- Select Car Number --')
+    ] + [
+        (
+            car.car_number,
+            f"{car.car_number} - {car.team.name if car.team else ''} ({car.team.abbreviation if car.team else ''}) - {car.class_}"
+        )
+        for car in sorted_cars
+    ]
     if form.validate_on_submit():
         run = db.session.query(RunOrder).filter_by(id=run_id).first()
         if run:
             oldtime = run.raw_time
+            old_car_number = run.car_number
+            new_car_number = form.car_number.data
+
+            # Only update if car number changed
+            car_changed = new_car_number != old_car_number
+            if car_changed:
+                car_reg = db.session.query(CarReg).filter_by(car_number=new_car_number).first()
+                if not car_reg:
+                    return jsonify({
+                        'status': 'danger',
+                        'message': f'Car number {new_car_number} not found in CarReg!'
+                    }), 400
+                run.car_number = new_car_number
+            else:
+                car_reg = db.session.query(CarReg).filter_by(car_number=run.car_number).first()
+
             run.raw_time = form.raw_time.data
             db.session.commit()
-            car = db.session.query(CarReg).filter_by(car_number=run.car_number).first()
-            #flash(_('Run '+ str(run.id) + ' car #'+run.car_number+' updated successfully from '+ str(oldtime) + ' to ' + str(run.raw_time)))
-            response = {
-                'status': 'success',
-                'message': f'Run {run.id} car #{run.car_number} updated successfully from {oldtime} to {run.raw_time}',
-                'run': {
-                    'id': run.id,
-                    'car_number': run.car_number,
-                    'cones': run.cones,
-                    'off_course': run.off_course,
-                    'dnf': run.dnf,
-                    'raw_time': run.raw_time,
-                    'adjusted_time': run.adjusted_time,
-                    'team_name': car.team.name if car.team else None,
-                    'team_abbreviation': car.team.abbreviation if car.team else None
+
+            if car_changed:
+                response = {
+                    'status': 'warning',
+                    'message': f'Run {run.id} car changed from #{old_car_number} to #{run.car_number} and updated from {oldtime} to {run.raw_time}',
+                    'run': {
+                        'id': run.id,
+                        'car_number': run.car_number,
+                        'cones': run.cones,
+                        'off_course': run.off_course,
+                        'dnf': run.dnf,
+                        'raw_time': run.raw_time,
+                        'adjusted_time': run.adjusted_time,
+                        'team_name': car_reg.team.name if car_reg and car_reg.team else None,
+                        'team_abbreviation': car_reg.team.abbreviation if car_reg and car_reg.team else None
+                    }
                 }
-            }
+            else:
+                response = {
+                    'status': 'success',
+                    'message': f'Run {run.id} car #{run.car_number} updated successfully from {oldtime} to {run.raw_time}',
+                    'run': {
+                        'id': run.id,
+                        'car_number': run.car_number,
+                        'cones': run.cones,
+                        'off_course': run.off_course,
+                        'dnf': run.dnf,
+                        'raw_time': run.raw_time,
+                        'adjusted_time': run.adjusted_time,
+                        'team_name': car_reg.team.name if car_reg and car_reg.team else None,
+                        'team_abbreviation': car_reg.team.abbreviation if car_reg and car_reg.team else None
+                    }
+                }
             return jsonify(response), 200
     response = {
         'status': 'danger',
@@ -500,16 +544,42 @@ def api_toplaps():
         runs.append(run)
     return jsonify(runs)
 
+@bp.route('/carreg', methods=['GET'])
+def carreg():
+    query = (
+        sa.select(CarReg, Team.name, Team.abbreviation)
+        .join(Team, CarReg.team_id == Team.id, isouter=True)
+        .order_by(sa.cast(CarReg.car_number, sa.Integer)))
+    results = db.session.execute(query).all()
+    cars = []
+    for car, team_name, team_abbr in results:
+        car_display = {
+            'id': car.id,
+            'scan_time': car.scan_time,
+            'tag_number': car.tag_number,
+            'car_number': car.car_number,
+            'team_id': car.team_id,
+            'team_name': team_name,
+            'team_abbreviation': team_abbr,
+            'class_': car.class_,
+            'year': car.year
+        }
+        cars.append(car_display)
+    # Return JSON if requested, otherwise render template
+    if request.accept_mimetypes['application/json'] >= request.accept_mimetypes['text/html']:
+        return jsonify(cars)
+    return render_template('carreg.html', title='Car Registration', cars=cars)
 
-
-def sync_carreg_with_cloud():
+def sync_carreg_with_cloud(force=False):
     try:
         log_no_runs_to_sync(False)
         append_sync_log("Manual CarReg sync started.")
         try:
-            # Get the most recent updated_at in local CarReg
-            most_recent = db.session.query(CarReg).order_by(CarReg.updated_at.desc()).first()
-            since = most_recent.updated_at.isoformat() if most_recent and most_recent.updated_at else "1970-01-01T00:00:00+00:00"
+            if force:
+                since = "1970-01-01T00:00:00+00:00"
+            else:
+                most_recent = db.session.query(CarReg).order_by(CarReg.updated_at.desc()).first()
+                since = most_recent.updated_at.isoformat() if most_recent and most_recent.updated_at else "1970-01-01T00:00:00+00:00"
             url = "https://trackapi.guttenp.land/api/car_regs/modified_since"
             params = {"since": since}
             # Add Authorization header (same as update_runs)
@@ -561,7 +631,11 @@ def sync_carreg_with_cloud():
 
 @bp.route('/api/carreg_sync', methods=['POST'])
 def api_carreg_sync():
-    success, message = sync_carreg_with_cloud()
+    force = False
+    if request.is_json:
+        data = request.get_json()
+        force = data.get('force', False)
+    success, message = sync_carreg_with_cloud(force=force)
     return jsonify({
         "status": "success" if success else "danger",
         "message": message

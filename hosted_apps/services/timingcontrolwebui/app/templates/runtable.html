@@ -13,27 +13,65 @@
         document.addEventListener('DOMContentLoaded', function() {
             function editRun(runId) {
                 fetch(`/api/runs/${runId}`)
-                    .then(response => response.json())
-                    .then(data => {
+                    .then(response => response.json()).then(data => {
                         if (data.error) {
                             alert(data.error);
                             return;
                         }
-        
-                        // Populate the modal with the run data
-                        var editRunForm = document.getElementById('editRunForm');
-                        if (editRunForm) {
-                            editRunForm.action = `/edit_run/${runId}`;
-                            editRunForm.raw_time.value = data.raw_time;
-                            editRunForm.run_id.value = data.id;
-                            editRunForm.car_number.value = data.car_number;
-        
-                            // Open the modal
-                            var myModal = new bootstrap.Modal(document.getElementById('editRunModal'));
-                            myModal.show();
-                        } else {
-                            console.error('Error: editRunForm not found');
-                        }
+
+                        // Fetch car numbers for the dropdown
+                        fetch('/carreg', { headers: { 'Accept': 'application/json' } })
+                            .then(response => response.json())
+                            .then(cars => {
+                                var editRunForm = document.getElementById('editRunForm');
+                                if (editRunForm) {
+                                    // Populate car number dropdown
+                                    var carNumberSelect = editRunForm.querySelector('select[name="car_number"]');
+                                    if (carNumberSelect) {
+                                        carNumberSelect.innerHTML = '';
+                                        // Placeholder
+                                        var placeholder = document.createElement('option');
+                                        placeholder.value = '';
+                                        placeholder.textContent = '-- Select Car Number --';
+                                        carNumberSelect.appendChild(placeholder);
+
+                                        cars.forEach(car => {
+                                            var option = document.createElement('option');
+                                            option.value = car.car_number;
+                                            let name = car.team_name ? car.team_name : '';
+                                            let abbr = car.team_abbreviation ? car.team_abbreviation : '';
+                                            let classStr = car.class_ ? car.class_ : '';
+                                            let nameAbbr = '';
+                                            if (name && abbr) {
+                                                nameAbbr = `${name} (${abbr})`;
+                                            } else if (name) {
+                                                nameAbbr = name;
+                                            } else if (abbr) {
+                                                nameAbbr = abbr;
+                                            }
+                                            option.textContent = `${car.car_number} - ${nameAbbr} ${classStr}`.trim();
+                                            if (car.car_number == data.car_number) {
+                                                option.selected = true;
+                                            }
+                                            carNumberSelect.appendChild(option);
+                                        });
+                                    }
+
+                                    // Populate the rest of the modal with the run data
+                                    editRunForm.action = `/edit_run/${runId}`;
+                                    editRunForm.raw_time.value = data.raw_time;
+                                    editRunForm.run_id.value = data.id;
+
+                                    // Open the modal
+                                    var myModal = new bootstrap.Modal(document.getElementById('editRunModal'));
+                                    myModal.show();
+                                } else {
+                                    console.error('Error: editRunForm not found');
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error fetching car numbers:', error);
+                            });
                     })
                     .catch(error => console.error('Error:', error));
             }
@@ -61,9 +99,9 @@
                 })
                 .then(response => response.json())
                 .then(data => {
-                    if (data.status === 'success') {
+                    if (data.status === 'success' || data.status === 'warning') {
                         if (data.message && data.message.trim() !== "")
-                            showAlert('success', data.message);
+                            showAlert(data.status, data.message);
                         // Close the modal
                         var myModalEl = document.getElementById('editRunModal');
                         var modal = bootstrap.Modal.getInstance(myModalEl);
@@ -161,8 +199,13 @@
                                 <strong>Cloud Sync Log</strong>
                                 <span id="sync-status" class="badge bg-secondary ms-2">Loading...</span>
                             </span>
-                            <div>
-                                <button class="btn btn-primary btn-sm" id="carreg-sync-btn">CarReg Sync</button>
+                            <div class="d-flex align-items-center">
+                            <button type="button" class="btn btn-outline-danger btn-sm me-2" id="carreg-force-btn" aria-pressed="false" autocomplete="off">
+                                Force?
+                            </button>
+                            <input type="checkbox" id="carreg-force-checkbox" class="d-none">
+                                <button class="btn btn-primary btn-sm me-2" id="carreg-sync-btn">CarReg Sync</button>
+                                <span class="vr mx-2" style="height: 32px;"></span>
                                 <button class="btn btn-warning btn-sm me-2" id="force-sync-btn">Force Run Sync</button>
                                 <button class="btn btn-secondary btn-sm me-2" id="sync-toggle-btn">Pause</button>
                             </div>
@@ -183,6 +226,23 @@
     <!-- Modal -->
     {% include '_edit_run_modal.html' %}
     {% include '_add_run_modal.html' %}
+    <div class="modal fade" id="forceSyncConfirmModal" tabindex="-1" aria-labelledby="forceSyncConfirmModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-warning">
+        <h5 class="modal-title" id="forceSyncConfirmModalLabel">Confirm Force Run Sync</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to force a run sync? This action cannot be undone.
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-warning" id="confirmForceSyncBtn">Yes, Force Sync</button>
+      </div>
+    </div>
+  </div>
+</div>
     <script>
         document.getElementById('refresh-button').addEventListener('click', function(event) {
             event.preventDefault();
@@ -347,7 +407,15 @@
         fetch('/api/sync_log')
             .then(r => r.json())
             .then(data => {
-                document.getElementById('sync-status').textContent = data.status;
+                const syncStatusElem = document.getElementById('sync-status');
+                syncStatusElem.textContent = data.status;
+                if (data.status === "Running") {
+                    syncStatusElem.className = "badge bg-success ms-2";
+                } else if (data.status === "Paused") {
+                    syncStatusElem.className = "badge bg-danger ms-2";
+                } else {
+                    syncStatusElem.className = "badge bg-secondary ms-2";
+                }
                 var syncLogElem = document.getElementById('sync-log');
                 // Use innerText for better compatibility
                 syncLogElem.innerText = data.log.join('\n');
@@ -358,6 +426,7 @@
                 document.getElementById('sync-toggle-btn').textContent = (data.status === "Paused" ? "Resume" : "Pause");
             });
     }
+
     document.getElementById('sync-toggle-btn').addEventListener('click', function() {
         fetch('/api/sync_toggle', {method: 'POST'})
             .then(r => r.json())
@@ -368,7 +437,16 @@
     });
 
     // Force Cloud Sync button handler
-    document.getElementById('force-sync-btn').addEventListener('click', function() {
+    document.getElementById('force-sync-btn').addEventListener('click', function(event) {
+        event.preventDefault();
+        // Show confirmation modal on Force Run Sync button click
+        var confirmModal = new bootstrap.Modal(document.getElementById('forceSyncConfirmModal'));
+        confirmModal.show();
+    });
+
+    // Handle confirmation in the modal
+    document.getElementById('confirmForceSyncBtn').addEventListener('click', function() {
+        // Actually trigger the force sync
         fetch('/api/force_sync', {method: 'POST'})
             .then(r => r.json())
             .then(data => {
@@ -376,21 +454,104 @@
                 fetchSyncLog();
             })
             .catch(() => showAlert("danger", "Failed to trigger force sync."));
+        // Hide the modal
+        var confirmModal = bootstrap.Modal.getInstance(document.getElementById('forceSyncConfirmModal'));
+        confirmModal.hide();
     });
 
     // Manual CarReg Sync button handler
     document.getElementById('carreg-sync-btn').addEventListener('click', function() {
-        fetch('/api/carreg_sync', {method: 'POST'})
-            .then(r => r.json())
-            .then(data => {
-                showAlert(data.status === "success" ? "success" : "danger", data.message || "CarReg sync triggered.");
-                fetchSyncLog();
-            })
-            .catch(() => showAlert("danger", "Failed to trigger CarReg sync."));
+        const force = document.getElementById('carreg-force-checkbox').checked;
+        fetch('/api/carreg_sync', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({force: force})
+        })
+        .then(r => r.json())
+        .then(data => {
+            showAlert(data.status === "success" ? "success" : "danger", data.message || "CarReg sync triggered.");
+            fetchSyncLog();
+            if (data.status === "success") {
+                refreshCarNumberDropdown();
+            }
+            // Reset the checkbox after use for clarity
+            forceBtn.setAttribute('aria-pressed', 'false');
+            forceBtn.classList.remove('active', 'btn-danger');
+            forceBtn.classList.add('btn-outline-danger');
+        })
+        .catch(() => showAlert("danger", "Failed to trigger CarReg sync."));
+    });
+    // Toggle Force button logic
+    const forceBtn = document.getElementById('carreg-force-btn');
+    const forceCheckbox = document.getElementById('carreg-force-checkbox');
+    forceBtn.addEventListener('click', function() {
+        const pressed = forceBtn.getAttribute('aria-pressed') === 'true';
+        forceBtn.setAttribute('aria-pressed', String(!pressed));
+        forceBtn.classList.toggle('active', !pressed);
+        forceBtn.classList.toggle('btn-danger', !pressed);
+        forceBtn.classList.toggle('btn-outline-danger', pressed);
+        forceCheckbox.checked = !pressed;
     });
 
+
+    //Finally, start the page updates 
     setInterval(fetchSyncLog, 2000);
     fetchSyncLog();
         
+    // Call this after a successful CarReg sync to refresh the car number dropdown
+function refreshCarNumberDropdown() {
+  fetch('/carreg', {
+    headers: {
+      'Accept': 'application/json'
+    }
+  })
+  .then(response => response.json())
+  .then(cars => {
+    // Find the car number select element in the Add Run modal
+    const carNumberSelect = document.querySelector('#addRunModal select[name="car_number"]');
+    if (!carNumberSelect) return;
+
+    // Save the current selection (if any)
+    const currentValue = carNumberSelect.value;
+
+    // Clear existing options
+    carNumberSelect.innerHTML = '';
+
+    // Optionally, add a placeholder
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.textContent = '-- Select Car Number --';
+    carNumberSelect.appendChild(placeholder);
+
+    // Add new options from CarReg data
+    cars.forEach(car => {
+      const option = document.createElement('option');
+      option.value = car.car_number;
+      // Show car number, team name/abbr, class, etc. for clarity
+      let name = car.team_name ? car.team_name : '';
+        let abbr = car.team_abbreviation ? car.team_abbreviation : '';
+        let classStr = car.class_ ? car.class_ : '';
+        let nameAbbr = '';
+        if (name && abbr) {
+        nameAbbr = `${name} (${abbr})`;
+        } else if (name) {
+        nameAbbr = name;
+        } else if (abbr) {
+        nameAbbr = abbr;
+        }
+        option.textContent = `${car.car_number} - ${nameAbbr} ${classStr}`.trim();
+      if (car.car_number == currentValue) {
+        option.selected = true;
+      }
+      carNumberSelect.appendChild(option);
+    });
+  })
+  .catch(error => {
+    console.error('Failed to refresh car number dropdown:', error);
+  });
+}
+        
     </script>
+    <!-- Force Run Sync Confirmation Modal -->
+
     {% endblock %}
