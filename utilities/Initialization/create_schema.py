@@ -101,8 +101,7 @@ FROM (
     ) b
     ORDER BY b.car_number::int, b.points DESC
 ) c
-ORDER BY c.points DESC,
-CASE WHEN points = 6.5 THEN adjusted_time::decimal END ASC;
+ORDER BY c.points DESC, adjusted_time::decimal ASC;
 """
 create_view(sql)
 
@@ -156,8 +155,7 @@ FROM (
     ) b
     ORDER BY b.car_number::int, b.points DESC
 ) c
-ORDER BY c.points DESC,
-CASE WHEN points = 6.5 THEN adjusted_time::decimal END ASC;
+ORDER BY c.points DESC, adjusted_time::decimal ASC;
 """
 create_view(sql)
 
