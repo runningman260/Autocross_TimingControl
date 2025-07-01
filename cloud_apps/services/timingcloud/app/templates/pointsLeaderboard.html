@@ -63,8 +63,20 @@
             </table>
         </div>
     </div>
+    <div class="bottom-fixed">
+        <div class="row">
+            <div class="container-md" id="alert-div"></div>
+        </div>
+    </div>
+
 
     <script>
+        let failedAttempts = 0;
+        let refreshIntervalId;
+        function showAlert(type, message) {
+            const alertDiv = document.getElementById('alert-div');
+            alertDiv.innerHTML = `<div class="alert alert-${type} alert-dismissible fade show" role="alert">${message}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>`;
+        }
         async function updatePointsLeaderboard() {
             try {
                 const response = await fetch('/pointsLeaderboard');
@@ -72,6 +84,7 @@
                     throw new Error('Network response was not ok');
                 }
                 const data = await response.json();
+                failedAttempts = 0;
 
                 // IC
                 const icTbody = document.getElementById('ic-points-leaderboard-tbody');
@@ -140,12 +153,17 @@
                 const currentTime = new Date();
                 timestampElement.textContent = `Last Refresh: ${currentTime.toLocaleTimeString()}`;
             } catch (error) {
+                failedAttempts++;
+                if (failedAttempts > 2) {
+                    clearInterval(refreshIntervalId);
+                    showAlert('danger', 'Failed to refresh leaderboard. Please reload the page.');
+                }
                 console.error('Error updating points leaderboard:', error);
             }
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            setInterval(updatePointsLeaderboard, 10000); // Update every 10 seconds
+            refreshIntervalId = setInterval(updatePointsLeaderboard, 10000); // Update every 10 seconds
         });
     </script>
 {% endblock %}

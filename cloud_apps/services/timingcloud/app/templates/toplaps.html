@@ -35,9 +35,21 @@
         </table>
     </div>
 </div>
+<div class="bottom-fixed">
+    <div class="row">
+        <div class="container-md" id="alert-div"></div>
+    </div>
+</div>
 
 <script>
     let toplapsData = [];
+    let failedAttempts = 0;
+    let refreshIntervalId;
+
+    function showAlert(type, message) {
+        const alertDiv = document.getElementById('alert-div');
+        alertDiv.innerHTML = `<div class="alert alert-${type} alert-dismissible fade show" role="alert">${message}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>`;
+    }
 
     async function updateTopLaps() {
         try {
@@ -46,6 +58,7 @@
                 throw new Error('Network response was not ok');
             }
             const data = await response.json();
+            failedAttempts = 0;
             toplapsData = data;
             renderTopLapsTable();
             updateTeamFilterOptions();
@@ -53,6 +66,11 @@
             const currentTime = new Date();
             timestampElement.textContent = `Last Refresh: ${currentTime.toLocaleTimeString()}`;
         } catch (error) {
+            failedAttempts++;
+            if (failedAttempts > 2) {
+                clearInterval(refreshIntervalId);
+                showAlert('danger', 'Failed to refresh top laps. Please refresh the page.');
+            }
             console.error('Error updating top laps:', error);
         }
     }
@@ -96,7 +114,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
-        setInterval(updateTopLaps, 10000); // Update every 10 seconds
+        refreshIntervalId = setInterval(updateTopLaps, 10000); // Update every 10 seconds
         updateTopLaps();
 
         const filterBtn = document.getElementById('filter-team-btn');

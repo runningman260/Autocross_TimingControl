@@ -35,8 +35,10 @@ def runtable():
         setattr(run, 'team_name', team_name)
         setattr(run, 'team_abbreviation', team_abbr)
         runs.append(run)
-    page = request.args.get('page', 1, type=int)
-    return render_template('runtable.html', title='Autocross', runs=runs)
+    #page = request.args.get('page', 1, type=int)
+    # In your runtable() route
+    max_run_id = max((run.id for run in runs), default=0)
+    return render_template('runtable.html', title='Autocross', runs=runs, max_run_id=max_run_id)
 
 @bp.route('/api/runs', methods=['GET'])
 def get_runs():

@@ -53,6 +53,12 @@
 
 
     <script>
+        // Add showAlert function for consistent alert display
+        function showAlert(type, message) {
+            const alertDiv = document.getElementById('alert-div');
+            alertDiv.innerHTML = `<div class="alert alert-${type} alert-dismissible fade show" role="alert">${message}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>`;
+        }
+
         document.getElementById('refresh-button').addEventListener('click', function(event) {
             event.preventDefault();
             failedAttempts = 0;
@@ -87,7 +93,7 @@
         const timestampElement = document.getElementById('last-refresh-timestamp');
         const currentTime = new Date();
         timestampElement.textContent = `Last Refresh: ${currentTime.toLocaleTimeString()}`;
-        let lastrun=0;
+        let lastrun={{ max_run_id|default(0) }};
         let failedAttempts = 0;
         let intervalId;
         let firstRun = true;
@@ -109,7 +115,7 @@
                 failedAttempts++;
                 if (failedAttempts > 4) {
                   console.error('Max failed attempts reached. Stopping refresh attempts.');
-                  showAlert('danger', 'Failed Refresh limit reached. Please refresh the page.');
+                  showAlert('danger', 'Failed to refresh Runs. Please reload the page.');
                   clearInterval(intervalId); // Stop the interval
                     return;
                 }
@@ -173,7 +179,7 @@
                 failedAttempts = 0;
             } catch (error) {
             console.error('Error updating runs table:', error);
-              showAlert('danger', 'An error occurred while updating the runs table. Please try again.');
+              //showAlert('danger', 'An error occurred while updating the runs table. Please try again.');
             
         }
     }
