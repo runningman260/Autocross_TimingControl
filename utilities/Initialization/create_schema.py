@@ -76,8 +76,8 @@ FROM (
             s.tmin AS MIN,
             s.tmax AS max,
             CASE
-                WHEN s.adjusted_time::decimal > s.tmax::decimal THEN 7.5
-                ELSE trunc((117.5 * ((s.tmax::decimal / s.adjusted_time::decimal) - 1) / ((s.tmax::decimal / s.tmin::decimal) - 1)) + 7.5, 3)
+                WHEN s.adjusted_time::decimal > s.tmax::decimal THEN 6.5
+                ELSE trunc((118.5 * ((s.tmax::decimal / s.adjusted_time::decimal) - 1) / ((s.tmax::decimal / s.tmin::decimal) - 1)) + 6.5, 3)
             END AS points
         FROM (
             SELECT
@@ -130,8 +130,8 @@ FROM (
             s.tmin AS MIN,
             s.tmax AS max,
             CASE
-                WHEN s.adjusted_time::decimal > s.tmax::decimal THEN 7.5
-                ELSE trunc((117.5 * ((s.tmax::decimal / s.adjusted_time::decimal) - 1) / ((s.tmax::decimal / s.tmin::decimal) - 1)) + 7.5, 3)
+                WHEN s.adjusted_time::decimal > s.tmax::decimal THEN 6.5
+                ELSE trunc((118.5 * ((s.tmax::decimal / s.adjusted_time::decimal) - 1) / ((s.tmax::decimal / s.tmin::decimal) - 1)) + 6.5, 3)
             END AS points
         FROM (
             SELECT
