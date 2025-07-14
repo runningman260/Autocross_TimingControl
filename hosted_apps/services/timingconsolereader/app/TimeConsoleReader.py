@@ -34,7 +34,8 @@ def create_mqtt_connection():
 			print("MQTT Client Connected", flush=True)
 		else:
 			print("MQTT Client NOT Connected, rc= " + str(reason_code), flush=True)
-		#client.subscribe("iotstack/mosquitto/healthcheck")
+		client.subscribe("/timing/webui/eyeson")
+		client.subscribe("/timing/webui/eyesoff")
 	client = paho.Client(paho.CallbackAPIVersion.VERSION2,client_id=client_id)
 	client.username_pw_set(Config.MQTT.USERNAME, Config.MQTT.PASSWORD)
 	client.on_connect = on_connect
@@ -42,7 +43,14 @@ def create_mqtt_connection():
 	return client
 
 def sub_handler(client, userdata, msg):
-    print(f"{msg.topic}: {msg.payload.decode()}")
+    #print(f"{msg.topic}: {msg.payload.decode()}")
+	if(msg.topic == "/timing/webui/eyeson"):
+		client.publish("/timing/timeconsolereader/eyestate",str("EYES are ON/TCR ON"))
+		eyes_state = 1
+	if(msg.topic == "/timing/webui/eyesoff"):
+		eyes_state = 0
+		client.publish("/timing/timeconsolereader/eyestate",str("EYES are OFF/TCR OFF"))
+
 
 def build_payload(insert, read_count, raw_time, timestamp):
 	if(insert):
@@ -72,6 +80,9 @@ while not(port_available):
 print("Device Found", flush=True)
 ser = serial.Serial(Config.FARMTEK.CONSOLE_PATH, Config.FARMTEK.CONSOLE_BAUD, serial.EIGHTBITS, serial.PARITY_NONE, serial.STOPBITS_ONE, timeout=1.0)
 
+# eyes state tracking
+# 0: eyes_off, 1: eyes_turned_on, 2: eyes_on
+eyes_state = 2 
 
 if __name__ == '__main__':
 	restartStr = "^ RESTART-IGNORE TIME ^"
@@ -96,6 +107,17 @@ if __name__ == '__main__':
 
 	try:
 		while True:
+			if(eyes_state == 0):
+				# eyes have been turned off, disregard incoming serial data
+				ser.reset_input_buffer()
+				lap_time_buffer = ""
+			if(eyes_state == 1):
+				# eyes are back on, clear buffers. Same as above, but keeping separate
+				# for now in case more work is needed
+				ser.reset_input_buffer()
+				lap_time_buffer = ""
+				eyes_state = 2
+
 			if(ser.in_waiting > 1):
 				time.sleep(0.1)
 				lap_time_buffer = ser.read(ser.in_waiting).decode('ascii')

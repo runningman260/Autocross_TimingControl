@@ -42,6 +42,9 @@ const char *ID             = "slscan";                     // Name of our device
 const int mqttPort         = 1883;
 String PUB_TOPIC_0         = "/timing/slscan/newscan";
 String PUB_TOPIC_1         = "/timing/TLCtrl/phototrigger";
+String SUB_TOPIC_EYES_ON   = "/timing/webui/eyeson";
+String SUB_TOPIC_EYES_OFF  = "/timing/webui/eyesoff";
+String PUB_TOPIC_EYES_STATE ="/timing/slscan/eyestate";
 String HEALTH_CHECK_TOPIC  = "/timing/slscan/healthcheck";
 String HomePageText = "Startline Firmware Running.\nIP Address: 192.168.2.210\nUpdate at 192.168.2.210/update";
 String StoredScannedTagValue = "";
@@ -49,6 +52,7 @@ unsigned long StoredScannedTagTime = 0;
 unsigned long StoredScannedTagTimeout = 30000;
 unsigned long prev_health_check = 0;
 unsigned long health_check_interval = 30000; //ms
+bool eyes_on = true;
 
 TaskHandle_t rfid_scanner_reader_task;
 TaskHandle_t rfid_scanner_write_task;
@@ -67,6 +71,14 @@ typedef struct{
 //Callback for an incoming MQTT message
 void callback(char* topic, byte* payload, unsigned int length) 
 {
+  if(String(topic) == SUB_TOPIC_EYES_ON){
+    eyes_on = true;
+    client.publish(PUB_TOPIC_EYES_STATE.c_str(), "EYES are ON/SLScan ON");
+  }
+  if(String(topic) == SUB_TOPIC_EYES_OFF){
+    eyes_on = false;
+    client.publish(PUB_TOPIC_EYES_STATE.c_str(), "EYES are OFF/SLScan OFF");
+  }
   //Rogue
   Serial.print("Message arrived [" + String(topic) + "] ");  
   for (unsigned int i = 0; i < length; i++) { Serial.print((char)payload[i]); }
@@ -147,15 +159,18 @@ void TaskReadFromSerial2(void *pvParameters){  // This is a task.
         // The line needs to be passed as pointer to void.
         // The last parameter states how many milliseconds should wait (keep trying to send) if is not possible to send right away.
         // When the wait parameter is 0 it will not wait and if the send is not possible the function will return errQUEUE_FULL
-        int ret = xQueueSend(QueueHandle, (void*) &message, 0);
-        if(ret == pdTRUE){
-          // The message was successfully sent.
-          Serial.println("Successfully sent scan data to queue");
-        }else if(ret == errQUEUE_FULL){
-          // Since we are checking uxQueueSpacesAvailable this should not occur, however if more than one task should
-          // write into the same queue it can fill-up between the test and actual send attempt
-          Serial.println("Unsuccessfully sent scan data to queue");
-        } // Queue send check
+        // ONLY send message if the EYES are ON
+        if(eyes_on){
+          int ret = xQueueSend(QueueHandle, (void*) &message, 0);
+          if(ret == pdTRUE){
+            // The message was successfully sent.
+            Serial.println("Successfully sent scan data to queue");
+          }else if(ret == errQUEUE_FULL){
+            // Since we are checking uxQueueSpacesAvailable this should not occur, however if more than one task should
+            // write into the same queue it can fill-up between the test and actual send attempt
+            Serial.println("Unsuccessfully sent scan data to queue");
+          } // Queue send check
+        } // EYES ON check
       } // Queue sanity check
     }else{
       delay(100); // Allow other tasks to run when there is nothing to read
@@ -227,6 +242,9 @@ void reconnect()
     // Attempt to connect
     if (client.connect(ID, mqttBrokerUser, mqttBrokerPass)) {
       Serial.println("...connected");
+      //Subscribe to the eyes-on/eyes-off topics
+      client.subscribe(SUB_TOPIC_EYES_ON.c_str());
+      client.subscribe(SUB_TOPIC_EYES_OFF.c_str());
     }
     else {
       Serial.print("...failed, rc=");

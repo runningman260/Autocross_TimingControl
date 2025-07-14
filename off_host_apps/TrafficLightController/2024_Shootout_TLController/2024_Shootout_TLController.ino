@@ -46,14 +46,20 @@ const int mqttPort         = 1883;
 String PUB_TOPIC_0         = "/timing/TLCtrl/newpattern";  // Topic to publish to
 String SUB_TOPIC_0         = "/timing/slscan/newscan";
 String SUB_TOPIC_1         = "/timing/webui/override";
+String SUB_TOPIC_EYES_ON   = "/timing/webui/eyeson";
+String SUB_TOPIC_EYES_OFF  = "/timing/webui/eyesoff";
+String PUB_TOPIC_EYES_STATE ="/timing/TLCtrl/eyestate";
 String HEALTH_CHECK_TOPIC  = "/timing/TLCtrl/healthcheck";
 String HomePageText = "TLC Firmware Running.\nIP Address: 192.168.2.201\nUpdate at 192.168.2.201/update";
 SemaphoreHandle_t xSemaphore = NULL;     // to track incoming scans
 SemaphoreHandle_t ADAM_conneciton_status_change = NULL;     // in case the LED control box disconnects
+SemaphoreHandle_t xEYES_off = NULL;     // to track if the eyes have been turned off
+SemaphoreHandle_t xEYES_on = NULL;     // to track if the eyes have been turned on
 int PatternStateTracker;
 bool state_changed;
 bool ADAM_connection_change = false;
 bool scan_ready = false;
+int eyes_state = 2; // 0: eyes_off, 1: eyes_turned_on, 2: eyes_on
 unsigned long yellow_pressed_time_ms = 0;
 unsigned long green_pressed_time_ms  = 0;
 unsigned long yellow_green_expiry_interval_ms = 5000;
@@ -72,6 +78,14 @@ void callback(char* topic, byte* payload, unsigned int length) {
   }
   if(String(topic) == String("Advantech/00D0C9FD648D/Device_Status")){
     xSemaphoreGive(ADAM_conneciton_status_change);  // Release the semaphore
+  }
+  if(String(topic) == SUB_TOPIC_EYES_OFF){
+    xSemaphoreGive(xEYES_off);  // Release the semaphore
+    client.publish(PUB_TOPIC_EYES_STATE.c_str(), "EYES are OFF/TLCtrl OFF");
+  }
+  if(String(topic) == SUB_TOPIC_EYES_ON){
+    xSemaphoreGive(xEYES_on);  // Release the semaphore
+    client.publish(PUB_TOPIC_EYES_STATE.c_str(), "EYES are ON/TLCtrl ON");
   }
 }
 
@@ -161,6 +175,8 @@ void setup()
   while( !Serial ){ delay(10); }
   xSemaphore = xSemaphoreCreateBinary();  // Set the semaphore as binary
   ADAM_conneciton_status_change = xSemaphoreCreateBinary();  // Set the semaphore as binary
+  xEYES_off = xSemaphoreCreateBinary();  // Set the semaphore as binary
+  xEYES_on = xSemaphoreCreateBinary();  // Set the semaphore as binary
 
   WT32_ETH01_onEvent(); // To be called before ETH.begin()
   ETH.begin();
@@ -217,6 +233,9 @@ void reconnect()
       client.subscribe(SUB_TOPIC_0.c_str());
       client.subscribe(SUB_TOPIC_1.c_str());
       client.subscribe(String("Advantech/00D0C9FD648D/Device_Status").c_str());
+      //Subscribe to the eyes-on/eyes-off topics
+      client.subscribe(SUB_TOPIC_EYES_ON.c_str());
+      client.subscribe(SUB_TOPIC_EYES_OFF.c_str());
     }
     else {
       Serial.print("...failed, rc=");
@@ -243,6 +262,9 @@ void reconnect()
 // State 4:
 //  TLA: GREEN (SOLID)
 //  TLC: GREEN (SOLID)
+// State 5 (Eyes are off):
+//  TLA: RED (SOLID), YELLOW (SOLID)
+//  TLC: RED (FLASH), YELLOW (FLASH)
 
 void loop() 
 {
@@ -265,6 +287,13 @@ void loop()
     }
     if (xSemaphoreTake(ADAM_conneciton_status_change, (1 * portTICK_PERIOD_MS))  == pdTRUE) {
       ADAM_connection_change = true;
+    }
+    // Check if the eyes have been disabled
+    if (xSemaphoreTake(xEYES_on, (1 * portTICK_PERIOD_MS))  == pdTRUE) {
+      eyes_state = 0; // 0: eyes_off, 1: eyes_turned_on, 2: eyes_on
+    }
+    if (xSemaphoreTake(xEYES_off, (1 * portTICK_PERIOD_MS))  == pdTRUE) {
+      eyes_state = 1; // 0: eyes_off, 1: eyes_turned_on, 2: eyes_on
     }
 
     //write states
@@ -408,6 +437,34 @@ void loop()
       TLC.yellow_next.control_state = 0;
       TLC.green_next.control_state  = 0;
       ADAM_connection_change = false;
+    }
+
+    //eyes on/off handling. When eyes are turned back on, we just go back to the default state.
+    //int eyes_state = 2; // 0: eyes_off, 1: eyes_turned_on, 2: eyes_on
+    if(eyes_state == 0)
+    {
+      TLC.currState = 5;
+      TLC.red_act.control_state     = 1; 
+      TLC.yellow_act.control_state  = 1;
+      TLC.green_act.control_state   = 0;
+      TLC.red_next.control_state    = 2;
+      TLC.yellow_next.control_state = 2;
+      TLC.green_next.control_state  = 0;
+    }
+    if(eyes_state == 1)
+    {
+      // Set to ready state where the traffic light and the controller both showing RED 
+      TLC.currState = 1;
+      TLC.prevState = 0;
+      TLC.red_act.control_state     = 1;
+      TLC.red_act.prev_control_state= 0;
+      TLC.yellow_act.control_state  = 0;
+      TLC.green_act.control_state   = 0;
+      TLC.red_next.control_state    = 0;
+      TLC.yellow_next.control_state = 0;
+      TLC.green_next.control_state  = 0;
+      // Finally, set the eyes state to ON
+      eyes_state = 2;
     }
 
     //write LED States
