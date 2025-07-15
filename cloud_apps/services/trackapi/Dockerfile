@@ -10,6 +10,5 @@ RUN chmod a+x boot.sh
 ENV FLASK_APP=trackapi.py
 
 
-
 EXPOSE 5000
 ENTRYPOINT ["./boot.sh"]
