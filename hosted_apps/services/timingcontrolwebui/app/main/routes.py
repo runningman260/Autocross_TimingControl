@@ -12,6 +12,7 @@ import threading
 import time
 from collections import deque
 
+eyesToggle= False
 
 @bp.route('/', methods=['GET', 'POST'])
 @bp.route('/runtable', methods=['GET', 'POST'])
@@ -106,6 +107,7 @@ sync_thread_paused = True
 sync_log = deque(maxlen=100)  # use deque for thread-safe rolling log
 sync_log_lock = threading.Lock()
 
+# --- CarReg Sync Globals ---
 last_carreg_sync_time = time.time()
 carreg_sync_interval = 30  # seconds
 
@@ -213,6 +215,26 @@ def on_load(state):
         sync_thread_obj = threading.Thread(target=sync_with_cloud_loop, args=(app,), daemon=True)
         sync_thread = sync_thread_obj
         sync_thread_obj.start()
+
+
+@bp.route('/api/eyes_toggle', methods=['POST'])
+def api_eyes_toggle():
+    global eyesToggle
+    eyesToggle = not eyesToggle
+    topic = "/timing/webui/eyesoff" if eyesToggle else "/timing/webui/eyeson"
+    payload = str(int(time.time()))
+    mqtt.publish(topic, payload)
+    return jsonify({
+        "status": "off" if eyesToggle else "on",
+        "timestamp": payload
+    })
+
+@bp.route('/api/eyes_toggle', methods=['GET'])
+def api_eyes_toggle_status():
+    global eyesToggle
+    return jsonify({
+        "status": "off" if eyesToggle else "on"
+    })
 
 @bp.route('/api/sync_log', methods=['GET'])
 def api_sync_log():
