@@ -20,6 +20,7 @@ Flask-SQLAlchemy==3.1.1
 Flask-WTF==1.2.1
 greenlet==3.0.1
 gunicorn==21.2.0
+gevent==1.4
 httpie==3.2.2
 idna==3.4
 Jinja2==3.1.2
