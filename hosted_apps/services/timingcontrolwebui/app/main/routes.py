@@ -14,7 +14,7 @@ from collections import deque
 
 eyesToggle= False
 authtoken = os.getenv('TRACKAPI_AUTH_TOKEN')
-trackapi_host = os.getenv('TRACKAPI_HOST')
+trackapi_host = 'https://' + os.getenv('TRACKAPI_HOST')
 
 
 @bp.route('/', methods=['GET', 'POST'])
@@ -616,7 +616,7 @@ def sync_carreg_with_cloud(force=False):
             else:
                 most_recent = db.session.query(CarReg).order_by(CarReg.updated_at.desc()).first()
                 since = most_recent.updated_at.isoformat() if most_recent and most_recent.updated_at else "1970-01-01T00:00:00+00:00"
-            url = authtoken+"api/car_regs/modified_since"
+            url = trackapi_host+"/api/car_regs/modified_since"
             params = {"since": since}
             # Add Authorization header (same as update_runs)
             headers = {
