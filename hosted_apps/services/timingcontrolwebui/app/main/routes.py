@@ -13,7 +13,7 @@ import time
 from collections import deque
 
 eyesToggle= False
-authtoken = os.getenv('TRACKAPI_AUTH_TOKEN')
+authtoken = 'Bearer '+os.getenv('TRACKAPI_AUTH_TOKEN')
 trackapi_host = 'https://' + os.getenv('TRACKAPI_HOST')
 
 
