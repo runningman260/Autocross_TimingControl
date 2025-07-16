@@ -41,3 +41,9 @@ app.db
 timingctrl.log*
 client_secret.json
 hosted_apps/volumes/
+
+# Environment variables
+.env
+*/.env
+services/*/.env
+volumes/*/.env

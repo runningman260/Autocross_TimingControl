@@ -48,7 +48,7 @@ services:
     restart: unless-stopped
     environment:
       - NGINX_PROXY_CONTAINER=nginx-proxy
-      - DEFAULT_EMAIL=admin@guttenp.land
+      - DEFAULT_EMAIL={LETSENCRYPT_EMAIL}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./certs:/etc/nginx/certs:rw
@@ -69,10 +69,10 @@ services:
       - IOTSTACK_UID=1000
       - IOTSTACK_GID=1000
       - DOCKER_HOST_IP=172.17.0.1
-      - VIRTUAL_HOST=timing.guttenp.land
+      - VIRTUAL_HOST={TIMINGSITE_HOST}
       - VIRTUAL_PORT=5000
-      - LETSENCRYPT_HOST=timing.guttenp.land
-      - LETSENCRYPT_EMAIL=adming@guttenp.land
+      - LETSENCRYPT_HOST={TIMINGSITE_HOST}
+      - LETSENCRYPT_EMAIL={LETSENCRYPT_EMAIL}
     expose:
       - "5000"
     networks:
@@ -90,10 +90,10 @@ services:
       - IOTSTACK_UID=1000
       - IOTSTACK_GID=1000
       - DOCKER_HOST_IP=172.17.0.1
-      - VIRTUAL_HOST=trackapi.guttenp.land
+      - VIRTUAL_HOST={TRACKAPI_HOST}
       - VIRTUAL_PORT=5000
-      - LETSENCRYPT_HOST=trackapi.guttenp.land
-      - LETSENCRYPT_EMAIL=adming@guttenp.land
+      - LETSENCRYPT_HOST={TRACKAPI_HOST}
+      - LETSENCRYPT_EMAIL={LETSENCRYPT_EMAIL}
     expose:
       - "5000"
     networks:

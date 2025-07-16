@@ -5,10 +5,10 @@ import os
 import time
 
 #URL_HOST = 'http://localhost:5000/'
-URL_HOST = 'https://trackapi.guttenp.land/'  # Use this for production
+URL_HOST = os.getenv('TRACKAPI_HOST')
 API_URL = URL_HOST + 'api/update_car_regs'
 TEAMS_URL = URL_HOST + 'api/teams'
-AUTH = 'P59d46bV5Xy40TblyzZR6J4dz4TlJ12lIswu2iiDYw2Hr8RqtPHoAWyWC8aevdDwVLJUsurbOo4M2aSSOFmmJ5DgaItek34yHYGTAyosU7GIBYhKBuihv3GyDPlCcr6fiKk7J3w0JE1yQeqbP2UPhjfyq63Azjd1wKK8Uhl3CUqJ4BPjipvzA1W1rQXFW1xc9Qdjqcs9IwrQ3edfPXSivYL'
+AUTH = os.getenv('TRACKAPI_AUTH_TOKEN')
 
 def get_teams():
     headers = {"Authorization": AUTH}

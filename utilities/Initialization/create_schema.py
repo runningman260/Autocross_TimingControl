@@ -20,7 +20,7 @@ def exit_handler():
 	print(' Cleaning Up!')
 	exit(1)
 
-#clear_and_create_schema()
+clear_and_create_schema()
 
 #create_view and create_table are identical lol
 

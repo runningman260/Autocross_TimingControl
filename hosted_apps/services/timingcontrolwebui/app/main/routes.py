@@ -13,6 +13,9 @@ import time
 from collections import deque
 
 eyesToggle= False
+authtoken = os.getenv('TRACKAPI_AUTH_TOKEN')
+trackapi_host = os.getenv('TRACKAPI_HOST')
+
 
 @bp.route('/', methods=['GET', 'POST'])
 @bp.route('/runtable', methods=['GET', 'POST'])
@@ -179,10 +182,9 @@ def sync_with_cloud_loop(app):
                     append_sync_log(f"Syncing batch with {len(runs_data)} runs: " +
                         ", ".join([f"ID {r['id']} (Car {r['car_number']})" for r in runs_data]))
                     try:
-                        response = requests.post(
-                            'https://trackapi.guttenp.land/api/update_runs',
+                        response = requests.post(os.path.join(trackapi_host, 'api', 'update_runs'),
                             json={'runs': runs_data},
-                            headers={'Authorization': 'P59d46bV5Xy40TblyzZR6J4dz4TlJ12lIswu2iiDYw2Hr8RqtPHoAWyWC8aevdDwVLJUsurbOo4M2aSSOFmmJ5DgaItek34yHYGTAyosU7GIBYhKBuihv3GyDPlCcr6fiKk7J3w0JE1yQeqbP2UPhjfyq63Azjd1wKK8Uhl3CUqJ4BPjipvzA1W1rQXFW1xc9Qdjqcs9IwrQ3edfPXSivYL'}
+                            headers={'Authorization': authtoken}
                         )
                         if response.status_code == 200:
                             for run, orig_updated_at in batch:
@@ -614,11 +616,11 @@ def sync_carreg_with_cloud(force=False):
             else:
                 most_recent = db.session.query(CarReg).order_by(CarReg.updated_at.desc()).first()
                 since = most_recent.updated_at.isoformat() if most_recent and most_recent.updated_at else "1970-01-01T00:00:00+00:00"
-            url = "https://trackapi.guttenp.land/api/car_regs/modified_since"
+            url = authtoken+"api/car_regs/modified_since"
             params = {"since": since}
             # Add Authorization header (same as update_runs)
             headers = {
-                'Authorization': 'P59d46bV5Xy40TblyzZR6J4dz4TlJ12lIswu2iiDYw2Hr8RqtPHoAWyWC8aevdDwVLJUsurbOo4M2aSSOFmmJ5DgaItek34yHYGTAyosU7GIBYhKBuihv3GyDPlCcr6fiKk7J3w0JE1yQeqbP2UPhjfyq63Azjd1wKK8Uhl3CUqJ4BPjipvzA1W1rQXFW1xc9Qdjqcs9IwrQ3edfPXSivYL'
+                'Authorization': authtoken
             }
             response = requests.get(url, params=params, headers=headers, timeout=10)
             if response.status_code == 200:

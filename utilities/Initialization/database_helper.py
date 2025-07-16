@@ -743,7 +743,9 @@ def insert_teams():
 		("York College of Pennsylvania YC Racing", "YCR"),
 		("Liberty University Flames Racing", "LUFR"),
 		("Carnegie Mellon Racing", "CMR"),
-		("Kennesaw State University Kennesaw Motorsports", "KSUM")
+		("Kennesaw State University Kennesaw Motorsports", "KSUM"),
+		("University of California Irvine ", "UCIRV"),
+		("West Virginia Mountaineer Racing", "WVU")
 	]
 	try:
 		with psycopg2.connect(
@@ -883,4 +885,128 @@ def clear_and_create_schema():
 
 
 
+def clear_and_create_non_autocross_schema():
+    # --- Drop old tables/views if they exist ---
+    delete_table("skidpad_run")
+    delete_table("accel_run")
+    delete_view("skidpad_leaderboard_ic")
+    delete_view("skidpad_leaderboard_ev")
+    delete_view("skidpad_leaderboard_pge")
+    delete_view("accel_leaderboard_ic")
+    delete_view("accel_leaderboard_ev")
+    delete_view("accel_leaderboard_pge")
+    delete_view("overall_points_leaderboard_ic")
+    delete_view("overall_points_leaderboard_ev")
+    delete_view("overall_points_leaderboard_pge")
+    delete_view("overall_conekiller_leaderboard")
+
+    # --- Create new tables ---
+    create_table("""
+        CREATE TABLE skidpad_run (
+            id SERIAL PRIMARY KEY,
+            car_number VARCHAR(255),
+            raw_time VARCHAR(255),
+            cones VARCHAR(255) DEFAULT '0' NOT NULL,
+            dnf VARCHAR(255),
+            adjusted_time VARCHAR(255),
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        );
+    """)
+    create_table("""
+        CREATE TABLE accel_run (
+            id SERIAL PRIMARY KEY,
+            car_number VARCHAR(255),
+            raw_time VARCHAR(255),
+            cones VARCHAR(255) DEFAULT '0' NOT NULL,
+            dnf VARCHAR(255),
+            adjusted_time VARCHAR(255),
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        );
+    """)
+
+    # --- Skidpad Leaderboards ---
+    for class_ in ['IC', 'EV', 'PGE']:
+        create_view(f"""
+            CREATE OR REPLACE VIEW skidpad_leaderboard_{class_.lower()} AS
+            SELECT
+                s.car_number,
+                t.name AS team_name,
+                t.abbreviation AS team_abbreviation,
+                s.adjusted_time,
+                s.cones
+            FROM skidpad_run s
+            JOIN carreg c ON s.car_number = c.car_number
+            LEFT JOIN team t ON c.team_id = t.id
+            WHERE c.class = '{class_}'
+                AND s.adjusted_time IS NOT NULL
+                AND s.adjusted_time IS DISTINCT FROM 'DNF'
+                AND s.raw_time IS NOT NULL
+                AND (s.raw_time::decimal > 0)
+            ORDER BY s.adjusted_time::decimal ASC;
+        """)
+
+    # --- Accel Leaderboards ---
+    for class_ in ['IC', 'EV', 'PGE']:
+        create_view(f"""
+            CREATE OR REPLACE VIEW accel_leaderboard_{class_.lower()} AS
+            SELECT
+                a.car_number,
+                t.name AS team_name,
+                t.abbreviation AS team_abbreviation,
+                a.adjusted_time,
+                a.cones
+            FROM accel_run a
+            JOIN carreg c ON a.car_number = c.car_number
+            LEFT JOIN team t ON c.team_id = t.id
+            WHERE c.class = '{class_}'
+                AND a.adjusted_time IS NOT NULL
+                AND a.adjusted_time IS DISTINCT FROM 'DNF'
+                AND a.raw_time IS NOT NULL
+                AND (a.raw_time::decimal > 0)
+            ORDER BY a.adjusted_time::decimal ASC;
+        """)
+
+    # --- Overall Points Leaderboards ---
+    for class_ in ['IC', 'EV', 'PGE']:
+        create_view(f"""
+            CREATE OR REPLACE VIEW overall_points_leaderboard_{class_.lower()} AS
+            SELECT
+                c.car_number,
+                t.name AS team_name,
+                t.abbreviation AS team_abbreviation,
+                -- Example: sum of points from all events (autocross, skidpad, accel)
+                COALESCE(a.points, 0) + COALESCE(s.points, 0) + COALESCE(r.points, 0) AS total_points
+            FROM carreg c
+            LEFT JOIN team t ON c.team_id = t.id
+            LEFT JOIN (
+                SELECT car_number, MAX(points) AS points FROM points_leaderboard_{class_.lower()} GROUP BY car_number
+            ) a ON c.car_number = a.car_number
+            LEFT JOIN (
+                SELECT car_number, MAX(points) AS points FROM skidpad_leaderboard_{class_.lower()} GROUP BY car_number
+            ) s ON c.car_number = s.car_number
+            LEFT JOIN (
+                SELECT car_number, MAX(points) AS points FROM accel_leaderboard_{class_.lower()} GROUP BY car_number
+            ) r ON c.car_number = r.car_number
+            WHERE c.class = '{class_}'
+            ORDER BY total_points DESC;
+        """)
+
+    # --- Overall Conekiller Leaderboard (all classes) ---
+    create_view("""
+        CREATE OR REPLACE VIEW overall_conekiller_leaderboard AS
+        SELECT
+            car_number,
+            SUM(cones::int) AS total_cones
+        FROM (
+            SELECT car_number, cones FROM runtable
+            UNION ALL
+            SELECT car_number, cones FROM skidpad_run
+            UNION ALL
+            SELECT car_number, cones FROM accel_run
+        ) all_cones
+        GROUP BY car_number
+        ORDER BY total_cones DESC;
+    """)
 
