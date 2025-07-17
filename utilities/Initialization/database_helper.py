@@ -980,7 +980,7 @@ def clear_and_create_schema():
 
 
 
-## 2025 Rules Reference with Pitt Shootout - specific modification
+## 2025 Rules Reference with Pitt Shootout-specific modification
 ## 	(10 second OC penalty in AutoX rather than 20)
 #
 # Autocross Scoring
@@ -1018,7 +1018,7 @@ def clear_and_create_schema():
 #		Corrected Time 		= Acceleration Run Time + ( CONE * 2 )
 #		Tyour 				= the best Corrected Time for the team
 #		Tmin 				= the lowest Corrected Time recorded for any team
-#		Tmax 				= 150% of 
+#		Tmax 				= 150% of Tmin
 #		CONE Penalty		= 2 seconds
 #		OFF COURSE Pentalty = DNF
 #	When Tyour < Tmax. the team score is calculated as:
