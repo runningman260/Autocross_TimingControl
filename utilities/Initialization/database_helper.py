@@ -743,9 +743,7 @@ def insert_teams():
 		("York College of Pennsylvania YC Racing", "YCR"),
 		("Liberty University Flames Racing", "LUFR"),
 		("Carnegie Mellon Racing", "CMR"),
-		("Kennesaw State University Kennesaw Motorsports", "KSUM"),
-		("University of California Irvine ", "UCIRV"),
-		("West Virginia Mountaineer Racing", "WVU")
+		("Kennesaw State University Kennesaw Motorsports", "KSUM")
 	]
 	try:
 		with psycopg2.connect(
