@@ -663,8 +663,8 @@ def create_pg_notify_trigger(table_name, function_name, trigger_name):
 	except (psycopg2.DatabaseError, Exception) as error:
 		print(error)
 
-def create_update_adjusted_time_calc_function():
-	sql = """CREATE OR REPLACE FUNCTION update_adjusted_time() 
+def create_autocross_runtable_update_adjusted_time_calc_function(table_name):
+	sql = """CREATE OR REPLACE FUNCTION {table_name}_update_adjusted_time() 
 		RETURNS TRIGGER AS $$
 		BEGIN
 			IF POSITION('DNF' IN UPPER(NEW.dnf)) > 0 THEN
@@ -674,7 +674,7 @@ def create_update_adjusted_time_calc_function():
 			END IF;
 			RETURN NEW;
 		END;
-		$$ LANGUAGE plpgsql;"""
+		$$ LANGUAGE plpgsql;""".format(table_name=table_name)
 	try:
 		with psycopg2.connect(
 			host=Config.DB.HOST, 
@@ -687,13 +687,60 @@ def create_update_adjusted_time_calc_function():
 	except (psycopg2.DatabaseError, Exception) as error:
 		print(error)
 
+def create_accel_runtable_update_adjusted_time_calc_function(table_name):
+	sql = """CREATE OR REPLACE FUNCTION {table_name}_update_adjusted_time() 
+		RETURNS TRIGGER AS $$
+		BEGIN
+			IF POSITION('DNF' IN UPPER(NEW.dnf)) > 0 THEN
+				NEW.adjusted_time := 'DNF';
+			ELSE
+				NEW.adjusted_time := (COALESCE(CAST(NEW.raw_time AS NUMERIC),0) + (2 * CAST(NEW.cones AS NUMERIC)))::text;
+			END IF;
+			RETURN NEW;
+		END;
+		$$ LANGUAGE plpgsql;""".format(table_name=table_name)
+	try:
+		with psycopg2.connect(
+			host=Config.DB.HOST, 
+			database=Config.DB.NAME, 
+			user=Config.DB.USER, 
+			password=Config.DB.PASS) as conn:
+			with conn.cursor() as cur:
+				# execute
+				cur.execute(sql)
+	except (psycopg2.DatabaseError, Exception) as error:
+		print(error)
 
-def create_adjust_time_trigger():
+def create_skidpad_runtable_update_adjusted_time_calc_function(table_name):
+	sql = """CREATE OR REPLACE FUNCTION {table_name}_update_adjusted_time() 
+		RETURNS TRIGGER AS $$
+		BEGIN
+			IF POSITION('DNF' IN UPPER(NEW.dnf)) > 0 THEN
+				NEW.adjusted_time := 'DNF';
+			ELSE
+				NEW.adjusted_time := (COALESCE(CAST(NEW.raw_time_left AS NUMERIC),0) + COALESCE(CAST(NEW.raw_time_right AS NUMERIC),0) + (0.125 * CAST(NEW.cones AS NUMERIC)))::text;
+			END IF;
+			RETURN NEW;
+		END;
+		$$ LANGUAGE plpgsql;""".format(table_name=table_name)
+	try:
+		with psycopg2.connect(
+			host=Config.DB.HOST, 
+			database=Config.DB.NAME, 
+			user=Config.DB.USER, 
+			password=Config.DB.PASS) as conn:
+			with conn.cursor() as cur:
+				# execute
+				cur.execute(sql)
+	except (psycopg2.DatabaseError, Exception) as error:
+		print(error)
+
+def create_adjust_time_trigger(table_name):
 	sql = """
-		CREATE TRIGGER adjust_time_trigger
-		BEFORE INSERT OR UPDATE ON runtable
+		CREATE TRIGGER {table_name}_adjust_time_trigger
+		BEFORE INSERT OR UPDATE ON "{table_name}"
 		FOR EACH ROW
-		EXECUTE FUNCTION update_adjusted_time();"""
+		EXECUTE FUNCTION {table_name}_update_adjusted_time();""".format(table_name=table_name)
 	try:
 		with psycopg2.connect(
 			host=Config.DB.HOST, 
@@ -827,6 +874,35 @@ def clear_and_create_schema():
 				created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 				updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 				last_synced_at TIMESTAMPTZ
+				);""",
+		"accel_runtable":
+		"""
+			CREATE TABLE accel_runtable(
+				id SERIAL PRIMARY KEY,
+				car_number VARCHAR(255),
+				raw_time VARCHAR(255),
+				cones VARCHAR(255) DEFAULT '0' NOT NULL,
+				off_course VARCHAR(255) NOT NULL DEFAULT '0',
+				dnf VARCHAR(255),
+				adjusted_time VARCHAR(255),
+				created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+				updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+				last_synced_at TIMESTAMPTZ
+				);""",
+		"skidpad_runtable":
+		"""
+			CREATE TABLE skidpad_runtable(
+				id SERIAL PRIMARY KEY,
+				car_number VARCHAR(255),
+				raw_time_left VARCHAR(255),
+				raw_time_right VARCHAR(255),
+				cones VARCHAR(255) DEFAULT '0' NOT NULL,
+				off_course VARCHAR(255) NOT NULL DEFAULT '0',
+				dnf VARCHAR(255),
+				adjusted_time VARCHAR(255),
+				created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+				updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+				last_synced_at TIMESTAMPTZ
 				);"""
 	}
 	trigger_name = "_trigger_set_timestamp"
@@ -848,7 +924,10 @@ def clear_and_create_schema():
 	delete_view("leaderboard")
 	delete_table("points_leaderboard")
 	delete_view("cones_leaderboard")
-	
+
+	delete_table("accel_runtable")
+	delete_table("skidpad_runtable")
+
 	for table_name in database_tables:
 		delete_if_exists = False
 		table_exists = False
@@ -875,8 +954,74 @@ def clear_and_create_schema():
 		if(table_name == "runtable"):
 			function_name = table_name + "_function_pg_nofity"
 			trigger_name  = table_name + "_trigger_pg_nofity"
+			# Notify that a new ID has been added
+			create_pg_notify_function(function_name)
+			# Trigger executes the function when the above nofify flag is raised
+			create_pg_notify_trigger(table_name,function_name,trigger_name)
+			# The Actual time adjustment function
+			create_autocross_runtable_update_adjusted_time_calc_function(table_name)
+			# Execute update_adjusted_time on insert or udate of the table
+			create_adjust_time_trigger(table_name)
+		if(table_name == "accel_runtable"):
+			function_name = table_name + "_function_pg_nofity"
+			trigger_name  = table_name + "_trigger_pg_nofity"
 			create_pg_notify_function(function_name)
 			create_pg_notify_trigger(table_name,function_name,trigger_name)
-			create_update_adjusted_time_calc_function()
-			create_adjust_time_trigger()
+			create_skidpad_runtable_update_adjusted_time_calc_function(table_name)
+			create_adjust_time_trigger(table_name)
+		if(table_name == "accel_runtable"):
+			function_name = table_name + "_function_pg_nofity"
+			trigger_name  = table_name + "_trigger_pg_nofity"
+			create_pg_notify_function(function_name)
+			create_pg_notify_trigger(table_name,function_name,trigger_name)
+			create_accel_runtable_update_adjusted_time_calc_function(table_name)
+			create_adjust_time_trigger(table_name)
 	insert_teams()
+
+
+
+## 2025 Rules Reference with Pitt Shootout - specific modification
+## 	(10 second OC penalty in AutoX rather than 20)
+#
+# Autocross Scoring
+#	Scoring Term Definitions:
+#		Corrected Time 		= Autocross Run Time + ( CONE * 2 ) + ( OC * 20 )
+#		Tyour				= the best Corrected Time for the team
+#		Tmin 				= the lowest Corrected Time recorded for any team
+#		Tmax 				= 145% of Tmin
+#		CONE Penalty		= 2 seconds
+#		OFF COURSE Pentalty = 10 seconds
+#	When Tyour < Tmax. the team score is calculated as:
+#		Autocross Score = 118.5 x [( Tmax / Tyour ) -1] / [( Tmax / Tmin ) -1] + 6.5
+#	When Tyour > Tmax:
+# 		Autocross Score = 6.5
+#
+#
+#
+# Skidpad Scoring
+#	Scoring Term Definitions:
+# 		Corrected Time 		= ( Right Lap Time + Left Lap Time ) / 2 + ( CONE * 0.125 )
+#		Tyour 				= the best Corrected Time for the team
+#		Tmin 				= is the lowest Corrected Time recorded for any team
+#		Tmax 				= 125% of Tmin
+#		CONE Penalty		= 0.125 seconds
+#		OFF COURSE Pentalty = DNF
+#	When Tyour < Tmax. the team score is calculated as:
+#		Skidpad Score = 71.5 x [( Tmax / Tyour )^2 -1] / [( Tmax / Tmin )^2 -1] + 3.5
+#	When Tyour > Tmax:
+# 		Skidpad Score = 3.5
+#
+#
+#
+# Acceleration 
+#	Scoring Term Definitions:
+#		Corrected Time 		= Acceleration Run Time + ( CONE * 2 )
+#		Tyour 				= the best Corrected Time for the team
+#		Tmin 				= the lowest Corrected Time recorded for any team
+#		Tmax 				= 150% of 
+#		CONE Penalty		= 2 seconds
+#		OFF COURSE Pentalty = DNF
+#	When Tyour < Tmax. the team score is calculated as:
+#		Acceleration Score = 95.5 x [( Tmax / Tyour ) -1] / [( Tmax / Tmin ) -1] + 4.5
+#	When Tyour > Tmax:
+#		Acceleration Score = 4.5
