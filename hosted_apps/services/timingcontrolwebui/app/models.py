@@ -212,9 +212,12 @@ class Overall_PointsLeaderboard(db.Model):
 class ConesLeaderboard(db.Model):
     __tablename__ = 'cones_leaderboard'
     __table_args__ = {'info': {'is_view': True}}
-    __mapper_args__ = {'primary_key': ['car_number', 'total_cones']}
+    __mapper_args__ = {'primary_key': ['car_number', 'autocross_cones', 'accel_cones', 'skidpad_cones', 'total_cones']}
        
     car_number: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    autocross_cones: so.Mapped[int] = so.mapped_column(sa.Integer, index=True)
+    accel_cones: so.Mapped[int] = so.mapped_column(sa.Integer, index=True)
+    skidpad_cones: so.Mapped[int] = so.mapped_column(sa.Integer, index=True)
     total_cones: so.Mapped[int] = so.mapped_column(sa.Integer, index=True)
     team_name: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
 

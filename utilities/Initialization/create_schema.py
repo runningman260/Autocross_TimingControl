@@ -288,58 +288,49 @@ print("Creating Cones Leaderboard")
 sql = """
 CREATE OR REPLACE VIEW cones_leaderboard AS
 SELECT
-    car_number,
-    team_name,
-    team_abbreviation,
-    SUM(cones::int) AS total_cones
+    cars.car_number,
+    cars.team_name,
+    cars.team_abbreviation,
+    COALESCE(autocross.cones, 0) AS autocross_cones,
+    COALESCE(accel.cones, 0) AS accel_cones,
+    COALESCE(skidpad.cones, 0) AS skidpad_cones,
+    (COALESCE(autocross.cones, 0) + COALESCE(accel.cones, 0) + COALESCE(skidpad.cones, 0)) AS total_cones
 FROM (
-    SELECT
-        runtable.car_number,
-        team.name AS team_name,
-        team.abbreviation AS team_abbreviation,
-        runtable.cones
+    SELECT DISTINCT car_number, team_name, team_abbreviation FROM (
+        SELECT runtable.car_number, team.name AS team_name, team.abbreviation AS team_abbreviation
+        FROM runtable
+        JOIN carreg ON runtable.car_number = carreg.car_number
+        LEFT JOIN team ON carreg.team_id = team.id
+        UNION
+        SELECT accel_runtable.car_number, team.name, team.abbreviation
+        FROM accel_runtable
+        JOIN carreg ON accel_runtable.car_number = carreg.car_number
+        LEFT JOIN team ON carreg.team_id = team.id
+        UNION
+        SELECT skidpad_runtable.car_number, team.name, team.abbreviation
+        FROM skidpad_runtable
+        JOIN carreg ON skidpad_runtable.car_number = carreg.car_number
+        LEFT JOIN team ON carreg.team_id = team.id
+    ) all_cars
+) cars
+LEFT JOIN (
+    SELECT car_number, SUM(cones::int) AS cones
     FROM runtable
-    JOIN carreg ON runtable.car_number = carreg.car_number
-    LEFT JOIN team ON carreg.team_id = team.id
-    WHERE
-        runtable.adjusted_time IS NOT NULL
-        AND runtable.cones IS NOT NULL
-        AND (runtable.cones::numeric > 0)
-    
-    UNION ALL
-    
-    SELECT
-        accel_runtable.car_number,
-        team.name AS team_name,
-        team.abbreviation AS team_abbreviation,
-        accel_runtable.cones
+    WHERE adjusted_time IS NOT NULL AND cones IS NOT NULL AND (cones::numeric > 0)
+    GROUP BY car_number
+) autocross ON cars.car_number = autocross.car_number
+LEFT JOIN (
+    SELECT car_number, SUM(cones::int) AS cones
     FROM accel_runtable
-    JOIN carreg ON accel_runtable.car_number = carreg.car_number
-    LEFT JOIN team ON carreg.team_id = team.id
-    WHERE
-        accel_runtable.adjusted_time IS NOT NULL
-        AND accel_runtable.cones IS NOT NULL
-        AND (accel_runtable.cones::numeric > 0)
-    
-    UNION ALL
-    
-    SELECT
-        skidpad_runtable.car_number,
-        team.name AS team_name,
-        team.abbreviation AS team_abbreviation,
-        skidpad_runtable.cones
+    WHERE adjusted_time IS NOT NULL AND cones IS NOT NULL AND (cones::numeric > 0)
+    GROUP BY car_number
+) accel ON cars.car_number = accel.car_number
+LEFT JOIN (
+    SELECT car_number, SUM(cones::int) AS cones
     FROM skidpad_runtable
-    JOIN carreg ON skidpad_runtable.car_number = carreg.car_number
-    LEFT JOIN team ON carreg.team_id = team.id
-    WHERE
-        skidpad_runtable.adjusted_time IS NOT NULL
-        AND skidpad_runtable.cones IS NOT NULL
-        AND (skidpad_runtable.cones::numeric > 0)
-) combined_cones
-GROUP BY
-    car_number,
-    team_name,
-    team_abbreviation
+    WHERE adjusted_time IS NOT NULL AND cones IS NOT NULL AND (cones::numeric > 0)
+    GROUP BY car_number
+) skidpad ON cars.car_number = skidpad.car_number
 ORDER BY
     total_cones DESC;
 """

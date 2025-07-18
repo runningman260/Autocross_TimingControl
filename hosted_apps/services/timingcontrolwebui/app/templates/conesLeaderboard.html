@@ -15,6 +15,9 @@
                     <tr>
                         <th>Team Name</th>
                         <th>Car Number</th>
+                        <th>Autocross Cones</th>
+                        <th>Acceleraction Cones</th>
+                        <th>Skidpad Cones</th>
                         <th>Cones</th>
                     </tr>
                 </thead>
@@ -42,6 +45,9 @@
                     row.innerHTML = `
                         <td>${run.team_name}</td>
                         <td>${run.car_number}</td>
+                        <td>${run.autocross_cones}</td>
+                        <td>${run.accel_cones}</td>
+                        <td>${run.skidpad_cones}</td>
                         <td>${run.cones}</td>
                     `;
                     tbody.appendChild(row);

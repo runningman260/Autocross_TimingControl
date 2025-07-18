@@ -674,6 +674,23 @@ def api_skidpad_points_leaderboard():
     }
     return jsonify(runs_data)
 
+@bp.route('/api/overall_pointsLeaderboard', methods=['GET'])
+def api_overall_pointsLeaderboard():
+    query = sa.select(Overall_PointsLeaderboard)
+    PointsTotals = db.session.scalars(query).all()
+    points_totals_data = [
+        {
+            'team_name': team.team_name,
+            'car_number': team.car_number,
+            'autocross_points' : team.autocross_points,
+            'accel_points': team.accel_points,
+            'skidpad_points': team.skidpad_points,
+            'total_points': team.total_points
+        }
+        for team in PointsTotals
+    ]
+    return jsonify(points_totals_data)
+
 @bp.route('/api/cones_leaderboard', methods=['GET'])
 def api_cones_leaderboard():
     query = sa.select(ConesLeaderboard)
@@ -682,6 +699,9 @@ def api_cones_leaderboard():
         {
             'team_name': run.team_name,
             'car_number': run.car_number,
+            'autocross_cones' : run.autocross_cones,
+            'accel_cones': run.accel_cones,
+            'skidpad_cones': run.skidpad_cones,
             'cones': run.total_cones
         }
         for run in runs
