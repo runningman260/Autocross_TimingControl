@@ -25,13 +25,13 @@
                     {% set ns = namespace(cutoff_inserted=False) %}
                     {% for run in ICruns %}
                         {% if not ns.cutoff_inserted and IC_tmax is not none and run.adjusted_time|float >= IC_tmax %}
-                            <tr><td colspan="4" class="table-warning text-center"><strong>145% Cutoff: {{ IC_tmax }} sec</strong></td></tr>
+                            <tr><td colspan="4" class="table-warning text-center"><strong>Excess Time Threshold 145% : {{ IC_tmax }} sec</strong></td></tr>
                             {% set ns.cutoff_inserted = True %}
                         {% endif %}
                         {% include '_point_board_entry.html' %}
                     {% endfor %}
                     {% if not ns.cutoff_inserted and ICruns|length > 0 and IC_tmax is not none %}
-                        <tr><td colspan="4" class="table-warning text-center"><strong>145% Cutoff: {{ IC_tmax }} sec</strong></td></tr>
+                        <tr><td colspan="4" class="table-warning text-center"><strong>Excess Time Threshold 145% : {{ IC_tmax }} sec</strong></td></tr>
                     {% endif %}
                 </tbody>
             </table>
@@ -51,13 +51,13 @@
                     {% set ns = namespace(cutoff_inserted=False) %}
                     {% for run in EVruns %}
                         {% if not ns.cutoff_inserted and EV_tmax is not none and run.adjusted_time|float >= EV_tmax %}
-                            <tr><td colspan="4" class="table-warning text-center"><strong>145% Cutoff: {{ EV_tmax }} sec</strong></td></tr>
+                            <tr><td colspan="4" class="table-warning text-center"><strong>Excess Time Threshold 145% : {{ EV_tmax }} sec</strong></td></tr>
                             {% set ns.cutoff_inserted = True %}
                         {% endif %}
                         {% include '_point_board_entry.html' %}
                     {% endfor %}
                     {% if not ns.cutoff_inserted and EVruns|length > 0 and EV_tmax is not none %}
-                        <tr><td colspan="4" class="table-warning text-center"><strong>145% Cutoff: {{ EV_tmax }} sec</strong></td></tr>
+                        <tr><td colspan="4" class="table-warning text-center"><strong>Excess Time Threshold 145% : {{ EV_tmax }} sec</strong></td></tr>
                     {% endif %}
                 </tbody>
             </table>
@@ -95,7 +95,7 @@
                         // Insert cutoff row
                         const cutoffRow = document.createElement('tr');
                         cutoffRow.innerHTML = `<td colspan="4" class="table-warning text-center">
-                            <strong>145% Cutoff: ${Number(data.IC_tmax).toFixed(3)} sec</strong>
+                            <strong>Excess Time Threshold 145% : ${Number(data.IC_tmax).toFixed(3)} sec</strong>
                         </td>`;
                         icTbody.appendChild(cutoffRow);
                         icCutoffInserted = true;
@@ -113,7 +113,7 @@
                 if (!icCutoffInserted && data.IC_runs.length > 0) {
                     const cutoffRow = document.createElement('tr');
                     cutoffRow.innerHTML = `<td colspan="4" class="table-warning text-center">
-                        <strong>145% Cutoff: ${Number(data.IC_tmax).toFixed(3)} sec</strong>
+                        <strong>Excess Time Threshold 145% : ${Number(data.IC_tmax).toFixed(3)} sec</strong>
                     </td>`;
                     icTbody.appendChild(cutoffRow);
                 }
@@ -127,7 +127,7 @@
                         // Insert cutoff row
                         const cutoffRow = document.createElement('tr');
                         cutoffRow.innerHTML = `<td colspan="4" class="table-warning text-center">
-                            <strong>145% Cutoff: ${Number(data.EV_tmax).toFixed(3)} sec</strong>
+                            <strong>Excess Time Threshold 145% : ${Number(data.EV_tmax).toFixed(3)} sec</strong>
                         </td>`;
                         evTbody.appendChild(cutoffRow);
                         evCutoffInserted = true;
@@ -144,7 +144,7 @@
                 if (!evCutoffInserted && data.EV_runs.length > 0) {
                     const cutoffRow = document.createElement('tr');
                     cutoffRow.innerHTML = `<td colspan="4" class="table-warning text-center">
-                        <strong>145% Cutoff: ${Number(data.EV_tmax).toFixed(3)} sec</strong>
+                        <strong>Excess Time Threshold 145% : ${Number(data.EV_tmax).toFixed(3)} sec</strong>
                     </td>`;
                     evTbody.appendChild(cutoffRow);
                 }

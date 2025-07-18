@@ -10,7 +10,7 @@ from app.main import bp
 @bp.before_request
 def authenticate():
     auth_header = request.headers.get('Authorization')
-    if auth_header != 'P59d46bV5Xy40TblyzZR6J4dz4TlJ12lIswu2iiDYw2Hr8RqtPHoAWyWC8aevdDwVLJUsurbOo4M2aSSOFmmJ5DgaItek34yHYGTAyosU7GIBYhKBuihv3GyDPlCcr6fiKk7J3w0JE1yQeqbP2UPhjfyq63Azjd1wKK8Uhl3CUqJ4BPjipvzA1W1rQXFW1xc9Qdjqcs9IwrQ3edfPXSivYL':
+    if auth_header != 'Bearer ' + os.getenv('TRACKAPI_AUTH_TOKEN'):
         return jsonify({'status': 'error', 'message': 'Unauthorized'}), 403
     
     

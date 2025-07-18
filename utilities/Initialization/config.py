@@ -8,6 +8,7 @@
 
 import os
 
+
 class Config:
     class MQTT:
         PORT = 1883
@@ -25,6 +26,7 @@ class Config:
             HOST = os.environ.get('DOCKER_HOST_IP')
         else:
             HOST = 'localhost'
-        NAME="test_scans"
-        USER="nick"
-        PASS="password"
+        NAME = os.environ.get('POSTGRES_DB', 'test_scans')
+        USER = os.environ.get('POSTGRES_USER', 'nick')
+        PASS = os.environ.get('POSTGRES_PASSWORD', 'password')
+        TZ = os.environ.get('TZ', 'America/New_York')

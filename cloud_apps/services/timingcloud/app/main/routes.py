@@ -161,10 +161,10 @@ def pointsLeaderboard():
 
     # Calculate tmax for IC and EV
     ic_times = [float(run.adjusted_time) for run in ICruns if run.adjusted_time is not None and str(run.adjusted_time).replace('.', '', 1).isdigit()]
-    IC_tmax = round(1.45 * min(ic_times), 3) if ic_times else None
+    IC_tmax = round(1.450 * min(ic_times), 4) if ic_times else None
 
     ev_times = [float(run.adjusted_time) for run in EVruns if run.adjusted_time is not None and str(run.adjusted_time).replace('.', '', 1).isdigit()]
-    EV_tmax = round(1.45 * min(ev_times), 3) if ev_times else None
+    EV_tmax = round(1.450 * min(ev_times), 4) if ev_times else None
 
     if request.accept_mimetypes['application/json'] >= request.accept_mimetypes['text/html']:
         runs_data = {
