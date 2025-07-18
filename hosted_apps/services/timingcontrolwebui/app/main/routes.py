@@ -5,7 +5,7 @@ from flask_babel import _, get_locale
 import sqlalchemy as sa
 from app import db, mqtt
 from app.main.forms import EmptyForm, PostForm, SearchForm, RunEditForm, AddRunForm, EditRunForm
-from app.models import RunOrder, Accel_RunOrder, Skidpad_RunOrder, CarReg, Autocross_TopLaps, Accel_TopLaps, Skidpad_TopLaps, Autocross_PointsLeaderboardIC, Autocross_PointsLeaderboardEV, Accel_PointsLeaderboardIC, Accel_PointsLeaderboardEV, Skidpad_PointsLeaderboardIC, Skidpad_PointsLeaderboardEV, Overall_PointsLeaderboardEV, ConesLeaderboard, Team
+from app.models import RunOrder, Accel_RunOrder, Skidpad_RunOrder, CarReg, Autocross_TopLaps, Accel_TopLaps, Skidpad_TopLaps, Autocross_PointsLeaderboardIC, Autocross_PointsLeaderboardEV, Accel_PointsLeaderboardIC, Accel_PointsLeaderboardEV, Skidpad_PointsLeaderboardIC, Skidpad_PointsLeaderboardEV, Overall_PointsLeaderboard, ConesLeaderboard, Team
 from app.main import bp
 import requests
 import threading
@@ -530,6 +530,14 @@ def skidpad_toplaps():
         }
         runs.append(run)
     return render_template('skidpad_toplaps.html', title='Skidpad Top Laps', runs=runs)
+
+@bp.route('/overall_pointsLeaderboard', methods=['GET', 'POST'])
+def overall_pointsLeaderboard():
+    
+    query = sa.select(Overall_PointsLeaderboard)
+    PointsTotals = db.session.scalars(query).all()
+    
+    return render_template('overall_pointsLeaderboard.html', title='Overall Points Leaderboard', PointsTotals=PointsTotals)
 
 @bp.route('/autocross_pointsLeaderboard', methods=['GET', 'POST'])
 def autocross_pointsLeaderboard():

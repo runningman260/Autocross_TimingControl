@@ -196,14 +196,16 @@ class Skidpad_PointsLeaderboardEV(db.Model):
     points: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
     team_name: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)  
 
-class Overall_PointsLeaderboardEV(db.Model):
+class Overall_PointsLeaderboard(db.Model):
     __tablename__ = 'overall_points_leaderboard'
     __table_args__ = {'info': {'is_view': True}}
-    __mapper_args__ = {'primary_key': ['car_number', 'adjusted_time', 'points']}
-       
+    __mapper_args__ = {'primary_key': ['car_number', 'autocross_points', 'accel_points', 'skidpad_points', 'total_points']}
+        
     car_number: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
-    adjusted_time: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
-    points: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    autocross_points: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    accel_points: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    skidpad_points: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    total_points: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
     team_name: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)   
     
 # Conekiller  
