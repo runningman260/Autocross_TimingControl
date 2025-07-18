@@ -5,7 +5,7 @@ from flask_babel import _, get_locale
 import sqlalchemy as sa
 from app import db, mqtt
 from app.main.forms import EmptyForm, PostForm, SearchForm, RunEditForm, AddRunForm, EditRunForm
-from app.models import RunOrder, TopLaps, CarReg, PointsLeaderboardIC, PointsLeaderboardEV, ConesLeaderboard, Team
+from app.models import RunOrder, Accel_RunOrder, Skidpad_RunOrder, CarReg, Autocross_TopLaps, Accel_TopLaps, Skidpad_TopLaps, Autocross_PointsLeaderboardIC, Autocross_PointsLeaderboardEV, Accel_PointsLeaderboardIC, Accel_PointsLeaderboardEV, Skidpad_PointsLeaderboardIC, Skidpad_PointsLeaderboardEV, Overall_PointsLeaderboardEV, ConesLeaderboard, Team
 from app.main import bp
 import requests
 import threading
@@ -477,9 +477,9 @@ def get_run(run_id):
 def favicon():
     return send_from_directory(os.path.join(bp.root_path, 'static'),'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
-@bp.route('/toplaps', methods=['GET', 'POST'])
-def toplaps():
-    query = sa.select(TopLaps)
+@bp.route('/autocross_toplaps', methods=['GET', 'POST'])
+def autocross_toplaps():
+    query = sa.select(Autocross_TopLaps)
     toplaps_data = db.session.scalars(query).all()
     runs = []
     for lap in toplaps_data:
@@ -493,17 +493,73 @@ def toplaps():
             'id': lap.id
         }
         runs.append(run)
-    return render_template('toplaps.html', title='Top Laps', runs=runs)
+    return render_template('autocross_toplaps.html', title='Autocross Top Laps', runs=runs)
 
-@bp.route('/pointsLeaderboard', methods=['GET', 'POST'])
-def pointsLeaderboard():
+@bp.route('/accel_toplaps', methods=['GET', 'POST'])
+def accel_toplaps():
+    query = sa.select(Accel_TopLaps)
+    toplaps_data = db.session.scalars(query).all()
+    runs = []
+    for lap in toplaps_data:
+        run = {
+            'team_name': lap.team_name,
+            'car_number': lap.car_number,
+            'adjusted_time': lap.adjusted_time,
+            'class_': lap.class_,
+            'cones': lap.cones,
+            'off_course': lap.off_course,
+            'id': lap.id
+        }
+        runs.append(run)
+    return render_template('accel_toplaps.html', title='Acceleration Top Laps', runs=runs)
+
+@bp.route('/skidpad_toplaps', methods=['GET', 'POST'])
+def skidpad_toplaps():
+    query = sa.select(Skidpad_TopLaps)
+    toplaps_data = db.session.scalars(query).all()
+    runs = []
+    for lap in toplaps_data:
+        run = {
+            'team_name': lap.team_name,
+            'car_number': lap.car_number,
+            'adjusted_time': lap.adjusted_time,
+            'class_': lap.class_,
+            'cones': lap.cones,
+            'off_course': lap.off_course,
+            'id': lap.id
+        }
+        runs.append(run)
+    return render_template('skidpad_toplaps.html', title='Skidpad Top Laps', runs=runs)
+
+@bp.route('/autocross_pointsLeaderboard', methods=['GET', 'POST'])
+def autocross_pointsLeaderboard():
     
-    query = sa.select(PointsLeaderboardIC)
+    query = sa.select(Autocross_PointsLeaderboardIC)
     ICruns = db.session.scalars(query).all()
-    query = sa.select(PointsLeaderboardEV)
+    query = sa.select(Autocross_PointsLeaderboardEV)
     EVruns = db.session.scalars(query).all()
     
-    return render_template('pointsLeaderboard.html', title='Points Leaderboard', ICruns=ICruns, EVruns=EVruns)
+    return render_template('autocross_pointsLeaderboard.html', title='Autocross Points Leaderboard', ICruns=ICruns, EVruns=EVruns)
+
+@bp.route('/accel_pointsLeaderboard', methods=['GET', 'POST'])
+def accel_pointsLeaderboard():
+    
+    query = sa.select(Accel_PointsLeaderboardIC)
+    ICruns = db.session.scalars(query).all()
+    query = sa.select(Accel_PointsLeaderboardEV)
+    EVruns = db.session.scalars(query).all()
+    
+    return render_template('accel_pointsLeaderboard.html', title='Acceleration Points Leaderboard', ICruns=ICruns, EVruns=EVruns)
+
+@bp.route('/skidpad_pointsLeaderboard', methods=['GET', 'POST'])
+def skidpad_pointsLeaderboard():
+    
+    query = sa.select(Skidpad_PointsLeaderboardIC)
+    ICruns = db.session.scalars(query).all()
+    query = sa.select(Skidpad_PointsLeaderboardEV)
+    EVruns = db.session.scalars(query).all()
+    
+    return render_template('skidpad_pointsLeaderboard.html', title='Skidpad Points Leaderboard', ICruns=ICruns, EVruns=EVruns)
 
 @bp.route('/conesLeaderboard', methods=['GET', 'POST'])
 def conesLeaderboard():
@@ -514,11 +570,75 @@ def conesLeaderboard():
         
         return render_template('conesLeaderboard.html', title='Cones Leaderboard', runs=runs)
 
-@bp.route('/api/points_leaderboard', methods=['GET'])
-def api_points_leaderboard():
-    query = sa.select(PointsLeaderboardIC)
+@bp.route('/api/autocross_points_leaderboard', methods=['GET'])
+def api_autocross_points_leaderboard():
+    query = sa.select(Autocross_PointsLeaderboardIC)
     ICruns = db.session.scalars(query).all()
-    query = sa.select(PointsLeaderboardEV)
+    query = sa.select(Autocross_PointsLeaderboardEV)
+    EVRuns = db.session.scalars(query).all()
+    ic_runs_data = [
+        {
+            'team_name': run.team_name,
+            'car_number': run.car_number,
+            'adjusted_time': run.adjusted_time,
+            'points': run.points
+        }
+        for run in ICruns
+    ]
+    
+    ev_runs_data = [
+        {
+            'team_name': run.team_name,
+            'car_number': run.car_number,
+            'adjusted_time': run.adjusted_time,
+            'points': run.points
+        }
+        for run in EVRuns
+    ]
+    
+    runs_data = {
+        'IC_runs': ic_runs_data,
+        'EV_runs': ev_runs_data
+    }
+    return jsonify(runs_data)
+
+@bp.route('/api/accel_points_leaderboard', methods=['GET'])
+def api_accel_points_leaderboard():
+    query = sa.select(Accel_PointsLeaderboardIC)
+    ICruns = db.session.scalars(query).all()
+    query = sa.select(Accel_PointsLeaderboardEV)
+    EVRuns = db.session.scalars(query).all()
+    ic_runs_data = [
+        {
+            'team_name': run.team_name,
+            'car_number': run.car_number,
+            'adjusted_time': run.adjusted_time,
+            'points': run.points
+        }
+        for run in ICruns
+    ]
+    
+    ev_runs_data = [
+        {
+            'team_name': run.team_name,
+            'car_number': run.car_number,
+            'adjusted_time': run.adjusted_time,
+            'points': run.points
+        }
+        for run in EVRuns
+    ]
+    
+    runs_data = {
+        'IC_runs': ic_runs_data,
+        'EV_runs': ev_runs_data
+    }
+    return jsonify(runs_data)
+
+@bp.route('/api/skidpad_points_leaderboard', methods=['GET'])
+def api_skidpad_points_leaderboard():
+    query = sa.select(Skidpad_PointsLeaderboardIC)
+    ICruns = db.session.scalars(query).all()
+    query = sa.select(Skidpad_PointsLeaderboardEV)
     EVRuns = db.session.scalars(query).all()
     ic_runs_data = [
         {
@@ -560,23 +680,23 @@ def api_cones_leaderboard():
     ]
     return jsonify(runs_data)
 #should top laps be limited to a certain number of laps?
-@bp.route('/api/toplaps', methods=['GET'])
-def api_toplaps():
-    query = sa.select(TopLaps)
-    toplaps_data = db.session.scalars(query).all()
-    runs = []
-    for lap in toplaps_data:
-        run = {
-            'team_name': lap.team_name,
-            'car_number': lap.car_number,
-            'adjusted_time': lap.adjusted_time,
-            'class_': lap.class_,
-            'cones': lap.cones,
-            'off_course': lap.off_course,
-            'id': lap.id
-        }
-        runs.append(run)
-    return jsonify(runs)
+#@bp.route('/api/toplaps', methods=['GET'])
+#def api_toplaps():
+#    query = sa.select(Autocross_TopLaps)
+#    toplaps_data = db.session.scalars(query).all()
+#    runs = []
+#    for lap in toplaps_data:
+#        run = {
+#            'team_name': lap.team_name,
+#            'car_number': lap.car_number,
+#            'adjusted_time': lap.adjusted_time,
+#            'class_': lap.class_,
+#            'cones': lap.cones,
+#            'off_course': lap.off_course,
+#            'id': lap.id
+#        }
+#        runs.append(run)
+#    return jsonify(runs)
 
 @bp.route('/carreg', methods=['GET'])
 def carreg():

@@ -4,7 +4,7 @@
 {% block content %}
    
     <div class="d-flex justify-content-between align-items-center">
-        <h2 class="mb-0">Points Leaderboard</h2>
+        <h2 class="mb-0">Skidpad Points Leaderboard</h2>
         <div id="last-refresh-timestamp">Last Refresh: Never</div>
    
     </div>
@@ -49,9 +49,9 @@
     </div>
 
     <script>
-        async function updatePointsLeaderboard() {
+        async function updateSkidpadPointsLeaderboard() {
             try {
-                const response = await fetch('/api/points_leaderboard');
+                const response = await fetch('/api/skidpad_points_leaderboard');
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
                 }
@@ -94,7 +94,7 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            setInterval(updatePointsLeaderboard, 10000); // Update every 10 seconds
+            setInterval(updateSkidpadPointsLeaderboard, 10000); // Update every 10 seconds
         });
     </script>
 {% endblock %}

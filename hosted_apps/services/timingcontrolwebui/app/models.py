@@ -33,6 +33,45 @@ class RunOrder(db.Model):
     def print_row(self):
         return f'{self.id}; {self.car_number}; {self.cones}; {self.off_course}; {self.dnf}; {self.raw_time}; {self.adjusted_time};'
 
+class Accel_RunOrder(db.Model):
+    __tablename__ = 'accel_runtable'
+    id: so.Mapped[int] = so.mapped_column(primary_key=True, autoincrement=True)
+    car_number: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    cones: so.Mapped[int] = so.mapped_column(sa.String(128), nullable=True) 
+    off_course: so.Mapped[int] = so.mapped_column(sa.String(128), nullable=True)
+    dnf: so.Mapped[str] = so.mapped_column(sa.String(128))
+    raw_time: so.Mapped[float] = so.mapped_column(sa.String(128))
+    adjusted_time: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    created_at: so.Mapped[datetime] = so.mapped_column(sa.DateTime, nullable=False, default=datetime.now) 
+    updated_at: so.Mapped[datetime] = so.mapped_column(sa.DateTime, nullable=False, default=datetime.now)    
+    last_synced_at: so.Mapped[datetime] = so.mapped_column(sa.DateTime, nullable=True) 
+    
+    def __repr__(self):
+        return '<Accel_RunOrder {}>'.format(self.id)
+    
+    def print_row(self):
+        return f'{self.id}; {self.car_number}; {self.cones}; {self.off_course}; {self.dnf}; {self.raw_time}; {self.adjusted_time};'
+
+class Skidpad_RunOrder(db.Model):
+    __tablename__ = 'skidpad_runtable'
+    id: so.Mapped[int] = so.mapped_column(primary_key=True, autoincrement=True)
+    car_number: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    cones: so.Mapped[int] = so.mapped_column(sa.String(128), nullable=True) 
+    off_course: so.Mapped[int] = so.mapped_column(sa.String(128), nullable=True)
+    dnf: so.Mapped[str] = so.mapped_column(sa.String(128))
+    raw_time_left: so.Mapped[float] = so.mapped_column(sa.String(128))
+    raw_time_right: so.Mapped[float] = so.mapped_column(sa.String(128))
+    adjusted_time: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    created_at: so.Mapped[datetime] = so.mapped_column(sa.DateTime, nullable=False, default=datetime.now) 
+    updated_at: so.Mapped[datetime] = so.mapped_column(sa.DateTime, nullable=False, default=datetime.now)    
+    last_synced_at: so.Mapped[datetime] = so.mapped_column(sa.DateTime, nullable=True) 
+    
+    def __repr__(self):
+        return '<Skidpad_RunOrder {}>'.format(self.id)
+    
+    def print_row(self):
+        return f'{self.id}; {self.car_number}; {self.cones}; {self.off_course}; {self.dnf}; {self.raw_time_left}; {self.raw_time_right}; {self.adjusted_time};'
+
 class Team(db.Model):
     __tablename__ = 'team'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -55,11 +94,10 @@ class CarReg(db.Model):
 
     def __repr__(self):
         return '<CarReg {}>'.format(self.id)
-    
-    
 
-class TopLaps(db.Model):
-    __tablename__ = 'leaderboard'
+## LapTime Leaderboards
+class Autocross_TopLaps(db.Model):
+    __tablename__ = 'autocross_leaderboard'
     __table_args__ = {'info': {'is_view': True}}
     __mapper_args__ = {'primary_key': ['car_number', 'adjusted_time', 'team_name']}
       
@@ -70,9 +108,36 @@ class TopLaps(db.Model):
     off_course: so.Mapped[int] = so.mapped_column(sa.Integer)
     id: so.Mapped[int] = so.mapped_column(sa.Integer)
     class_: so.Mapped[str] = so.mapped_column(sa.String(128), index=True, name='class')
-    
-class PointsLeaderboardIC(db.Model):
-    __tablename__ = 'points_leaderboard_ic'
+
+class Accel_TopLaps(db.Model):
+    __tablename__ = 'accel_leaderboard'
+    __table_args__ = {'info': {'is_view': True}}
+    __mapper_args__ = {'primary_key': ['car_number', 'adjusted_time', 'team_name']}
+      
+    car_number: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    team_name: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    adjusted_time: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    cones: so.Mapped[int] = so.mapped_column(sa.Integer)
+    off_course: so.Mapped[int] = so.mapped_column(sa.Integer)
+    id: so.Mapped[int] = so.mapped_column(sa.Integer)
+    class_: so.Mapped[str] = so.mapped_column(sa.String(128), index=True, name='class')
+
+class Skidpad_TopLaps(db.Model):
+    __tablename__ = 'skidpad_leaderboard'
+    __table_args__ = {'info': {'is_view': True}}
+    __mapper_args__ = {'primary_key': ['car_number', 'adjusted_time', 'team_name']}
+      
+    car_number: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    team_name: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    adjusted_time: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    cones: so.Mapped[int] = so.mapped_column(sa.Integer)
+    off_course: so.Mapped[int] = so.mapped_column(sa.Integer)
+    id: so.Mapped[int] = so.mapped_column(sa.Integer)
+    class_: so.Mapped[str] = so.mapped_column(sa.String(128), index=True, name='class')
+
+# Points-tracking leaderboards
+class Autocross_PointsLeaderboardIC(db.Model):
+    __tablename__ = 'autocross_points_leaderboard_ic'
     __table_args__ = {'info': {'is_view': True}}
     __mapper_args__ = {'primary_key': ['car_number', 'adjusted_time', 'points']}
        
@@ -81,8 +146,18 @@ class PointsLeaderboardIC(db.Model):
     points: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
     team_name: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
     
-class PointsLeaderboardEV(db.Model):
-    __tablename__ = 'points_leaderboard_ev'
+class Autocross_PointsLeaderboardEV(db.Model):
+    __tablename__ = 'autocross_points_leaderboard_ev'
+    __table_args__ = {'info': {'is_view': True}}
+    __mapper_args__ = {'primary_key': ['car_number', 'adjusted_time', 'points']}
+       
+    car_number: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    adjusted_time: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    points: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    team_name: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+
+class Accel_PointsLeaderboardIC(db.Model):
+    __tablename__ = 'accel_points_leaderboard_ic'
     __table_args__ = {'info': {'is_view': True}}
     __mapper_args__ = {'primary_key': ['car_number', 'adjusted_time', 'points']}
        
@@ -91,8 +166,47 @@ class PointsLeaderboardEV(db.Model):
     points: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
     team_name: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
     
+class Accel_PointsLeaderboardEV(db.Model):
+    __tablename__ = 'accel_points_leaderboard_ev'
+    __table_args__ = {'info': {'is_view': True}}
+    __mapper_args__ = {'primary_key': ['car_number', 'adjusted_time', 'points']}
+       
+    car_number: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    adjusted_time: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    points: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    team_name: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
     
+class Skidpad_PointsLeaderboardIC(db.Model):
+    __tablename__ = 'skidpad_points_leaderboard_ic'
+    __table_args__ = {'info': {'is_view': True}}
+    __mapper_args__ = {'primary_key': ['car_number', 'adjusted_time', 'points']}
+       
+    car_number: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    adjusted_time: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    points: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    team_name: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
     
+class Skidpad_PointsLeaderboardEV(db.Model):
+    __tablename__ = 'skidpad_points_leaderboard_ev'
+    __table_args__ = {'info': {'is_view': True}}
+    __mapper_args__ = {'primary_key': ['car_number', 'adjusted_time', 'points']}
+       
+    car_number: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    adjusted_time: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    points: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    team_name: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)  
+
+class Overall_PointsLeaderboardEV(db.Model):
+    __tablename__ = 'overall_points_leaderboard'
+    __table_args__ = {'info': {'is_view': True}}
+    __mapper_args__ = {'primary_key': ['car_number', 'adjusted_time', 'points']}
+       
+    car_number: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    adjusted_time: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    points: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    team_name: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)   
+    
+# Conekiller  
 class ConesLeaderboard(db.Model):
     __tablename__ = 'cones_leaderboard'
     __table_args__ = {'info': {'is_view': True}}

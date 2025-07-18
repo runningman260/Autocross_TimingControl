@@ -718,7 +718,7 @@ def create_skidpad_runtable_update_adjusted_time_calc_function(table_name):
 			IF POSITION('DNF' IN UPPER(NEW.dnf)) > 0 THEN
 				NEW.adjusted_time := 'DNF';
 			ELSE
-				NEW.adjusted_time := (COALESCE(CAST(NEW.raw_time_left AS NUMERIC),0) + COALESCE(CAST(NEW.raw_time_right AS NUMERIC),0) + (0.125 * CAST(NEW.cones AS NUMERIC)))::text;
+				NEW.adjusted_time := (((COALESCE(CAST(NEW.raw_time_left AS NUMERIC),0) + COALESCE(CAST(NEW.raw_time_right AS NUMERIC),0)) / 2) + (0.125 * CAST(NEW.cones AS NUMERIC)))::text;
 			END IF;
 			RETURN NEW;
 		END;
@@ -962,7 +962,7 @@ def clear_and_create_schema():
 			create_autocross_runtable_update_adjusted_time_calc_function(table_name)
 			# Execute update_adjusted_time on insert or udate of the table
 			create_adjust_time_trigger(table_name)
-		if(table_name == "accel_runtable"):
+		if(table_name == "skidpad_runtable"):
 			function_name = table_name + "_function_pg_nofity"
 			trigger_name  = table_name + "_trigger_pg_nofity"
 			create_pg_notify_function(function_name)

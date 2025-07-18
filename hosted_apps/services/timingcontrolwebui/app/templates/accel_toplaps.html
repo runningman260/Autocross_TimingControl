@@ -28,9 +28,9 @@
     </div>
 
     <script>
-        async function updateTopLaps() {
+        async function updateAccelTopLaps() {
             try {
-                const response = await fetch('/api/toplaps');
+                const response = await fetch('/api/accel_toplaps');
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
                 }
@@ -51,12 +51,12 @@
                 const currentTime = new Date();
                 timestampElement.textContent = `Last Refresh: ${currentTime.toLocaleTimeString()}`;
             } catch (error) {
-                console.error('Error updating top laps:', error);
+                console.error('Error updating accel top laps:', error);
             }
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            setInterval(updateTopLaps, 10000); // Update every 10 seconds
+            setInterval(updateAccelTopLaps, 10000); // Update every 10 seconds
         });
     </script>
 {% endblock %}

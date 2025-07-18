@@ -56,7 +56,7 @@ for event in laptime_leaderboard_events:
         AND (raw_time{skidpad_string}::decimal > 0)
     ORDER BY
         CASE WHEN pg_input_is_valid(adjusted_time, 'decimal') THEN adjusted_time::decimal END ASC;
-    """.format(event=event, skidpad_string="_left" if event=="skidpad_" else "")
+    """.format(event=event, skidpad_string="_left" if event=="skidpad_" else "", event_name=event_name)
     create_view(sql)
 
 ## AUTOCROSS POINTS TRACKER
