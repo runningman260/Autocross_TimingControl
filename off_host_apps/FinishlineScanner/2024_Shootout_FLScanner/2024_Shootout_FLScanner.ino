@@ -28,14 +28,14 @@
 AsyncWebServer server(80);
 
 // Set according to your local network if you need static IP
-IPAddress myIP(192, 168,   2, 211);
-IPAddress myGW(192, 168,   2,   1);
+IPAddress myIP(192, 168,  88, 211);
+IPAddress myGW(192, 168,  88,   1);
 IPAddress mySN(255, 255, 255,   0);
 IPAddress myDNS( 8,   8,   8,   8);
 WiFiClient ethClient;
 
 // MQTT Settings
-const char *mqttServer     = "192.168.2.200";               // Broker address
+const char *mqttServer     = "192.168.88.200";             // Broker address
 const char *mqttBrokerUser = "username";                   // Username to connect to your MQTT broker
 const char *mqttBrokerPass = "password";                   // Password to connect to your MQTT broker
 const char *ID             = "flscan";                     // Name of our device, must be unique
@@ -45,7 +45,7 @@ String SUB_TOPIC_EYES_ON   = "/timing/webui/eyeson";
 String SUB_TOPIC_EYES_OFF  = "/timing/webui/eyesoff";
 String PUB_TOPIC_EYES_STATE ="/timing/flscan/eyestate";
 String HEALTH_CHECK_TOPIC  = "/timing/flscan/healthcheck";
-String HomePageText = "Finishline Firmware Running.\nIP Address: 192.168.2.211\nUpdate at 192.168.2.211/update";
+String HomePageText = "Finishline Firmware Running.\nIP Address: 192.168.88.211\nUpdate at 192.168.88.211/update";
 String StoredScannedTagValue = "";
 unsigned long StoredScannedTagTime = 0;
 unsigned long StoredScannedTagTimeout = 10000;

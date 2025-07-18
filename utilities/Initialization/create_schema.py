@@ -20,7 +20,7 @@ def exit_handler():
     print(' Cleaning Up!')
     exit(1)
 
-#clear_and_create_schema()
+clear_and_create_schema()
 
 #create_view and create_table are identical lol
 
@@ -36,7 +36,7 @@ for event in laptime_leaderboard_events:
     print(f"Creating {event_name} LapTimes Leaderboard")
 
     sql = """
-    CREATE OR REPLACE VIEW {event}leaderboard AS
+    CREATE OR REPLACE VIEW {event_name}leaderboard AS
     SELECT
         {event}runtable.car_number,
         team.name AS team_name,
@@ -56,7 +56,7 @@ for event in laptime_leaderboard_events:
         AND (raw_time{skidpad_string}::decimal > 0)
     ORDER BY
         CASE WHEN pg_input_is_valid(adjusted_time, 'decimal') THEN adjusted_time::decimal END ASC;
-    """.format(event=event, skidpad_string={"_left" if event=="skidpad_" else ""})
+    """.format(event=event, skidpad_string="_left" if event=="skidpad_" else "")
     create_view(sql)
 
 ## AUTOCROSS POINTS TRACKER
@@ -67,7 +67,7 @@ for car_class in points_tracker_classes:
     print(f"Creating {car_class} Points Tracker for Autocross")
 
     sql = """
-    CREATE OR REPLACE VIEW points_leaderboard_{car_class_lower} AS
+    CREATE OR REPLACE VIEW autocross_points_leaderboard_{car_class_lower} AS
     SELECT
         c.car_number,
         c.team_name,
@@ -246,9 +246,9 @@ SELECT
     team_abbreviation,
     SUM(points) AS total_points
 FROM (
-    SELECT car_number, team_name, team_abbreviation, points FROM points_leaderboard_ic
+    SELECT car_number, team_name, team_abbreviation, points FROM autocross_points_leaderboard_ic
     UNION ALL
-    SELECT car_number, team_name, team_abbreviation, points FROM points_leaderboard_ev
+    SELECT car_number, team_name, team_abbreviation, points FROM autocross_points_leaderboard_ev
     UNION ALL
     SELECT car_number, team_name, team_abbreviation, points FROM accel_points_leaderboard_ic
     UNION ALL
