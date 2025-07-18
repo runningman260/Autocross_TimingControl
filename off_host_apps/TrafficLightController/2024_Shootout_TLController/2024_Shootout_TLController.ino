@@ -31,14 +31,14 @@
 AsyncWebServer server(80);
 
 // Set according to your local network if you need static IP
-IPAddress myIP(192, 168,   2, 201);
-IPAddress myGW(192, 168,   2,   1);
+IPAddress myIP(192, 168,  88, 201);
+IPAddress myGW(192, 168,  88,   1);
 IPAddress mySN(255, 255, 255,   0);
 IPAddress myDNS( 8,   8,   8,   8);
 WiFiClient ethClient;
 
 // MQTT Settings
-const char *mqttServer     = "192.168.2.200";               // Broker address
+const char *mqttServer     = "192.168.88.200";             // Broker address
 const char *mqttBrokerUser = "username";                   // Username to connect to your MQTT broker
 const char *mqttBrokerPass = "password";                   // Password to connect to your MQTT broker
 const char *ID             = "TLCtrl";                     // Name of our device, must be unique
@@ -50,7 +50,7 @@ String SUB_TOPIC_EYES_ON   = "/timing/webui/eyeson";
 String SUB_TOPIC_EYES_OFF  = "/timing/webui/eyesoff";
 String PUB_TOPIC_EYES_STATE ="/timing/TLCtrl/eyestate";
 String HEALTH_CHECK_TOPIC  = "/timing/TLCtrl/healthcheck";
-String HomePageText = "TLC Firmware Running.\nIP Address: 192.168.2.201\nUpdate at 192.168.2.201/update";
+String HomePageText = "TLC Firmware Running.\nIP Address: 192.168.88.201\nUpdate at 192.168.88.201/update";
 SemaphoreHandle_t xSemaphore = NULL;     // to track incoming scans
 SemaphoreHandle_t ADAM_conneciton_status_change = NULL;     // in case the LED control box disconnects
 SemaphoreHandle_t xEYES_off = NULL;     // to track if the eyes have been turned off

@@ -28,7 +28,8 @@ services:
     - ./volumes/mosquitto/log:/mosquitto/log
     - ./volumes/mosquitto/pwfile:/mosquitto/pwfile
 
-
+  # To get into the container and enter the postgres CLI:
+  # docker exec -it postgres bash -c 'PGPASSWORD=$POSTGRES_PASSWORD psql $POSTGRES_DB $POSTGRES_USER'
   postgres:
     container_name: postgres
     image: postgres

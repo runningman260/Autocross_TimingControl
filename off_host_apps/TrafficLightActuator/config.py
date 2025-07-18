@@ -13,6 +13,6 @@ class Config:
         PORT = 1883
         USERNAME = 'username'
         PASSWORD = 'password'
-        BROKER = '192.168.2.200'
+        BROKER = '192.168.88.200'
         CLIENTID = 'TrafficLightActuator'
         TESTERCLIENTID = 'TrafficLightActuatorTester'
