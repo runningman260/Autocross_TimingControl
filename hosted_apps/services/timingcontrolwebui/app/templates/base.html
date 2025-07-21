@@ -43,6 +43,28 @@
         tr[name="run_row"]:hover .edit-icon {
             display: inline;
         }
+        
+        /* Hamburger menu styles */
+        @media (max-width: 991px) {
+          .navbar-collapse {
+            position: fixed;
+            top: 56px;
+            left: 0;
+            padding-left: 15px;
+            padding-right: 15px;
+            padding-bottom: 15px;
+            width: 75%;
+            height: 100%;
+            background-color: #f8f9fa;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            transform: translateX(-100%);
+          }
+          .navbar-collapse.show {
+            transform: translateX(0);
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+          }
+        }
         </style>
   <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
       </head>
@@ -82,10 +104,16 @@
               <a class="nav-link" aria-current="page" href="{{ url_for('main.accel_pointsLeaderboard') }}">Acceleration Points Leaderboard</a>
             </li>
             <li class="nav-item">
+              <a class="nav-link" aria-current="page" href="{{ url_for('main.accel_runtable') }}">Acceleration Run Order</a>
+            </li>
+            <li class="nav-item">
               <a class="nav-link" aria-current="page" href="{{ url_for('main.skidpad_toplaps') }}">Skidpad Top Laps</a>
             </li>
             <li class="nav-item">
               <a class="nav-link" aria-current="page" href="{{ url_for('main.skidpad_pointsLeaderboard') }}">Skidpad Points Leaderboard</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" aria-current="page" href="{{ url_for('main.skidpad_runtable') }}">Skidpad Run Order</a>
             </li>
             <li class="nav-item">
               <a class="nav-link" aria-current="page" href="{{ url_for('main.carreg') }}">Car Registration</a>
@@ -110,6 +138,31 @@
     </script>
     <script src="{{ url_for('static', filename='moment-with-locales.min.js')}}"></script>
     <script>
+      // Initialize hamburger menu functionality
+      document.addEventListener('DOMContentLoaded', function() {
+        const navbarToggler = document.querySelector('.navbar-toggler');
+        const navbarCollapse = document.querySelector('.navbar-collapse');
+        
+        // Close menu when clicking outside
+        document.addEventListener('click', function(event) {
+          const isNavbarToggler = navbarToggler.contains(event.target);
+          const isNavbarCollapse = navbarCollapse.contains(event.target);
+          
+          if (!isNavbarToggler && !isNavbarCollapse && navbarCollapse.classList.contains('show')) {
+            navbarToggler.click();
+          }
+        });
+        
+        // Close menu when clicking a nav link (on mobile)
+        const navLinks = document.querySelectorAll('.navbar-nav .nav-link');
+        navLinks.forEach(function(link) {
+          link.addEventListener('click', function() {
+            if (window.innerWidth < 992 && navbarCollapse.classList.contains('show')) {
+              navbarToggler.click();
+            }
+          });
+        });
+      });
 
     
       function set_message_count(n) {

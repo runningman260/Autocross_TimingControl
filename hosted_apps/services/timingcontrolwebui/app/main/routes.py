@@ -477,6 +477,59 @@ def get_run(run_id):
 def favicon():
     return send_from_directory(os.path.join(bp.root_path, 'static'),'favicon.ico', mimetype='image/vnd.microsoft.icon')
 
+@bp.route('/api/skidpad_runtable', methods=['GET'])
+def api_skidpad_runtable():
+    query = sa.select(Skidpad_RunOrder)
+    runs = db.session.scalars(query).all()
+    runs_data = [
+        {
+            'id': run.id,
+            'car_number': run.car_number,
+            'cones': run.cones,
+            'off_course': run.off_course,
+            'dnf': run.dnf,
+            'raw_time_left': run.raw_time_left,
+            'raw_time_right' : run.raw_time_right,
+            'adjusted_time': run.adjusted_time
+        }
+        for run in runs
+    ]
+    return jsonify(runs_data)
+
+@bp.route('/skidpad_runtable', methods=['GET', 'POST'])
+def skidpad_runtable():
+    
+    query = sa.select(Skidpad_RunOrder)
+    runs = db.session.scalars(query).all()
+    
+    return render_template('skidpad_runtable.html', title='Skidpad Run Order', runs=runs)
+
+@bp.route('/api/accel_runtable', methods=['GET'])
+def api_accel_runtable():
+    query = sa.select(Accel_RunOrder)
+    runs = db.session.scalars(query).all()
+    runs_data = [
+        {
+            'id': run.id,
+            'car_number': run.car_number,
+            'cones': run.cones,
+            'off_course': run.off_course,
+            'dnf': run.dnf,
+            'raw_time': run.raw_time,
+            'adjusted_time': run.adjusted_time
+        }
+        for run in runs
+    ]
+    return jsonify(runs_data)
+
+@bp.route('/accel_runtable', methods=['GET', 'POST'])
+def accel_runtable():
+    
+    query = sa.select(Accel_RunOrder)
+    runs = db.session.scalars(query).all()
+    
+    return render_template('accel_runtable.html', title='Acceleration Run Order', runs=runs)
+
 @bp.route('/autocross_toplaps', methods=['GET', 'POST'])
 def autocross_toplaps():
     query = sa.select(Autocross_TopLaps)

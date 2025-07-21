@@ -718,7 +718,7 @@ def create_skidpad_runtable_update_adjusted_time_calc_function(table_name):
 			IF POSITION('DNF' IN UPPER(NEW.dnf)) > 0 THEN
 				NEW.adjusted_time := 'DNF';
 			ELSE
-				NEW.adjusted_time := (((COALESCE(CAST(NEW.raw_time_left AS NUMERIC),0) + COALESCE(CAST(NEW.raw_time_right AS NUMERIC),0)) / 2) + (0.125 * CAST(NEW.cones AS NUMERIC)))::text;
+				NEW.adjusted_time := (((COALESCE(CAST(NEW.raw_time_left AS NUMERIC),0) + COALESCE(CAST(NEW.raw_time_right AS NUMERIC),0)) / 2) + (CAST(0.125 AS NUMERIC) * CAST(NEW.cones AS NUMERIC)))::text;
 			END IF;
 			RETURN NEW;
 		END;
