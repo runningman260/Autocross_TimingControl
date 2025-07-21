@@ -4,7 +4,7 @@ COPY requirements.txt requirements.txt
 RUN pip install -r requirements.txt
 
 COPY app app
-COPY trackapi.py config.py boot.sh ./
+COPY registration.py config.py boot.sh ./
 RUN chmod a+x boot.sh
 
 ENV FLASK_APP=registration.py
