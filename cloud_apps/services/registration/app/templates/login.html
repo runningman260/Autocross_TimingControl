@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+  <h2>Enter Registration Password</h2>
+  <form method="post">
+    <input type="password" name="password" class="form-control" placeholder="Password" required>
+    <button type="submit" class="btn btn-primary mt-2">Login</button>
+  </form>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+{% endblock %}

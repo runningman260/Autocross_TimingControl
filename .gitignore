@@ -39,6 +39,7 @@ nosetests.xml
 venv
 app.db
 timingctrl.log*
+registration.log*
 client_secret.json
 hosted_apps/volumes/
 

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% import "bootstrap_wtf.html" as wtf %}
+
+{% block content %}
+  <h2>Register Your Car</h2>
+  {{ wtf.quick_form(form) }}
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+      <script>
+        setTimeout(function() {
+          document.querySelectorAll('.alert').forEach(function(alert) {
+            alert.classList.remove('show');
+            alert.classList.add('hide');
+          });
+        }, 15000);
+
+        document.addEventListener('DOMContentLoaded', function() {
+          var yearInput = document.querySelector('input[name="year"]');
+          var currentYear = new Date().getFullYear();
+          if (yearInput) {
+            yearInput.setAttribute('type', 'number');
+            yearInput.setAttribute('max', currentYear);
+            yearInput.setAttribute('min', '1900');
+            yearInput.setAttribute('step', '1');
+            yearInput.value = currentYear;
+            yearInput.addEventListener('input', function() {
+              if (parseInt(this.value) > currentYear) {
+                this.value = currentYear;
+              }
+            });
+          }
+        });
+      </script>
+    {% endif %}
+  {% endwith %}
+{% endblock %}
