@@ -102,6 +102,27 @@ services:
       - webproxy
       - default
 
+  registration:
+    container_name: registration
+    build: ./services/registration/.
+    env_file:
+      - ./.env
+    restart: unless-stopped
+    environment:
+      - TZ=Etc/UTC
+      - IOTSTACK_UID=1000
+      - IOTSTACK_GID=1000
+      - DOCKER_HOST_IP=172.17.0.1
+      - VIRTUAL_HOST=${REGISTRATION_HOST}
+      - VIRTUAL_PORT=5000
+      - LETSENCRYPT_HOST=${REGISTRATION_HOST}
+      - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
+    expose:
+      - "5000"
+    networks:
+      - webproxy
+      - default
+
 
   # Copy and Uncomment below for an additional python container
   #
