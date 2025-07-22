@@ -59,10 +59,28 @@
             z-index: 1000;
             transition: all 0.3s ease;
             transform: translateX(-100%);
+            overflow: visible !important;
           }
           .navbar-collapse.show {
             transform: translateX(0);
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
+          }
+          .navbar-nav .dropdown-menu {
+            position: absolute !important;
+            left: 0;
+            top: 100%;
+            min-width: 180px;
+            z-index: 1100;
+            margin-top: 0.5rem;
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.2s;
+            display: none;
+          }
+          .navbar-nav .dropdown.show .dropdown-menu {
+            visibility: visible;
+            opacity: 1;
+            display: block;
           }
         }
         </style>
@@ -88,38 +106,48 @@
           <!-- Right side of Page -->
            
           <ul class="navbar-nav mb-2 mb-lg-0">
+            <!-- Autocross Dropdown -->
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="autocrossDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                Autocross
+              </a>
+              <ul class="dropdown-menu" aria-labelledby="autocrossDropdown">
+                <li><a class="dropdown-item" href="{{ url_for('main.runtable') }}">Run Order</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('main.autocross_toplaps') }}">Top Laps</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('main.autocross_pointsLeaderboard') }}">Points Leaderboard</a></li>
+              </ul>
+            </li>
+            <!-- Acceleration Dropdown -->
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="accelDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                Acceleration
+              </a>
+              <ul class="dropdown-menu" aria-labelledby="accelDropdown">
+                <li><a class="dropdown-item" href="{{ url_for('main.accel_runtable') }}">Run Order</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('main.accel_toplaps') }}">Top Laps</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('main.accel_pointsLeaderboard') }}">Points Leaderboard</a></li>
+              </ul>
+            </li>
+            <!-- Skidpad Dropdown -->
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="skidpadDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                Skidpad
+              </a>
+              <ul class="dropdown-menu" aria-labelledby="skidpadDropdown">
+                <li><a class="dropdown-item" href="{{ url_for('main.skidpad_runtable') }}">Run Order</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('main.skidpad_toplaps') }}">Top Laps</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('main.skidpad_pointsLeaderboard') }}">Points Leaderboard</a></li>
+              </ul>
+            </li>
+            <!-- Standalone Links -->
             <li class="nav-item">
-              <a class="nav-link" aria-current="page" href="{{ url_for('main.autocross_toplaps') }}">Autocross Top Laps</a>
+              <a class="nav-link" href="{{ url_for('main.conesLeaderboard') }}">Conekillers</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" aria-current="page" href="{{ url_for('main.autocross_pointsLeaderboard') }}">Autocross Points Leaderboard</a>
+              <a class="nav-link" href="{{ url_for('main.overall_pointsLeaderboard') }}">Overall Points Leaderboard</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" aria-current="page" href="{{ url_for('main.conesLeaderboard') }}">Conekillers</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" aria-current="page" href="{{ url_for('main.accel_toplaps') }}">Acceleration Top Laps</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" aria-current="page" href="{{ url_for('main.accel_pointsLeaderboard') }}">Acceleration Points Leaderboard</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" aria-current="page" href="{{ url_for('main.accel_runtable') }}">Acceleration Run Order</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" aria-current="page" href="{{ url_for('main.skidpad_toplaps') }}">Skidpad Top Laps</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" aria-current="page" href="{{ url_for('main.skidpad_pointsLeaderboard') }}">Skidpad Points Leaderboard</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" aria-current="page" href="{{ url_for('main.skidpad_runtable') }}">Skidpad Run Order</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" aria-current="page" href="{{ url_for('main.carreg') }}">Car Registration</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" aria-current="page" href="{{ url_for('main.overall_pointsLeaderboard') }}">Overall Points Leaderboard</a>
+              <a class="nav-link" href="{{ url_for('main.carreg') }}">Car Registration</a>
             </li>
           </ul>
          
@@ -151,16 +179,6 @@
           if (!isNavbarToggler && !isNavbarCollapse && navbarCollapse.classList.contains('show')) {
             navbarToggler.click();
           }
-        });
-        
-        // Close menu when clicking a nav link (on mobile)
-        const navLinks = document.querySelectorAll('.navbar-nav .nav-link');
-        navLinks.forEach(function(link) {
-          link.addEventListener('click', function() {
-            if (window.innerWidth < 992 && navbarCollapse.classList.contains('show')) {
-              navbarToggler.click();
-            }
-          });
         });
       });
 
@@ -233,5 +251,64 @@
         }
       });
     </script>
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+  var navbarCollapse = document.querySelector('.navbar-collapse');
+  var navbarToggler = document.querySelector('.navbar-toggler');
+  var dropdownToggles = document.querySelectorAll('.navbar-nav .dropdown-toggle');
+
+  dropdownToggles.forEach(function(toggle) {
+    toggle.addEventListener('click', function(e) {
+      if (window.innerWidth < 992) {
+        e.preventDefault();
+        e.stopPropagation();
+        var dropdownMenu = this.nextElementSibling;
+        var parentDropdown = this.parentElement;
+        var expanded = parentDropdown.classList.contains('show');
+        // Close other open dropdowns
+        document.querySelectorAll('.navbar-nav .dropdown.show').forEach(function(openDropdown) {
+          if (openDropdown !== parentDropdown) {
+            openDropdown.classList.remove('show');
+          }
+        });
+        // Toggle parent .dropdown .show
+        parentDropdown.classList.toggle('show');
+        this.setAttribute('aria-expanded', !expanded);
+      }
+    });
+  });
+
+  // Close dropdowns when clicking outside (mobile)
+  document.addEventListener('click', function(e) {
+    if (window.innerWidth < 992) {
+      document.querySelectorAll('.navbar-nav .dropdown.show').forEach(function(menu) {
+        var toggle = menu.querySelector('.dropdown-toggle');
+        var dropdownMenu = menu.querySelector('.dropdown-menu');
+        if (dropdownMenu && !dropdownMenu.contains(e.target) && (!toggle || !toggle.contains(e.target))) {
+          menu.classList.remove('show');
+        }
+      });
+    }
+  });
+
+  // Only close navbar when a dropdown item is clicked (leaf)
+  document.querySelectorAll('.dropdown-menu .dropdown-item').forEach(function(item) {
+    item.addEventListener('click', function(e) {
+      if (window.innerWidth < 992 && navbarCollapse.classList.contains('show')) {
+        navbarToggler.click();
+      }
+    });
+  });
+
+  // Prevent nav-link close handler from interfering with dropdowns
+  document.querySelectorAll('.navbar-nav > .nav-item > .nav-link:not(.dropdown-toggle)').forEach(function(link) {
+    link.addEventListener('click', function() {
+      if (window.innerWidth < 992 && navbarCollapse.classList.contains('show')) {
+        navbarToggler.click();
+      }
+    });
+  });
+});
+</script>
   </body>
 </html>

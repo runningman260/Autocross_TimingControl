@@ -885,3 +885,57 @@ def api_carreg_sync():
         "message": message
     })
 
+@bp.route('/api/accel_toplaps', methods=['GET'])
+def api_accel_toplaps():
+    query = sa.select(Accel_TopLaps)
+    toplaps_data = db.session.scalars(query).all()
+    runs = []
+    for lap in toplaps_data:
+        run = {
+            'id': lap.id,
+            'team_name': lap.team_name,
+            'car_number': lap.car_number,
+            'adjusted_time': lap.adjusted_time,
+            'class_': lap.class_,
+            'cones': lap.cones,
+            'off_course': lap.off_course
+        }
+        runs.append(run)
+    return jsonify(runs)
+
+@bp.route('/api/skidpad_toplaps', methods=['GET'])
+def api_skidpad_toplaps():
+    query = sa.select(Skidpad_TopLaps)
+    toplaps_data = db.session.scalars(query).all()
+    runs = []
+    for lap in toplaps_data:
+        run = {
+            'id': lap.id,
+            'team_name': lap.team_name,
+            'car_number': lap.car_number,
+            'adjusted_time': lap.adjusted_time,
+            'class_': lap.class_,
+            'cones': lap.cones,
+            'off_course': lap.off_course
+        }
+        runs.append(run)
+    return jsonify(runs)
+
+@bp.route('/api/autocross_toplaps', methods=['GET'])
+def api_autocross_toplaps():
+    query = sa.select(Autocross_TopLaps)
+    toplaps_data = db.session.scalars(query).all()
+    runs = []
+    for lap in toplaps_data:
+        run = {
+            'id': lap.id,
+            'team_name': lap.team_name,
+            'car_number': lap.car_number,
+            'adjusted_time': lap.adjusted_time,
+            'class_': lap.class_,
+            'cones': lap.cones,
+            'off_course': lap.off_course
+        }
+        runs.append(run)
+    return jsonify(runs)
+

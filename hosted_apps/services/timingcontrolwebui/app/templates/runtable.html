@@ -33,6 +33,13 @@
     padding-right: 0.5rem;
     font-size: 1rem;
 }
+.eyes-off-flash {
+    animation: eyesOffFlash 0.7s steps(1, end) infinite;
+}
+@keyframes eyesOffFlash {
+    0%, 100% { background-color: inherit; }
+    50% { background-color: rgba(255,0,0,0.18); }
+}
 
     </style>
  
@@ -276,44 +283,17 @@
         let eyesFlashInterval = null;
         function setEyesOffUI(active) {
             const btn = document.getElementById('eyes-toggle-btn');
+            const syncLogHeader = document.querySelector('.card-header');
             if (active) {
                 btn.classList.remove('btn-success', 'btn-warning');
                 btn.classList.add('btn-danger', 'flashing');
                 btn.innerHTML = '<i class="bi bi-eye-slash"></i> Eyes Off';
-                if (!document.getElementById('eyes-off-flash')) {
-                    const flashDiv = document.createElement('div');
-                    flashDiv.id = 'eyes-off-flash';
-                    flashDiv.style.position = 'fixed';
-                    flashDiv.style.top = 0;
-                    flashDiv.style.left = 0;
-                    flashDiv.style.width = '100vw';
-                    flashDiv.style.height = '100vh';
-                    flashDiv.style.zIndex = 9999;
-                    flashDiv.style.pointerEvents = 'none';
-                    flashDiv.style.background = 'rgba(255,0,0,0.15)';
-                    flashDiv.style.display = 'none';
-                    document.body.appendChild(flashDiv);
-                }
-                if (!eyesFlashInterval) {
-                    eyesFlashInterval = setInterval(() => {
-                        const flashDiv = document.getElementById('eyes-off-flash');
-                        if (flashDiv) {
-                            flashDiv.style.display = (flashDiv.style.display === 'none') ? 'block' : 'none';
-                        }
-                    }, 500);
-                }
+                if (syncLogHeader) syncLogHeader.classList.add('eyes-off-flash');
             } else {
                 btn.classList.remove('btn-danger', 'flashing', 'btn-warning');
                 btn.classList.add('btn-success');
                 btn.innerHTML = '<i class="bi bi-eye-fill"></i> Eyes On';
-                const flashDiv = document.getElementById('eyes-off-flash');
-                if (flashDiv) {
-                    flashDiv.style.display = 'none';
-                }
-                if (eyesFlashInterval) {
-                    clearInterval(eyesFlashInterval);
-                    eyesFlashInterval = null;
-                }
+                if (syncLogHeader) syncLogHeader.classList.remove('eyes-off-flash');
             }
         }
         const eyesBtn = document.getElementById('eyes-toggle-btn');
