@@ -760,7 +760,7 @@ def insert_teams():
 		("Wayne State University Warrior Racing", "WARR"),
 		("Ecole de technologie superieure - Formule ETS", "ETS"),
 		("MRacing Formula SAE", "MR"),
-		("Univ of Connecticut Formula SAE", "UCON"),
+		("Univ of Connecticut Formula SAE", "UCONN"),
 		("University of Waterloo Formula Electric", "UWFE"),
 		("University of Ottawa", "FUO"),
 		("University of Virginia Virginia Motorsports", "UVA"),

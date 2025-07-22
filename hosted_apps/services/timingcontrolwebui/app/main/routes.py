@@ -819,21 +819,26 @@ def sync_carreg_with_cloud(force=False):
                 since = most_recent.updated_at.isoformat() if most_recent and most_recent.updated_at else "1970-01-01T00:00:00+00:00"
             url = trackapi_host+"/api/car_regs/modified_since"
             params = {"since": since}
-            # Add Authorization header (same as update_runs)
-            headers = {
-                'Authorization': authtoken
-            }
+            headers = {'Authorization': authtoken}
             response = requests.get(url, params=params, headers=headers, timeout=10)
             if response.status_code == 200:
                 car_regs = response.json()
+                cloud_car_numbers = set(car['car_number'] for car in car_regs)
+                # Remove local records not in cloud (only for force)
+                if force:
+                    local_car_numbers = set(row.car_number for row in db.session.query(CarReg.car_number).all())
+                    to_remove = local_car_numbers - cloud_car_numbers
+                    if to_remove:
+                        db.session.query(CarReg).filter(CarReg.car_number.in_(to_remove)).delete(synchronize_session=False)
+                        print(f"[CarReg Sync] Removed local car_numbers not in cloud: {to_remove}")
+                # Upsert cloud records
                 for car in car_regs:
-                    # Ensure team exists
                     team = db.session.query(Team).filter_by(id=car['team_id']).first()
                     if not team:
                         continue
-                    # Upsert CarReg
                     local_car = db.session.query(CarReg).filter_by(car_number=car['car_number']).first()
                     if local_car:
+                        # Overwrite local with cloud data
                         local_car.scan_time = datetime.fromisoformat(car['scan_time']) if car['scan_time'] else None
                         local_car.tag_number = car['tag_number']
                         local_car.team_id = car['team_id']
@@ -859,10 +864,12 @@ def sync_carreg_with_cloud(force=False):
             else:
                 append_sync_log(f"CarReg sync error: {response.text}")
         except Exception as e:
+            db.session.rollback()
             append_sync_log(f"CarReg sync error: {e}")
         append_sync_log("Manual CarReg sync completed successfully.")
         return True, "CarReg sync completed."
     except Exception as e:
+        db.session.rollback()
         append_sync_log(f"Manual CarReg sync failed: {e}")
         return False, f"CarReg sync failed: {e}"
 
