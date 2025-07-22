@@ -5,6 +5,10 @@
     </td>
     <td>
         {{ run.car_number }}
+        {% if run.team_abbreviation %}
+             –  
+             {{ run.team_abbreviation }}
+        {% endif %}
     </td>
     <td>
         {% if run.cones is not none and run.cones != 0 %}

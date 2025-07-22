@@ -411,7 +411,7 @@
     
                 row.innerHTML = `
                     <td><input type="checkbox" id="run_${run.id}" name="selected_runs" value="${run.id}-${run.car_number}" ${selectedRuns.has(`${run.id}-${run.car_number}`) ? 'checked' : ''}> ${run.id}</td>
-                    <td>${run.car_number}</td>
+                    <td>${run.car_number} – ${run.team_abbreviation || ''}</td>
                     <td>${run.cones || ''}</td>
                     <td>${run.off_course || ''}</td>
                     <td><div class="cell-content">${run.raw_time !== undefined && run.raw_time !== null ? run.raw_time : 'None'}<span class="edit-icon" onclick="editRun('${run.id}')"><i class="bi bi-pencil-square"></i></span></div></td>

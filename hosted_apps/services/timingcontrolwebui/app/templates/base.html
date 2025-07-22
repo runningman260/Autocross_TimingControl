@@ -43,6 +43,15 @@
         tr[name="run_row"]:hover .edit-icon {
             display: inline;
         }
+        @media (min-width: 700px) {
+          .team-abbr.custom-break { display: none !important; }
+          .team-name.custom-break { display: inline !important; }
+        }
+        /* Hide team name below 700px, show abbr */
+        @media (max-width: 699.98px) {
+          .team-abbr.custom-break { display: inline !important; }
+          .team-name.custom-break { display: none !important; }
+        }
         
         /* Hamburger menu styles */
         @media (max-width: 991px) {

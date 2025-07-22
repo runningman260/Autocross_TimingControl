@@ -479,55 +479,87 @@ def favicon():
 
 @bp.route('/api/skidpad_runtable', methods=['GET'])
 def api_skidpad_runtable():
-    query = sa.select(Skidpad_RunOrder)
-    runs = db.session.scalars(query).all()
+    query = (
+        sa.select(Skidpad_RunOrder, Team.name, Team.abbreviation)
+        .join(CarReg, Skidpad_RunOrder.car_number == CarReg.car_number, isouter=True)
+        .join(Team, CarReg.team_id == Team.id, isouter=True)
+        .order_by(-Skidpad_RunOrder.id)
+    )
+    results = db.session.execute(query).all()
     runs_data = [
         {
             'id': run.id,
             'car_number': run.car_number,
+            'team_name': team_name,
+            'team_abbreviation': team_abbr,
             'cones': run.cones,
             'off_course': run.off_course,
             'dnf': run.dnf,
             'raw_time_left': run.raw_time_left,
-            'raw_time_right' : run.raw_time_right,
+            'raw_time_right': run.raw_time_right,
             'adjusted_time': run.adjusted_time
         }
-        for run in runs
+        for run, team_name, team_abbr in results
     ]
     return jsonify(runs_data)
 
 @bp.route('/skidpad_runtable', methods=['GET', 'POST'])
 def skidpad_runtable():
-    
-    query = sa.select(Skidpad_RunOrder)
-    runs = db.session.scalars(query).all()
-    
+    query = (
+        sa.select(Skidpad_RunOrder, Team.name, Team.abbreviation)
+        .join(CarReg, Skidpad_RunOrder.car_number == CarReg.car_number, isouter=True)
+        .join(Team, CarReg.team_id == Team.id, isouter=True)
+        .order_by(-Skidpad_RunOrder.id)
+    )
+    results = db.session.execute(query).all()
+    runs = []
+    for run, team_name, team_abbr in results:
+        run_display = run
+        run_display.team_name = team_name
+        run_display.team_abbreviation = team_abbr
+        runs.append(run_display)
     return render_template('skidpad_runtable.html', title='Skidpad Run Order', runs=runs)
 
 @bp.route('/api/accel_runtable', methods=['GET'])
 def api_accel_runtable():
-    query = sa.select(Accel_RunOrder)
-    runs = db.session.scalars(query).all()
+    query = (
+        sa.select(Accel_RunOrder, Team.name, Team.abbreviation)
+        .join(CarReg, Accel_RunOrder.car_number == CarReg.car_number, isouter=True)
+        .join(Team, CarReg.team_id == Team.id, isouter=True)
+        .order_by(-Accel_RunOrder.id)
+    )
+    results = db.session.execute(query).all()
     runs_data = [
         {
             'id': run.id,
             'car_number': run.car_number,
+            'team_name': team_name,
+            'team_abbreviation': team_abbr,
             'cones': run.cones,
             'off_course': run.off_course,
             'dnf': run.dnf,
             'raw_time': run.raw_time,
             'adjusted_time': run.adjusted_time
         }
-        for run in runs
+        for run, team_name, team_abbr in results
     ]
     return jsonify(runs_data)
 
 @bp.route('/accel_runtable', methods=['GET', 'POST'])
 def accel_runtable():
-    
-    query = sa.select(Accel_RunOrder)
-    runs = db.session.scalars(query).all()
-    
+    query = (
+        sa.select(Accel_RunOrder, Team.name, Team.abbreviation)
+        .join(CarReg, Accel_RunOrder.car_number == CarReg.car_number, isouter=True)
+        .join(Team, CarReg.team_id == Team.id, isouter=True)
+        .order_by(-Accel_RunOrder.id)
+    )
+    results = db.session.execute(query).all()
+    runs = []
+    for run, team_name, team_abbr in results:
+        run_display = run
+        run_display.team_name = team_name
+        run_display.team_abbreviation = team_abbr
+        runs.append(run_display)
     return render_template('accel_runtable.html', title='Acceleration Run Order', runs=runs)
 
 @bp.route('/autocross_toplaps', methods=['GET', 'POST'])
