@@ -49,7 +49,7 @@
         {{ form.hidden_tag() }}
         <div class="row align-items-start">
             <div class="col">
-                <table id="runs-table" class="table table-hover">
+                <table id="runs-table" class="table table-hover table-striped">
                     <thead id="runs-table-body">{% include '_run_header.html' %}</thead>
                     <tbody id="runs-table-tbody">
                         {% for run in runs %}
