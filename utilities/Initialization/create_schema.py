@@ -236,10 +236,10 @@ for car_class in points_tracker_classes:
     """.format(car_class=car_class, car_class_lower=car_class.lower())
     create_view(sql)
 
-# Overall points leaderboard (EV and IC)
-print("Creating Overall Points Leaderboard")
+# Overall points leaderboard (IC)
+print("Creating Overall Points Leaderboard IC")
 sql = """
-CREATE OR REPLACE VIEW overall_points_leaderboard AS
+CREATE OR REPLACE VIEW overall_points_leaderboard_ic AS
 SELECT
     cars.car_number,
     cars.team_name,
@@ -252,32 +252,59 @@ FROM (
     SELECT DISTINCT car_number, team_name, team_abbreviation FROM (
         SELECT car_number, team_name, team_abbreviation FROM autocross_points_leaderboard_ic
         UNION ALL
-        SELECT car_number, team_name, team_abbreviation FROM autocross_points_leaderboard_ev
-        UNION ALL
         SELECT car_number, team_name, team_abbreviation FROM accel_points_leaderboard_ic
         UNION ALL
-        SELECT car_number, team_name, team_abbreviation FROM accel_points_leaderboard_ev
-        UNION ALL
         SELECT car_number, team_name, team_abbreviation FROM skidpad_points_leaderboard_ic
+    ) all_cars
+) cars
+LEFT JOIN (
+    SELECT car_number, points FROM autocross_points_leaderboard_ic
+) autocross ON cars.car_number = autocross.car_number
+LEFT JOIN (
+    SELECT car_number, points FROM accel_points_leaderboard_ic
+) accel ON cars.car_number = accel.car_number
+LEFT JOIN (
+    SELECT car_number, points FROM skidpad_points_leaderboard_ic
+) skidpad ON cars.car_number = skidpad.car_number
+JOIN carreg ON cars.car_number = carreg.car_number
+WHERE carreg.class = 'IC'
+ORDER BY
+    total_points DESC;
+"""
+create_view(sql)
+
+# Overall points leaderboard (EV)
+print("Creating Overall Points Leaderboard EV")
+sql = """
+CREATE OR REPLACE VIEW overall_points_leaderboard_ev AS
+SELECT
+    cars.car_number,
+    cars.team_name,
+    cars.team_abbreviation,
+    COALESCE(autocross.points, 0) AS autocross_points,
+    COALESCE(accel.points, 0) AS accel_points,
+    COALESCE(skidpad.points, 0) AS skidpad_points,
+    (COALESCE(autocross.points, 0) + COALESCE(accel.points, 0) + COALESCE(skidpad.points, 0)) AS total_points
+FROM (
+    SELECT DISTINCT car_number, team_name, team_abbreviation FROM (
+        SELECT car_number, team_name, team_abbreviation FROM autocross_points_leaderboard_ev
+        UNION ALL
+        SELECT car_number, team_name, team_abbreviation FROM accel_points_leaderboard_ev
         UNION ALL
         SELECT car_number, team_name, team_abbreviation FROM skidpad_points_leaderboard_ev
     ) all_cars
 ) cars
 LEFT JOIN (
-    SELECT car_number, points FROM autocross_points_leaderboard_ic
-    UNION ALL
     SELECT car_number, points FROM autocross_points_leaderboard_ev
 ) autocross ON cars.car_number = autocross.car_number
 LEFT JOIN (
-    SELECT car_number, points FROM accel_points_leaderboard_ic
-    UNION ALL
     SELECT car_number, points FROM accel_points_leaderboard_ev
 ) accel ON cars.car_number = accel.car_number
 LEFT JOIN (
-    SELECT car_number, points FROM skidpad_points_leaderboard_ic
-    UNION ALL
     SELECT car_number, points FROM skidpad_points_leaderboard_ev
 ) skidpad ON cars.car_number = skidpad.car_number
+JOIN carreg ON cars.car_number = carreg.car_number
+WHERE carreg.class = 'EV'
 ORDER BY
     total_points DESC;
 """

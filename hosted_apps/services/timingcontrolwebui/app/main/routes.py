@@ -5,7 +5,7 @@ from flask_babel import _, get_locale
 import sqlalchemy as sa
 from app import db, mqtt
 from app.main.forms import EmptyForm, PostForm, SearchForm, RunEditForm, AddRunForm, EditRunForm
-from app.models import RunOrder, Accel_RunOrder, Skidpad_RunOrder, CarReg, Autocross_TopLaps, Accel_TopLaps, Skidpad_TopLaps, Autocross_PointsLeaderboardIC, Autocross_PointsLeaderboardEV, Accel_PointsLeaderboardIC, Accel_PointsLeaderboardEV, Skidpad_PointsLeaderboardIC, Skidpad_PointsLeaderboardEV, Overall_PointsLeaderboard, ConesLeaderboard, Team
+from app.models import RunOrder, Accel_RunOrder, Skidpad_RunOrder, CarReg, Autocross_TopLaps, Accel_TopLaps, Skidpad_TopLaps, Autocross_PointsLeaderboardIC, Autocross_PointsLeaderboardEV, Accel_PointsLeaderboardIC, Accel_PointsLeaderboardEV, Skidpad_PointsLeaderboardIC, Skidpad_PointsLeaderboardEV, Overall_PointsLeaderboardIC, Overall_PointsLeaderboardEV, ConesLeaderboard, Team
 from app.main import bp
 import requests
 import threading
@@ -587,10 +587,12 @@ def skidpad_toplaps():
 @bp.route('/overall_pointsLeaderboard', methods=['GET', 'POST'])
 def overall_pointsLeaderboard():
     
-    query = sa.select(Overall_PointsLeaderboard)
-    PointsTotals = db.session.scalars(query).all()
-    
-    return render_template('overall_pointsLeaderboard.html', title='Overall Points Leaderboard', PointsTotals=PointsTotals)
+    query = sa.select(Overall_PointsLeaderboardIC)
+    ICruns = db.session.scalars(query).all()
+    query = sa.select(Overall_PointsLeaderboardEV)
+    EVruns = db.session.scalars(query).all()
+
+    return render_template('overall_pointsLeaderboard.html', title='Overall Points Leaderboard', ICruns=ICruns, EVruns=EVruns)
 
 @bp.route('/autocross_pointsLeaderboard', methods=['GET', 'POST'])
 def autocross_pointsLeaderboard():
@@ -729,9 +731,11 @@ def api_skidpad_points_leaderboard():
 
 @bp.route('/api/overall_pointsLeaderboard', methods=['GET'])
 def api_overall_pointsLeaderboard():
-    query = sa.select(Overall_PointsLeaderboard)
-    PointsTotals = db.session.scalars(query).all()
-    points_totals_data = [
+    query = sa.select(Overall_PointsLeaderboardIC)
+    ICruns = db.session.scalars(query).all()
+    query = sa.select(Overall_PointsLeaderboardEV)
+    EVruns = db.session.scalars(query).all()
+    IC_points_totals_data = [
         {
             'team_name': team.team_name,
             'car_number': team.car_number,
@@ -740,8 +744,24 @@ def api_overall_pointsLeaderboard():
             'skidpad_points': team.skidpad_points,
             'total_points': team.total_points
         }
-        for team in PointsTotals
+        for team in ICruns
     ]
+
+    EV_points_totals_data = [
+        {
+            'team_name': team.team_name,
+            'car_number': team.car_number,
+            'autocross_points' : team.autocross_points,
+            'accel_points': team.accel_points,
+            'skidpad_points': team.skidpad_points,
+            'total_points': team.total_points
+        }
+        for team in EVruns
+    ]
+    points_totals_data = {
+        'IC_points_totals': IC_points_totals_data,
+        'EV_points_totals': EV_points_totals_data
+    }
     return jsonify(points_totals_data)
 
 @bp.route('/api/cones_leaderboard', methods=['GET'])
@@ -805,7 +825,7 @@ def carreg():
     # Return JSON if requested, otherwise render template
     if request.accept_mimetypes['application/json'] >= request.accept_mimetypes['text/html']:
         return jsonify(cars)
-    return render_template('carreg.html', title='Car Registration', cars=cars)
+    return render_template('carreg.html', title='Registered Cars', cars=cars)
 
 def sync_carreg_with_cloud(force=False):
     try:

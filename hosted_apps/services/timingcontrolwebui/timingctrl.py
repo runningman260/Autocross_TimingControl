@@ -1,7 +1,7 @@
 import sqlalchemy as sa
 import sqlalchemy.orm as so
 from app import create_app, db
-from app.models import RunOrder, Accel_RunOrder, Skidpad_RunOrder, CarReg, Autocross_TopLaps, Accel_TopLaps, Skidpad_TopLaps, Autocross_PointsLeaderboardIC, Autocross_PointsLeaderboardEV, Accel_PointsLeaderboardIC, Accel_PointsLeaderboardEV, Skidpad_PointsLeaderboardIC, Skidpad_PointsLeaderboardEV, Overall_PointsLeaderboard, ConesLeaderboard, Team
+from app.models import RunOrder, Accel_RunOrder, Skidpad_RunOrder, CarReg, Autocross_TopLaps, Accel_TopLaps, Skidpad_TopLaps, Autocross_PointsLeaderboardIC, Autocross_PointsLeaderboardEV, Accel_PointsLeaderboardIC, Accel_PointsLeaderboardEV, Skidpad_PointsLeaderboardIC, Skidpad_PointsLeaderboardEV, Overall_PointsLeaderboardIC, Overall_PointsLeaderboardEV, ConesLeaderboard, Team
 
 app = create_app()
 
@@ -24,6 +24,7 @@ def make_shell_context():
             'Accel_PointsLeaderboardEV'     : Accel_PointsLeaderboardEV,
             'Skidpad_PointsLeaderboardIC'   : Skidpad_PointsLeaderboardIC,
             'Skidpad_PointsLeaderboardEV'   : Skidpad_PointsLeaderboardEV,
-            'Overall_PointsLeaderboard'     : Overall_PointsLeaderboard,
+            'Overall_PointsLeaderboardIC'   : Overall_PointsLeaderboardIC,
+            'Overall_PointsLeaderboardEV'   : Overall_PointsLeaderboardEV,
             'ConesLeaderboard'              : ConesLeaderboard
             }
