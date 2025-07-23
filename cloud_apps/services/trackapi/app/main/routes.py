@@ -4,7 +4,7 @@ from flask import  request, jsonify
 from flask_babel import _
 import sqlalchemy as sa
 from app import db
-from app.models import RunOrder, CarReg
+from app.models import RunOrder, CarReg, Team, Skidpad_RunOrder, Accel_RunOrder
 from app.main import bp
 
 @bp.before_request
@@ -135,6 +135,45 @@ def get_car_regs_modified_since():
         for car in car_regs
     ]
     return jsonify(result)
+
+@bp.route('/api/skidpad_runs', methods=['GET'])
+def get_skidpad_runs():
+    runs = db.session.query(Skidpad_RunOrder).all()
+    runs_data = [
+        {
+            'id': run.id,
+            'car_number': run.car_number,
+            'cones': run.cones,
+            'off_course': run.off_course,
+            'dnf': run.dnf,
+            'raw_time_left': run.raw_time_left,
+            'raw_time_right': run.raw_time_right,
+            'adjusted_time': run.adjusted_time,
+            'created_at': run.created_at.isoformat() if hasattr(run, 'created_at') and run.created_at else None,
+            'updated_at': run.updated_at.isoformat() if hasattr(run, 'updated_at') and run.updated_at else None
+        }
+        for run in runs
+    ]
+    return jsonify(runs_data)
+
+@bp.route('/api/accel_runs', methods=['GET'])
+def get_accel_runs():
+    runs = db.session.query(Accel_RunOrder).all()
+    runs_data = [
+        {
+            'id': run.id,
+            'car_number': run.car_number,
+            'cones': run.cones,
+            'off_course': run.off_course,
+            'dnf': run.dnf,
+            'raw_time': run.raw_time,
+            'adjusted_time': run.adjusted_time,
+            'created_at': run.created_at.isoformat() if hasattr(run, 'created_at') and run.created_at else None,
+            'updated_at': run.updated_at.isoformat() if hasattr(run, 'updated_at') and run.updated_at else None
+        }
+        for run in runs
+    ]
+    return jsonify(runs_data)
 
 # @bp.route('/api/runs', methods=['GET'])
 # def get_runs():

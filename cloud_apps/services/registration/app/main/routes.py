@@ -4,10 +4,13 @@ from flask import  request, jsonify, render_template, redirect, url_for, flash, 
 from flask_babel import _
 import sqlalchemy as sa
 from app import db
-from app.models import RunOrder, CarReg, Team
+from app.models import RunOrder, CarReg, Team, Accel_RunOrder, Skidpad_RunOrder
 from app.main import bp
 from app.main.forms import CarRegistrationForm
 from sqlalchemy.exc import IntegrityError
+from werkzeug.utils import secure_filename
+import csv
+from io import StringIO
 
 MASTER_PASSWORD = os.environ.get("REGISTRATION_MASTER_PASSWORD", "changeme")
 
@@ -91,62 +94,133 @@ def carreg():
         return jsonify(cars)
     return render_template('carreg.html', title='Car Registration', cars=cars)
 
-
-
-
-
-##Old stuff used for car_reg_filler test script, not necessarily handled in this API but useful so leaving in.
-######################################################################################################
-######################################################################################################
-######################################################################################################
-
-@bp.route('/api/update_car_regs', methods=['POST'])
-def update_car_regs():
-    data = request.json
-    if not data or 'car_regs' not in data:
-        return jsonify({'status': 'error', 'message': 'Invalid data'}), 400
-
-    for car_data in data['car_regs']:
-        car = db.session.query(CarReg).filter_by(id=car_data.get('id')).first()
-        if car:
-            scan_time_val = car_data.get('scan_time')
-            if scan_time_val is not None:
-                if isinstance(scan_time_val, str):
-                    car.scan_time = datetime.fromisoformat(scan_time_val)
-                elif isinstance(scan_time_val, datetime):
-                    car.scan_time = scan_time_val
-            car.tag_number = car_data.get('tag_number', car.tag_number)
-            car.car_number = car_data.get('car_number', car.car_number)
-            car.team_id = car_data.get('team_id', car.team_id)
-            car.class_ = car_data.get('class_', car.class_)
-            car.year = car_data.get('year', car.year)
+@bp.route('/upload_accel', methods=['GET', 'POST'])
+def upload_accel():
+    if not session.get('authenticated'):
+        return redirect(url_for('main.login'))
+    message = None
+    if request.method == 'POST':
+        csv_data = request.form.get('csv_data', '')
+        file = request.files.get('csv_file')
+        if file and file.filename:
+            csv_text = file.read().decode('utf-8')
         else:
-            new_car = CarReg(
-                scan_time=datetime.fromisoformat(car_data['scan_time']),
-                tag_number=car_data['tag_number'],
-                car_number=car_data['car_number'],
-                team_id=car_data['team_id'],
-                class_=car_data['class_'],
-                year=car_data.get('year', '')
-            )
-            db.session.add(new_car)
+            csv_text = csv_data
+        reader = csv.DictReader(StringIO(csv_text))
+        count = 0
+        for row in reader:
+            # Flexible header mapping for accel
+            run_number = row.get('Run Number') or row.get('run_number')
+            car_number = row.get('Car Number') or row.get('car_number')
+            cones = row.get('CONE Count') or row.get('cones') or 0
+            off_course = row.get('OFF COURSE Count') or row.get('off_course') or 0
+            # Accept both standard and user-facing headers for raw time
+            raw_time = row.get('Raw Time or DNF') or row.get('raw_time') or row.get('Raw RIGHT Time or DNF')
+            # No longer convert DNF to None; keep as DNF if present
+            dnf = None
+            # Convert cones/off_course to int or 0
+            try:
+                cones = int(cones) if cones not in (None, '', ' ') else 0
+            except ValueError:
+                cones = 0
+            try:
+                off_course = int(off_course) if off_course not in (None, '', ' ') else 0
+            except ValueError:
+                off_course = 0
+            # Skip empty, calculated, or summary rows
+            if not (run_number or car_number or raw_time or cones or off_course):
+                continue
+            if str(run_number).strip() == '' and str(car_number).strip() == '' and (raw_time is None or str(raw_time).strip() == ''):
+                continue
+            if 'WINNING RUN' in str(row.values()):
+                continue
+            # Overwrite if run with same ID exists
+            existing = db.session.query(Accel_RunOrder).filter_by(id=run_number).first()
+            if existing:
+                existing.car_number = car_number
+                existing.raw_time = raw_time
+                existing.cones = cones
+                existing.off_course = off_course
+                existing.dnf = dnf
+                existing.adjusted_time = None
+            else:
+                run = Accel_RunOrder(
+                    id=run_number,  # If your model uses id as run number
+                    car_number=car_number,
+                    raw_time=raw_time,
+                    cones=cones,
+                    off_course=off_course,
+                    dnf=dnf,  # Let DB logic handle DNF if not present
+                    adjusted_time=None  # Let DB logic calculate
+                )
+                db.session.add(run)
+            count += 1
+        db.session.commit()
+        message = f"{count} acceleration runs uploaded."
+    return render_template('upload_event.html', event_name='Acceleration', message=message)
 
-    db.session.commit()
-    return jsonify({'status': 'success'}), 200
-
-
-@bp.route('/api/teams', methods=['GET'])
-def get_teams():
-    teams = db.session.query(Team).all()
-    result = [
-        {
-            'id': team.id,
-            'name': team.name,
-            'abbreviation': team.abbreviation
-        }
-        for team in teams
-    ]
-    return jsonify(result)
-
-
-
+@bp.route('/upload_skidpad', methods=['GET', 'POST'])
+def upload_skidpad():
+    if not session.get('authenticated'):
+        return redirect(url_for('main.login'))
+    message = None
+    if request.method == 'POST':
+        csv_data = request.form.get('csv_data', '')
+        file = request.files.get('csv_file')
+        if file and file.filename:
+            csv_text = file.read().decode('utf-8')
+        else:
+            csv_text = csv_data
+        reader = csv.DictReader(StringIO(csv_text))
+        count = 0
+        for row in reader:
+            run_number = row.get('Run Number') or row.get('run_number')
+            car_number = row.get('Car Number') or row.get('car_number')
+            raw_time_left = row.get('Raw LEFT Time or DNF') or row.get('raw_time_left')
+            raw_time_right = row.get('Raw RIGHT Time or DNF') or row.get('raw_time_right')
+            cones = row.get('CONE Count') or row.get('cones') or 0
+            off_course = row.get('OFF COURSE Count') or row.get('off_course') or 0
+            # Do not convert DNF to None; keep as DNF if present
+            dnf = None
+            # Convert cones/off_course to int or 0
+            try:
+                cones = int(cones) if cones not in (None, '', ' ') else 0
+            except ValueError:
+                cones = 0
+            try:
+                off_course = int(off_course) if off_course not in (None, '', ' ') else 0
+            except ValueError:
+                off_course = 0
+            # Skip empty, calculated, or summary rows
+            if not (run_number or car_number or raw_time_left or raw_time_right or cones or off_course):
+                continue
+            if str(run_number).strip() == '' and str(car_number).strip() == '' and (raw_time_left is None or str(raw_time_left).strip() == '') and (raw_time_right is None or str(raw_time_right).strip() == ''):
+                continue
+            if 'WINNING RUN' in str(row.values()):
+                continue
+            # Overwrite if run with same ID exists
+            existing = db.session.query(Skidpad_RunOrder).filter_by(id=run_number).first()
+            if existing:
+                existing.car_number = car_number
+                existing.raw_time_left = raw_time_left
+                existing.raw_time_right = raw_time_right
+                existing.cones = cones
+                existing.off_course = off_course
+                existing.dnf = dnf
+                existing.adjusted_time = None
+            else:
+                run = Skidpad_RunOrder(
+                    id=run_number,
+                    car_number=car_number,
+                    raw_time_left=raw_time_left,
+                    raw_time_right=raw_time_right,
+                    cones=cones,
+                    off_course=off_course,
+                    dnf=dnf,
+                    adjusted_time=None
+                )
+                db.session.add(run)
+            count += 1
+        db.session.commit()
+        message = f"{count} skidpad runs uploaded."
+    return render_template('upload_event.html', event_name='Skidpad', message=message)

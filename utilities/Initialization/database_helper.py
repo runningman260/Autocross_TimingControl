@@ -691,7 +691,7 @@ def create_accel_runtable_update_adjusted_time_calc_function(table_name):
 	sql = """CREATE OR REPLACE FUNCTION {table_name}_update_adjusted_time() 
 		RETURNS TRIGGER AS $$
 		BEGIN
-			IF POSITION('DNF' IN UPPER(NEW.dnf)) > 0 THEN
+			IF POSITION('DNF' IN UPPER(NEW.dnf)) > 0 OR POSITION('DNF' IN UPPER(NEW.raw_time)) > 0 OR (COALESCE(NULLIF(TRIM(NEW.off_course),''),'0') ~ '^[0-9]+$' AND CAST(NEW.off_course AS INTEGER) > 0) THEN
 				NEW.adjusted_time := 'DNF';
 			ELSE
 				NEW.adjusted_time := (COALESCE(CAST(NEW.raw_time AS NUMERIC),0) + (2 * CAST(NEW.cones AS NUMERIC)))::text;
@@ -706,7 +706,7 @@ def create_accel_runtable_update_adjusted_time_calc_function(table_name):
 			user=Config.DB.USER, 
 			password=Config.DB.PASS) as conn:
 			with conn.cursor() as cur:
-				# execute
+				# execute the function creation
 				cur.execute(sql)
 	except (psycopg2.DatabaseError, Exception) as error:
 		print(error)
@@ -715,7 +715,7 @@ def create_skidpad_runtable_update_adjusted_time_calc_function(table_name):
 	sql = """CREATE OR REPLACE FUNCTION {table_name}_update_adjusted_time() 
 		RETURNS TRIGGER AS $$
 		BEGIN
-			IF POSITION('DNF' IN UPPER(NEW.dnf)) > 0 THEN
+			IF POSITION('DNF' IN UPPER(NEW.dnf)) > 0 OR POSITION('DNF' IN UPPER(NEW.raw_time_left)) > 0 OR POSITION('DNF' IN UPPER(NEW.raw_time_right)) > 0 OR (COALESCE(NULLIF(TRIM(NEW.off_course),''),'0') ~ '^[0-9]+$' AND CAST(NEW.off_course AS INTEGER) > 0) THEN
 				NEW.adjusted_time := 'DNF';
 			ELSE
 				NEW.adjusted_time := trunc((((COALESCE(CAST(NEW.raw_time_left AS NUMERIC),0) + COALESCE(CAST(NEW.raw_time_right AS NUMERIC),0)) / 2) + (CAST(0.125 AS NUMERIC) * CAST(NEW.cones AS NUMERIC))),3)::text;
@@ -730,7 +730,7 @@ def create_skidpad_runtable_update_adjusted_time_calc_function(table_name):
 			user=Config.DB.USER, 
 			password=Config.DB.PASS) as conn:
 			with conn.cursor() as cur:
-				# execute
+				# execute the function creation
 				cur.execute(sql)
 	except (psycopg2.DatabaseError, Exception) as error:
 		print(error)

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h2>Upload {{ event_name }} Data</h2>
+  {% if message %}
+    <div class="alert alert-success">{{ message }}</div>
+  {% endif %}
+  <form method="post" enctype="multipart/form-data">
+    <div class="mb-3">
+      <label for="csv_data" class="form-label">Paste CSV Data</label>
+      <textarea class="form-control" id="csv_data" name="csv_data" rows="10" placeholder="Paste CSV here..."></textarea>
+    </div>
+    <div class="mb-3">
+      <label for="csv_file" class="form-label">Or Upload CSV File</label>
+      <input class="form-control" type="file" id="csv_file" name="csv_file" accept=".csv">
+    </div>
+    <button type="submit" class="btn btn-primary">Upload</button>
+  </form>
+  <div class="mt-3">
+    <h5>CSV Format Example:</h5>
+    <pre>
+car_number,cones,off_course,dnf,raw_time,adjusted_time
+101,0,0,,52.123,52.123
+...</pre>
+  </div>
+</div>
+{% endblock %}
