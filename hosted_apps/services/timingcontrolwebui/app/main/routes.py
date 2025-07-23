@@ -973,40 +973,20 @@ def sync_carreg_with_cloud(force=False):
         append_sync_log("Manual CarReg sync started.")
         try:
             if force:
-                since = "1970-01-01T00:00:00+00:00"
-            else:
-                most_recent = db.session.query(CarReg).order_by(CarReg.updated_at.desc()).first()
-                since = most_recent.updated_at.isoformat() if most_recent and most_recent.updated_at else "1970-01-01T00:00:00+00:00"
-            url = trackapi_host+"/api/car_regs/modified_since"
-            params = {"since": since}
-            headers = {'Authorization': authtoken}
-            response = requests.get(url, params=params, headers=headers, timeout=10)
-            if response.status_code == 200:
-                car_regs = response.json()
-                cloud_car_numbers = set(car['car_number'] for car in car_regs)
-                # Remove local records not in cloud (only for force)
-                if force:
-                    local_car_numbers = set(row.car_number for row in db.session.query(CarReg.car_number).all())
-                    to_remove = local_car_numbers - cloud_car_numbers
-                    if to_remove:
-                        db.session.query(CarReg).filter(CarReg.car_number.in_(to_remove)).delete(synchronize_session=False)
-                        print(f"[CarReg Sync] Removed local car_numbers not in cloud: {to_remove}")
-                # Upsert cloud records
-                for car in car_regs:
-                    team = db.session.query(Team).filter_by(id=car['team_id']).first()
-                    if not team:
-                        continue
-                    local_car = db.session.query(CarReg).filter_by(car_number=car['car_number']).first()
-                    if local_car:
-                        # Overwrite local with cloud data
-                        local_car.scan_time = datetime.fromisoformat(car['scan_time']) if car['scan_time'] else None
-                        local_car.tag_number = car['tag_number']
-                        local_car.team_id = car['team_id']
-                        local_car.class_ = car['class_']
-                        local_car.year = car.get('year', '')
-                        local_car.updated_at = datetime.fromisoformat(car['updated_at']) if car['updated_at'] else datetime.now(timezone.utc)
-                        print(f"[CarReg Sync] Updated car_number={local_car.car_number}, team_id={local_car.team_id}")
-                    else:
+                # Fetch ALL records from the cloud
+                url = trackapi_host+"/api/car_regs"
+                headers = {'Authorization': authtoken}
+                response = requests.get(url, headers=headers, timeout=20)
+                if response.status_code == 200:
+                    car_regs = response.json()
+                    # Remove all local CarReg records
+                    db.session.query(CarReg).delete()
+                    db.session.commit()
+                    # Insert all cloud records
+                    for car in car_regs:
+                        team = db.session.query(Team).filter_by(id=car['team_id']).first()
+                        if not team:
+                            continue
                         new_car = CarReg(
                             scan_time=datetime.fromisoformat(car['scan_time']) if car['scan_time'] else None,
                             tag_number=car['tag_number'],
@@ -1014,15 +994,52 @@ def sync_carreg_with_cloud(force=False):
                             team_id=car['team_id'],
                             class_=car['class_'],
                             year=car.get('year', ''),
-                            created_at=datetime.fromisoformat(car['created_at']) if car['created_at'] else datetime.now(timezone.utc),
-                            updated_at=datetime.fromisoformat(car['updated_at']) if car['updated_at'] else datetime.now(timezone.utc)
+                            created_at=datetime.fromisoformat(car['created_at']) if car.get('created_at') else None,
+                            updated_at=datetime.fromisoformat(car['updated_at']) if car.get('updated_at') else None
                         )
                         db.session.add(new_car)
-                        print(f"[CarReg Sync] Added car_number={new_car.car_number}, team_id={new_car.team_id}")
-                db.session.commit()
-                append_sync_log(f"CarReg sync: {len(car_regs)} records updated from cloud.")
+                    db.session.commit()
+                    append_sync_log(f"[Force Sync] CarReg: replaced all local records with {len(car_regs)} from cloud.")
+                else:
+                    append_sync_log(f"[Force Sync] CarReg cloud sync error: {response.text}")
             else:
-                append_sync_log(f"CarReg sync error: {response.text}")
+                # ...existing code for non-force sync...
+                most_recent = db.session.query(CarReg).order_by(CarReg.updated_at.desc()).first()
+                since = most_recent.updated_at.isoformat() if most_recent and most_recent.updated_at else "1970-01-01T00:00:00+00:00"
+                url = trackapi_host+"/api/car_regs/modified_since"
+                params = {"since": since}
+                headers = {'Authorization': authtoken}
+                response = requests.get(url, params=params, headers=headers, timeout=10)
+                if response.status_code == 200:
+                    car_regs = response.json()
+                    for car in car_regs:
+                        team = db.session.query(Team).filter_by(id=car['team_id']).first()
+                        if not team:
+                            continue
+                        local_car = db.session.query(CarReg).filter_by(car_number=car['car_number']).first()
+                        if local_car:
+                            local_car.scan_time = datetime.fromisoformat(car['scan_time']) if car['scan_time'] else None
+                            local_car.tag_number = car['tag_number']
+                            local_car.team_id = car['team_id']
+                            local_car.class_ = car['class_']
+                            local_car.year = car.get('year', '')
+                            local_car.updated_at = datetime.fromisoformat(car['updated_at']) if car.get('updated_at') else None
+                        else:
+                            new_car = CarReg(
+                                scan_time=datetime.fromisoformat(car['scan_time']) if car['scan_time'] else None,
+                                tag_number=car['tag_number'],
+                                car_number=car['car_number'],
+                                team_id=car['team_id'],
+                                class_=car['class_'],
+                                year=car.get('year', ''),
+                                created_at=datetime.fromisoformat(car['created_at']) if car.get('created_at') else None,
+                                updated_at=datetime.fromisoformat(car['updated_at']) if car.get('updated_at') else None
+                            )
+                            db.session.add(new_car)
+                    db.session.commit()
+                    append_sync_log(f"CarReg sync: {len(car_regs)} records updated from cloud.")
+                else:
+                    append_sync_log(f"CarReg sync error: {response.text}")
         except Exception as e:
             db.session.rollback()
             append_sync_log(f"CarReg sync error: {e}")

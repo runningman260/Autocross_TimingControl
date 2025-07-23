@@ -16,20 +16,22 @@ MASTER_PASSWORD = os.environ.get("REGISTRATION_MASTER_PASSWORD", "changeme")
 
 @bp.route('/login', methods=['GET', 'POST'])
 def login():
+    next_url = request.args.get('next')
     if request.method == 'POST':
         password = request.form.get('password')
         if password == MASTER_PASSWORD:
             session['authenticated'] = True
-            return redirect(url_for('main.register_car'))
+            # Redirect to next_url if present, else to register_car
+            return redirect(next_url or url_for('main.register_car'))
         else:
             flash('Incorrect password', 'danger')
-    return render_template('login.html')
+    return render_template('login.html', next=next_url)
 
 @bp.route('/')
 @bp.route('/register_car', methods=['GET', 'POST'])
 def register_car():
     if not session.get('authenticated'):
-        return redirect(url_for('main.login'))
+        return redirect(url_for('main.login', next=request.url))
     teams = db.session.query(Team).order_by(Team.name).all()
     team_choices = [(-1, "Please select")] + [(team.id, f"{team.name} ({team.abbreviation})") for team in teams]
     form = CarRegistrationForm()
@@ -70,7 +72,7 @@ def car_sort_key(car):
 @bp.route('/carreg', methods=['GET'])
 def carreg():
     if not session.get('authenticated'):
-        return redirect(url_for('main.login'))
+        return redirect(url_for('main.login', next=request.url))
     query = (
         sa.select(CarReg, Team.name, Team.abbreviation)
         .join(Team, CarReg.team_id == Team.id, isouter=True))
@@ -99,7 +101,7 @@ def carreg():
 @bp.route('/upload_accel', methods=['GET', 'POST'])
 def upload_accel():
     if not session.get('authenticated'):
-        return redirect(url_for('main.login'))
+        return redirect(url_for('main.login', next=request.url))
     message = None
     if request.method == 'POST':
         csv_data = request.form.get('csv_data', '')
@@ -164,7 +166,7 @@ def upload_accel():
 @bp.route('/upload_skidpad', methods=['GET', 'POST'])
 def upload_skidpad():
     if not session.get('authenticated'):
-        return redirect(url_for('main.login'))
+        return redirect(url_for('main.login', next=request.url))
     message = None
     if request.method == 'POST':
         csv_data = request.form.get('csv_data', '')
@@ -230,7 +232,7 @@ def upload_skidpad():
 @bp.route('/delete_car/<int:car_id>', methods=['POST'])
 def delete_car(car_id):
     if not session.get('authenticated'):
-        return redirect(url_for('main.login'))
+        return redirect(url_for('main.login', next=request.url))
     car = db.session.query(CarReg).filter_by(id=car_id).first()
     if car:
         db.session.delete(car)
