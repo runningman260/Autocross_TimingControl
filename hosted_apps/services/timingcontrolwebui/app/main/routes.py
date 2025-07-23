@@ -126,11 +126,48 @@ def log_no_runs_to_sync(newline):
         if newline:
             sync_log.append(f"[{datetime.now().strftime('%H:%M:%S')}] {msg}")
 
+def upsert_skidpad_runs_from_cloud(runs):
+    count = 0
+    for run in runs:
+        local_run = db.session.query(Skidpad_RunOrder).filter_by(id=run['id']).first()
+        if local_run:
+            local_run.car_number = run.get('car_number')
+            local_run.raw_time_left = run.get('raw_time_left')
+            local_run.raw_time_right = run.get('raw_time_right')
+            local_run.cones = run.get('cones')
+            local_run.off_course = run.get('off_course')
+            local_run.dnf = run.get('dnf')
+            local_run.adjusted_time = run.get('adjusted_time')
+        else:
+            db.session.add(Skidpad_RunOrder(**run))
+        count += 1
+    db.session.commit()
+    append_sync_log(f"Skidpad sync: {count} records upserted from cloud.")
+
+def upsert_accel_runs_from_cloud(runs):
+    count = 0
+    for run in runs:
+        local_run = db.session.query(Accel_RunOrder).filter_by(id=run['id']).first()
+        if local_run:
+            local_run.car_number = run.get('car_number')
+            local_run.raw_time = run.get('raw_time')
+            local_run.cones = run.get('cones')
+            local_run.off_course = run.get('off_course')
+            local_run.dnf = run.get('dnf')
+            local_run.adjusted_time = run.get('adjusted_time')
+        else:
+            db.session.add(Accel_RunOrder(**run))
+        count += 1
+    db.session.commit()
+    append_sync_log(f"Accel sync: {count} records upserted from cloud.")
+
 def sync_with_cloud_loop(app):
     global sync_thread_running, sync_thread_paused
     with app.app_context():
         append_sync_log("Sync thread Paused.")
         last_checked_updated_at = None
+        last_cloud_pull = 0
+        cloud_pull_interval = 300  # 5 minutes
         while sync_thread_running:
             if sync_thread_paused:
                 time.sleep(1)
@@ -163,48 +200,87 @@ def sync_with_cloud_loop(app):
 
                 if not runs_to_sync_info:
                     log_no_runs_to_sync(True)
-                    time.sleep(5)
-                    continue
-                log_no_runs_to_sync(False)
-                for batch in batches:
-                    runs_data = [
-                        {
-                            'id': run.id,
-                            'car_number': run.car_number,
-                            'cones': run.cones,
-                            'off_course': run.off_course,
-                            'dnf': run.dnf,
-                            'raw_time': run.raw_time,
-                            'adjusted_time': run.adjusted_time
-                        }
-                        for run, orig_updated_at in batch
-                    ]
-                    append_sync_log(f"Syncing batch with {len(runs_data)} runs: " +
-                        ", ".join([f"ID {r['id']} (Car {r['car_number']})" for r in runs_data]))
+                else:
+                    log_no_runs_to_sync(False)
+                    for batch in batches:
+                        runs_data = [
+                            {
+                                'id': run.id,
+                                'car_number': run.car_number,
+                                'cones': run.cones,
+                                'off_course': run.off_course,
+                                'dnf': run.dnf,
+                                'raw_time': run.raw_time,
+                                'adjusted_time': run.adjusted_time
+                            }
+                            for run, orig_updated_at in batch
+                        ]
+                        append_sync_log(f"Syncing batch with {len(runs_data)} runs: " +
+                            ", ".join([f"ID {r['id']} (Car {r['car_number']})" for r in runs_data]))
+                        try:
+                            response = requests.post(os.path.join(trackapi_host, 'api', 'update_runs'),
+                                json={'runs': runs_data},
+                                headers={'Authorization': authtoken}
+                            )
+                            if response.status_code == 200:
+                                for run, orig_updated_at in batch:
+                                    db.session.refresh(run)
+                                    if run.updated_at == orig_updated_at:
+                                        run.last_synced_at = datetime.now(timezone.utc)
+                                        append_sync_log(f"Run {run.id} (Car {run.car_number}) marked as synced at {run.last_synced_at.strftime('%H:%M:%S')}")
+                                    else:
+                                        append_sync_log(f"Run {run.id} (Car {run.car_number}) was updated during sync, skipping last_synced_at update.")
+                                db.session.commit()
+                                append_sync_log("Batch synced successfully.")
+                            else:
+                                append_sync_log(f"Error syncing batch: {response.text}")
+                        except requests.exceptions.RequestException as e:
+                            append_sync_log(f"Network error: {e}")
+                            break
+                # --- Cloud pull every 5 minutes ---
+                now = time.time()
+                if now - last_cloud_pull > cloud_pull_interval:
+                    append_sync_log("Starting periodic cloud data pull...")
                     try:
-                        response = requests.post(os.path.join(trackapi_host, 'api', 'update_runs'),
-                            json={'runs': runs_data},
-                            headers={'Authorization': authtoken}
-                        )
-                        if response.status_code == 200:
-                            for run, orig_updated_at in batch:
-                                db.session.refresh(run)
-                                if run.updated_at == orig_updated_at:
-                                    run.last_synced_at = datetime.now(timezone.utc)
-                                    append_sync_log(f"Run {run.id} (Car {run.car_number}) marked as synced at {run.last_synced_at.strftime('%H:%M:%S')}")
-                                else:
-                                    append_sync_log(f"Run {run.id} (Car {run.car_number}) was updated during sync, skipping last_synced_at update.")
-                            db.session.commit()
-                            append_sync_log("Batch synced successfully.")
+                        sync_carreg_with_cloud(force=False)
+                        append_sync_log("CarReg cloud sync completed.")
+                    except Exception as e:
+                        append_sync_log(f"CarReg cloud sync error: {e}")
+                    try:
+                        skidpad_url = trackapi_host + '/api/skidpad_runs'
+                        append_sync_log(f"Fetching Skidpad runs from {skidpad_url}")
+                        skidpad_resp = requests.get(skidpad_url, headers={'Authorization': authtoken}, timeout=10)
+                        append_sync_log(f"Skidpad response status: {skidpad_resp.status_code}")
+                        if skidpad_resp.status_code == 200:
+                            runs = skidpad_resp.json()
+                            append_sync_log(f"Fetched {len(runs)} Skidpad runs from cloud.")
+                            upsert_skidpad_runs_from_cloud(runs)
                         else:
-                            append_sync_log(f"Error syncing batch: {response.text}")
-                    except requests.exceptions.RequestException as e:
-                        append_sync_log(f"Network error: {e}")
-                        break
+                            append_sync_log(f"Skidpad cloud sync error: {skidpad_resp.text}")
+                    except Exception as e:
+                        append_sync_log(f"Skidpad cloud sync error: {e}")
+                    try:
+                        accel_url = trackapi_host + '/api/accel_runs'
+                        append_sync_log(f"Fetching Accel runs from {accel_url}")
+                        accel_resp = requests.get(accel_url, headers={'Authorization': authtoken}, timeout=10)
+                        append_sync_log(f"Accel response status: {accel_resp.status_code}")
+                        if accel_resp.status_code == 200:
+                            runs = accel_resp.json()
+                            append_sync_log(f"Fetched {len(runs)} Accel runs from cloud.")
+                            upsert_accel_runs_from_cloud(runs)
+                        else:
+                            append_sync_log(f"Accel cloud sync error: {accel_resp.text}")
+                    except Exception as e:
+                        append_sync_log(f"Accel cloud sync error: {e}")
+                    last_cloud_pull = now
                 time.sleep(5)
             except Exception as e:
                 append_sync_log(f"Sync thread error: {e}")
                 time.sleep(25)
+                
+            
+            
+            
 
 
 @bp.record_once
@@ -264,7 +340,39 @@ def api_force_sync():
         db.session.commit()
         log_no_runs_to_sync(False)
         append_sync_log(f"Force sync triggered: {num_updated} runs marked for sync.")
-        return jsonify({"status": "success", "message": f"Force sync triggered for {num_updated} runs."})
+        # --- Also trigger cloud download for CarReg, Skidpad, Accel ---
+        try:
+            sync_carreg_with_cloud(force=False)
+            append_sync_log("[Force Sync] CarReg cloud sync completed.")
+        except Exception as e:
+            append_sync_log(f"[Force Sync] CarReg cloud sync error: {e}")
+        try:
+            skidpad_url = trackapi_host + '/api/skidpad_runs'
+            append_sync_log(f"[Force Sync] Fetching Skidpad runs from {skidpad_url}")
+            skidpad_resp = requests.get(skidpad_url, headers={'Authorization': authtoken}, timeout=10)
+            append_sync_log(f"[Force Sync] Skidpad response status: {skidpad_resp.status_code}")
+            if skidpad_resp.status_code == 200:
+                runs = skidpad_resp.json()
+                append_sync_log(f"[Force Sync] Fetched {len(runs)} Skidpad runs from cloud.")
+                upsert_skidpad_runs_from_cloud(runs)
+            else:
+                append_sync_log(f"[Force Sync] Skidpad cloud sync error: {skidpad_resp.text}")
+        except Exception as e:
+            append_sync_log(f"[Force Sync] Skidpad cloud sync error: {e}")
+        try:
+            accel_url = trackapi_host + '/api/accel_runs'
+            append_sync_log(f"[Force Sync] Fetching Accel runs from {accel_url}")
+            accel_resp = requests.get(accel_url, headers={'Authorization': authtoken}, timeout=10)
+            append_sync_log(f"[Force Sync] Accel response status: {accel_resp.status_code}")
+            if accel_resp.status_code == 200:
+                runs = accel_resp.json()
+                append_sync_log(f"[Force Sync] Fetched {len(runs)} Accel runs from cloud.")
+                upsert_accel_runs_from_cloud(runs)
+            else:
+                append_sync_log(f"[Force Sync] Accel cloud sync error: {accel_resp.text}")
+        except Exception as e:
+            append_sync_log(f"[Force Sync] Accel cloud sync error: {e}")
+        return jsonify({"status": "success", "message": f"Force sync triggered for {num_updated} runs and cloud data downloaded."})
     except Exception as e:
         append_sync_log(f"Force sync error: {e}")
         return jsonify({"status": "error", "message": f"Force sync failed: {e}"}), 500

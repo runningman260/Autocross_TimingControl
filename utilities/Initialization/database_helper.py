@@ -9,6 +9,7 @@
 from config import Config
 import time
 import psycopg2
+import re
 
 def run_query(command):
 	response = None
@@ -27,17 +28,20 @@ def run_query(command):
 	return response
 
 def create_table(command):
-	try:
-		with psycopg2.connect(
-			host=Config.DB.HOST, 
-			database=Config.DB.NAME, 
-			user=Config.DB.USER, 
-			password=Config.DB.PASS) as conn:
-			with conn.cursor() as cur:
-				# execute the CREATE TABLE statement
-				cur.execute(command)
-	except (psycopg2.DatabaseError, Exception) as error:
-		print(error)
+    try:
+        # Use regex to extract table name after CREATE TABLE (ignore whitespace/newlines)
+        match = re.search(r'CREATE\s+TABLE\s+"?([a-zA-Z0-9_]+)"?', command, re.IGNORECASE)
+        table_name = match.group(1) if match else 'unknown_table'
+        print(f"[DB] Creating table: {table_name}")
+        with psycopg2.connect(
+            host=Config.DB.HOST, 
+            database=Config.DB.NAME, 
+            user=Config.DB.USER, 
+            password=Config.DB.PASS) as conn:
+            with conn.cursor() as cur:
+                cur.execute(command)
+    except (psycopg2.DatabaseError, Exception) as error:
+        print(error)
 
 def check_table_exist(table_name):
 	exists = False
@@ -64,6 +68,7 @@ def check_table_exist(table_name):
 def delete_table(table_name):
 	sql = "DROP TABLE IF EXISTS " + table_name + " CASCADE;"
 	try:
+		print(f"[DB] Dropping table: {table_name}")
 		with psycopg2.connect(
 			host=Config.DB.HOST, 
 			database=Config.DB.NAME, 
@@ -76,21 +81,35 @@ def delete_table(table_name):
 		print(error)
 
 def create_view(command):
-	try:
-		with psycopg2.connect(
-			host=Config.DB.HOST, 
-			database=Config.DB.NAME, 
-			user=Config.DB.USER, 
-			password=Config.DB.PASS) as conn:
-			with conn.cursor() as cur:
-				# execute the CREATE TABLE statement
-				cur.execute(command)
-	except (psycopg2.DatabaseError, Exception) as error:
-		print(error)
+    try:
+        # Improved regex: handles quoted/unquoted, schema-qualified, multiline, and whitespace
+        match = re.search(
+            r'CREATE\s+VIEW\s+(?:[\w\."]+\.)?(?:"([^"]+)"|(\w+))',
+            command, re.IGNORECASE | re.DOTALL
+        )
+        if match:
+            view_name = match.group(1) or match.group(2)
+            view_name = view_name.strip()
+        else:
+            # Fallback: find the first non-empty line after CREATE VIEW
+            after_create_view = re.split(r'CREATE\s+VIEW', command, flags=re.IGNORECASE)[-1]
+            lines = [l.strip() for l in after_create_view.splitlines() if l.strip()]
+            view_name = lines[0][:40] + '...' if lines else 'unknown_view'
+        print(f"[DB] Creating view: {view_name}")
+        with psycopg2.connect(
+            host=Config.DB.HOST, 
+            database=Config.DB.NAME, 
+            user=Config.DB.USER, 
+            password=Config.DB.PASS) as conn:
+            with conn.cursor() as cur:
+                cur.execute(command)
+    except (psycopg2.DatabaseError, Exception) as error:
+        print(error)
 
 def delete_view(view_name):
 	sql = "DROP VIEW IF EXISTS " + view_name + " CASCADE;"
 	try:
+		print(f"[DB] Dropping view: {view_name}")
 		with psycopg2.connect(
 			host=Config.DB.HOST, 
 			database=Config.DB.NAME, 
@@ -547,21 +566,21 @@ def create_timestamp_function(function_name):
 		print(error)
 		  
 def create_timestamp_trigger(table_name, function_name, trigger_name):
-	sql = """
-		CREATE TRIGGER "{trigger_name}" 
-		BEFORE UPDATE ON "{table_name}"
-		FOR EACH ROW EXECUTE PROCEDURE {function_name}();""".format(function_name=function_name, trigger_name=trigger_name, table_name=table_name)
-	try:
-		with psycopg2.connect(
-			host=Config.DB.HOST, 
-			database=Config.DB.NAME, 
-			user=Config.DB.USER, 
-			password=Config.DB.PASS) as conn:
-			with conn.cursor() as cur:
-				# execute
-				cur.execute(sql)
-	except (psycopg2.DatabaseError, Exception) as error:
-		print(error)
+    sql = """
+        CREATE TRIGGER "{trigger_name}" 
+        BEFORE UPDATE ON "{table_name}"
+        FOR EACH ROW EXECUTE PROCEDURE {function_name}();""".format(function_name=function_name, trigger_name=trigger_name, table_name=table_name)
+    try:
+        print(f"[DB] Creating trigger: {trigger_name} on table: {table_name}")
+        with psycopg2.connect(
+            host=Config.DB.HOST, 
+            database=Config.DB.NAME, 
+            user=Config.DB.USER, 
+            password=Config.DB.PASS) as conn:
+            with conn.cursor() as cur:
+                cur.execute(sql)
+    except (psycopg2.DatabaseError, Exception) as error:
+        print(error)
 
 def check_function_exists(function_name):
 	exists = False
@@ -600,6 +619,7 @@ def check_trigger_exists(trigger_name):
 def delete_function(function_name):
 	sql = "DROP FUNCTION IF EXISTS " + function_name + " CASCADE;"
 	try:
+		print(f"[DB] Dropping function: {function_name}")
 		with psycopg2.connect(
 			host=Config.DB.HOST, 
 			database=Config.DB.NAME, 
@@ -614,6 +634,7 @@ def delete_function(function_name):
 def delete_trigger(trigger_name, table_name):
 	sql = "DROP TRIGGER IF EXISTS " + trigger_name + " ON " + table_name + " CASCADE;"
 	try:
+		print(f"[DB] Dropping trigger: {trigger_name} on table: {table_name}")
 		with psycopg2.connect(
 			host=Config.DB.HOST, 
 			database=Config.DB.NAME, 
@@ -736,22 +757,22 @@ def create_skidpad_runtable_update_adjusted_time_calc_function(table_name):
 		print(error)
 
 def create_adjust_time_trigger(table_name):
-	sql = """
-		CREATE TRIGGER {table_name}_adjust_time_trigger
-		BEFORE INSERT OR UPDATE ON "{table_name}"
-		FOR EACH ROW
-		EXECUTE FUNCTION {table_name}_update_adjusted_time();""".format(table_name=table_name)
-	try:
-		with psycopg2.connect(
-			host=Config.DB.HOST, 
-			database=Config.DB.NAME, 
-			user=Config.DB.USER, 
-			password=Config.DB.PASS) as conn:
-			with conn.cursor() as cur:
-				# execute
-				cur.execute(sql)
-	except (psycopg2.DatabaseError, Exception) as error:
-		print(error)
+    sql = """
+        CREATE TRIGGER {table_name}_adjust_time_trigger
+        BEFORE INSERT OR UPDATE ON "{table_name}"
+        FOR EACH ROW
+        EXECUTE FUNCTION {table_name}_update_adjusted_time();""".format(table_name=table_name)
+    try:
+        print(f"[DB] Creating trigger: {table_name}_adjust_time_trigger on table: {table_name}")
+        with psycopg2.connect(
+            host=Config.DB.HOST, 
+            database=Config.DB.NAME, 
+            user=Config.DB.USER, 
+            password=Config.DB.PASS) as conn:
+            with conn.cursor() as cur:
+                cur.execute(sql)
+    except (psycopg2.DatabaseError, Exception) as error:
+        print(error)
 
 
 def insert_teams():
