@@ -87,13 +87,19 @@ def get_teams():
     ]
     return jsonify(result)
 
+def safe_isoformat(dt):
+    if isinstance(dt, datetime):
+        return dt.isoformat()
+    return dt if isinstance(dt, str) else None
+
+
 @bp.route('/api/car_regs', methods=['GET'])
 def get_car_regs():
     car_regs = db.session.query(CarReg).all()
     result = [
         {
             'id': car.id,
-            'scan_time': car.scan_time.isoformat() if car.scan_time else None,
+            'scan_time': safe_isoformat(car.scan_time),
             'tag_number': car.tag_number,
             'car_number': car.car_number,
             'team_id': car.team_id,
@@ -103,11 +109,6 @@ def get_car_regs():
         for car in car_regs
     ]
     return jsonify(result)
-
-def safe_isoformat(dt):
-    if isinstance(dt, datetime):
-        return dt.isoformat()
-    return dt if isinstance(dt, str) else None
 
 @bp.route('/api/car_regs/modified_since', methods=['GET'])
 def get_car_regs_modified_since():
