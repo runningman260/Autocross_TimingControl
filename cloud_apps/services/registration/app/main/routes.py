@@ -30,12 +30,11 @@ def login():
 def register_car():
     if not session.get('authenticated'):
         return redirect(url_for('main.login'))
-    form = CarRegistrationForm()
     teams = db.session.query(Team).order_by(Team.name).all()
-    form.team_id.choices = [(-1, "Please select")] + [(team.id, f"{team.name} ({team.abbreviation})") for team in teams]
+    team_choices = [(-1, "Please select")] + [(team.id, f"{team.name} ({team.abbreviation})") for team in teams]
+    form = CarRegistrationForm()
+    form.team_id.choices = team_choices
     form.team_id.default = -1
-    form.process(request.form)
-
     if form.validate_on_submit():
         car = CarReg(
             car_number=form.car_number.data,
@@ -52,6 +51,7 @@ def register_car():
             flash(f'Car {car.car_number} for team {team.name} registered successfully!', 'success')
         except IntegrityError as e:
             db.session.rollback()
+            print(f"IntegrityError: {e}")
             flash(f'Error: Car number {car.car_number} is already registered. Please choose a different number.', 'danger')
         return redirect(url_for('main.register_car'))
     return render_template('register_car.html', form=form)
@@ -69,6 +69,8 @@ def car_sort_key(car):
 #carreg is now a bad name for this in retrospect, but leaving because it matches the other apps
 @bp.route('/carreg', methods=['GET'])
 def carreg():
+    if not session.get('authenticated'):
+        return redirect(url_for('main.login'))
     query = (
         sa.select(CarReg, Team.name, Team.abbreviation)
         .join(Team, CarReg.team_id == Team.id, isouter=True))
@@ -224,3 +226,16 @@ def upload_skidpad():
         db.session.commit()
         message = f"{count} skidpad runs uploaded."
     return render_template('upload_event.html', event_name='Skidpad', message=message)
+
+@bp.route('/delete_car/<int:car_id>', methods=['POST'])
+def delete_car(car_id):
+    if not session.get('authenticated'):
+        return redirect(url_for('main.login'))
+    car = db.session.query(CarReg).filter_by(id=car_id).first()
+    if car:
+        db.session.delete(car)
+        db.session.commit()
+        flash(f"Car {car.car_number} deleted.", "success")
+    else:
+        flash("Car not found.", "danger")
+    return redirect(url_for('main.register_car'))

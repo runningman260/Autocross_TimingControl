@@ -11,6 +11,7 @@
         <th>Year</th>
         <th>Tag Number</th>
         <th>Scan Time</th>
+        <th>Action</th>
       </tr>
     </thead>
     <tbody>
@@ -22,6 +23,11 @@
         <td>{{ car.year }}</td>
         <td>{{ car.tag_number }}</td>
         <td>{{ car.scan_time }}</td>
+        <td>
+          <form method="post" action="{{ url_for('main.delete_car', car_id=car.id) }}" style="display:inline;">
+            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete this car?');">Delete</button>
+          </form>
+        </td>
       </tr>
       {% endfor %}
     </tbody>

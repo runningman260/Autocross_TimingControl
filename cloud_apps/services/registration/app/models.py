@@ -81,5 +81,5 @@ class CarReg(db.Model):
     team = so.relationship("Team", back_populates="car_regs")
     class_: so.Mapped[str] = so.mapped_column(sa.String(128), index=True, name='class')
     year: so.Mapped[str] = so.mapped_column(sa.String(4))
-    created_at: so.Mapped[datetime] = so.mapped_column(sa.DateTime)
-    updated_at: so.Mapped[datetime] = so.mapped_column(sa.DateTime)
+    created_at: so.Mapped[datetime] = so.mapped_column(sa.DateTime, nullable=False, default=datetime.now)
+    updated_at: so.Mapped[datetime] = so.mapped_column(sa.DateTime, nullable=False, default=datetime.now)
