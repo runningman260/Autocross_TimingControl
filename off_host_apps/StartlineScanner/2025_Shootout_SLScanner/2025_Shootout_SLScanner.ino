@@ -68,6 +68,8 @@ typedef struct{
   uint8_t line_length;
 } message_t;
 
+PubSubClient  client(ethClient);
+
 //Callback for an incoming MQTT message
 void callback(char* topic, byte* payload, unsigned int length) 
 {
@@ -84,8 +86,6 @@ void callback(char* topic, byte* payload, unsigned int length)
   for (unsigned int i = 0; i < length; i++) { Serial.print((char)payload[i]); }
   Serial.println();
 }
-
-PubSubClient  client(mqttServer, mqttPort, callback, ethClient);
 
 void setup()
 {
@@ -236,6 +236,8 @@ void TaskWriteToSerial1(void *pvParameters){  // This is a task.
 
 void reconnect()
 {
+  client.setServer(mqttServer, mqttPort);
+  client.setCallback(callback);
   // Loop until we're reconnected
   while (!client.connected()) {
     Serial.print("Attempting MQTT connection to " + String(mqttServer));
