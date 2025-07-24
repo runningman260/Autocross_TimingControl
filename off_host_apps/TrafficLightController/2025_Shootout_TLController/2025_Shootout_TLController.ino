@@ -71,6 +71,8 @@ unsigned long prev_button_check = 0;
 unsigned long button_check_interval = 100; //ms
 unsigned long button_blink_interval = 500; //ms
 
+PubSubClient  client(ethClient);
+
 //Callback for an incoming MQTT message
 void callback(char* topic, byte* payload, unsigned int length) {
   if(String(topic) == SUB_TOPIC_0 || String(topic) == SUB_TOPIC_1){
@@ -89,7 +91,6 @@ void callback(char* topic, byte* payload, unsigned int length) {
   }
 }
 
-PubSubClient  client(mqttServer, mqttPort, callback, ethClient);
 
 // TLC stuff
 struct LED{
@@ -224,6 +225,8 @@ void setup()
 
 void reconnect()
 {
+  client.setServer(mqttServer, mqttPort);
+  client.setCallback(callback);
   // Loop until we're reconnected
   while (!client.connected()) {
     Serial.print("Attempting MQTT connection to " + String(mqttServer));

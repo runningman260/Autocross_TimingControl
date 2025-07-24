@@ -10,6 +10,12 @@ networks:
     ipam:
       driver: default
 
+# To get into the container and enter the mosquitto CLI:
+# docker exec -it mosquitto sh
+# To listen to all brokers:
+# mosquitto_sub -v -p 1883 -t '#'
+# Combine it all for one-and-done:
+# docker exec -it mosquitto sh -c "mosquitto_sub -v -p 1883 -t '#'"
 services:
   mosquitto:
     container_name: mosquitto
