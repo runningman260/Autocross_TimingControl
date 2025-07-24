@@ -293,10 +293,10 @@ void loop()
     }
     // Check if the eyes have been disabled
     if (xSemaphoreTake(xEYES_on, (1 * portTICK_PERIOD_MS))  == pdTRUE) {
-      eyes_state = 0; // 0: eyes_off, 1: eyes_turned_on, 2: eyes_on
+      eyes_state = 1; // 0: eyes_off, 1: eyes_turned_on, 2: eyes_on
     }
     if (xSemaphoreTake(xEYES_off, (1 * portTICK_PERIOD_MS))  == pdTRUE) {
-      eyes_state = 1; // 0: eyes_off, 1: eyes_turned_on, 2: eyes_on
+      eyes_state = 0; // 0: eyes_off, 1: eyes_turned_on, 2: eyes_on
     }
 
     //write states
