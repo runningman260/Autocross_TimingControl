@@ -113,19 +113,19 @@ services:
   #  volumes:
   #  - ./volumes/python/app:/usr/src/app
 
-  carregistrationlistener:
-    container_name: carregistrationlistener
-    build: ./services/carregistrationlistener/.
-    restart: unless-stopped
-    environment:
-    - TZ=Etc/UTC
-    - IOTSTACK_UID=1000
-    - IOTSTACK_GID=1000
-    - DOCKER_HOST_IP=172.17.0.1
-    x-ports:
-    - "external:internal"
-    volumes:
-    - ./volumes/carregistrationlistener/app:/usr/src/app
+  # carregistrationlistener:
+  #   container_name: carregistrationlistener
+  #   build: ./services/carregistrationlistener/.
+  #   restart: unless-stopped
+  #   environment:
+  #   - TZ=Etc/UTC
+  #   - IOTSTACK_UID=1000
+  #   - IOTSTACK_GID=1000
+  #   - DOCKER_HOST_IP=172.17.0.1
+  #   x-ports:
+  #   - "external:internal"
+  #   volumes:
+  #   - ./volumes/carregistrationlistener/app:/usr/src/app
 
   scanlistener:
     container_name: scanlistener
