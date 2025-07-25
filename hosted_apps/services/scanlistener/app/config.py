@@ -25,6 +25,16 @@ class Config:
             HOST = os.environ.get('DOCKER_HOST_IP')
         else:
             HOST = 'localhost'
-        NAME="test_scans"
-        USER="nick"
-        PASS="password"
+        if(os.environ.get('POSTGRES_DB') is not None):
+            NAME=os.environ.get('POSTGRES_DB')
+        else:
+            NAME="test_scans"
+        if(os.environ.get('POSTGRES_USER') is not None):
+            USER=os.environ.get('POSTGRES_USER')
+        else:
+            USER="nick"
+        if(os.environ.get('POSTGRES_PASSWORD') is not None):
+            PASS=os.environ.get('POSTGRES_PASSWORD')
+        else:
+            PASS="password"
+
