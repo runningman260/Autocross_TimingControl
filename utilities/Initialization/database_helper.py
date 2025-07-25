@@ -796,7 +796,7 @@ def insert_teams():
 		("Michigan State University State Racing", "MSUR"),
 		("University of Toledo Rocket Motorsports", "OTRM"),
 		("Polytechnique Montreal Formule Polytechnique Montreal", "FPM"),
-		("Pellissippi State Community College Pellissippi State Motorsports Team", "PELL"),
+		("Pellissippi State Community College Motorsports Team", "PELL"),
 		("Western University Western Formula Racing", "WFR"),
 		("Penn State University Nittany Motorsports", "PSU"),
 		("University of Windsor Lancer Motorsports", "UWLM"),
@@ -811,7 +811,9 @@ def insert_teams():
 		("York College of Pennsylvania YC Racing", "YCR"),
 		("Liberty University Flames Racing", "LUFR"),
 		("Carnegie Mellon Racing", "CMR"),
-		("Kennesaw State University Kennesaw Motorsports", "KSUM")
+		("Kennesaw State University Kennesaw Motorsports", "KSUM"),
+		("Superbaits University GC-Racing", "SUPER"),
+		("West Virginia University Mountaineer Racing", "WVU"),
 	]
 	try:
 		with psycopg2.connect(
