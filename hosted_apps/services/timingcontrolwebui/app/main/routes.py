@@ -128,38 +128,46 @@ def log_no_runs_to_sync(newline):
 
 def upsert_skidpad_runs_from_cloud(runs):
     count = 0
-    for run in runs:
-        local_run = db.session.query(Skidpad_RunOrder).filter_by(id=run['id']).first()
-        if local_run:
-            local_run.car_number = run.get('car_number')
-            local_run.raw_time_left = run.get('raw_time_left')
-            local_run.raw_time_right = run.get('raw_time_right')
-            local_run.cones = run.get('cones')
-            local_run.off_course = run.get('off_course')
-            local_run.dnf = run.get('dnf')
-            local_run.adjusted_time = run.get('adjusted_time')
-        else:
-            db.session.add(Skidpad_RunOrder(**run))
-        count += 1
-    db.session.commit()
-    append_sync_log(f"Skidpad sync: {count} records upserted from cloud.")
+    try:
+        for run in runs:
+            local_run = db.session.query(Skidpad_RunOrder).filter_by(id=run['id']).first()
+            if local_run:
+                local_run.car_number = run.get('car_number')
+                local_run.raw_time_left = run.get('raw_time_left')
+                local_run.raw_time_right = run.get('raw_time_right')
+                local_run.cones = run.get('cones')
+                local_run.off_course = run.get('off_course')
+                local_run.dnf = run.get('dnf')
+                local_run.adjusted_time = run.get('adjusted_time')
+            else:
+                db.session.add(Skidpad_RunOrder(**run))
+            count += 1
+        db.session.commit()
+        append_sync_log(f"Skidpad sync: {count} records upserted from cloud.")
+    except Exception as e:
+        db.session.rollback()
+        append_sync_log(f"Skidpad sync error: {e}")
 
 def upsert_accel_runs_from_cloud(runs):
     count = 0
-    for run in runs:
-        local_run = db.session.query(Accel_RunOrder).filter_by(id=run['id']).first()
-        if local_run:
-            local_run.car_number = run.get('car_number')
-            local_run.raw_time = run.get('raw_time')
-            local_run.cones = run.get('cones')
-            local_run.off_course = run.get('off_course')
-            local_run.dnf = run.get('dnf')
-            local_run.adjusted_time = run.get('adjusted_time')
-        else:
-            db.session.add(Accel_RunOrder(**run))
-        count += 1
-    db.session.commit()
-    append_sync_log(f"Accel sync: {count} records upserted from cloud.")
+    try:
+        for run in runs:
+            local_run = db.session.query(Accel_RunOrder).filter_by(id=run['id']).first()
+            if local_run:
+                local_run.car_number = run.get('car_number')
+                local_run.raw_time = run.get('raw_time')
+                local_run.cones = run.get('cones')
+                local_run.off_course = run.get('off_course')
+                local_run.dnf = run.get('dnf')
+                local_run.adjusted_time = run.get('adjusted_time')
+            else:
+                db.session.add(Accel_RunOrder(**run))
+            count += 1
+        db.session.commit()
+        append_sync_log(f"Accel sync: {count} records upserted from cloud.")
+    except Exception as e:
+        db.session.rollback()
+        append_sync_log(f"Accel sync error: {e}")
 
 def sync_with_cloud_loop(app):
     global sync_thread_running, sync_thread_paused
