@@ -131,6 +131,8 @@ services:
     container_name: scanlistener
     build: ./services/scanlistener/.
     restart: unless-stopped
+    env_file:
+      - ./.env
     environment:
     - TZ=Etc/UTC
     - IOTSTACK_UID=1000
@@ -145,6 +147,8 @@ services:
     container_name: timingconsolereader
     build: ./services/timingconsolereader/.
     restart: unless-stopped
+    env_file:
+      - ./.env
     environment:
     - TZ=Etc/UTC
     - IOTSTACK_UID=1000
