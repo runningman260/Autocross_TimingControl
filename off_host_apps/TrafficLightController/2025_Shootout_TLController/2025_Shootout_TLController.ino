@@ -447,6 +447,7 @@ void loop()
     if(eyes_state == 0)
     {
       TLC.currState = 5;
+      TLC.prevState = 0;
       TLC.red_act.control_state     = 1; 
       TLC.yellow_act.control_state  = 1;
       TLC.green_act.control_state   = 0;
