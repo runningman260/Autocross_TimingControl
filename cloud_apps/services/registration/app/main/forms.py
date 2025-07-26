@@ -12,3 +12,7 @@ class CarRegistrationForm(FlaskForm):
     currentYear = datetime.now().year
     year = IntegerField('Year', default=currentYear, render_kw={"min": 1900, "max": currentYear, "step": 1})
     submit = SubmitField('Register Car')
+
+    def validate_team_id(self, field):
+        if field.data == -1:
+            raise ValueError("Please select a team.")

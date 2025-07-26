@@ -27,7 +27,7 @@ def login():
             flash('Incorrect password', 'danger')
     return render_template('login.html', next=next_url)
 
-@bp.route('/')
+@bp.route('/', methods=['GET', 'POST']) #fix for form not working without explicit path specified - needs post method allowed for root path 
 @bp.route('/register_car', methods=['GET', 'POST'])
 def register_car():
     if not session.get('authenticated'):
@@ -119,7 +119,7 @@ def upload_accel():
             cones = row.get('CONE Count') or row.get('cones') or 0
             off_course = row.get('OFF COURSE Count') or row.get('off_course') or 0
             # Accept both standard and user-facing headers for raw time
-            raw_time = row.get('Raw Time or DNF') or row.get('raw_time') or row.get('Raw RIGHT Time or DNF')
+            raw_time = row.get('Raw Time or DNF') or row.get('raw_time')
             # No longer convert DNF to None; keep as DNF if present
             dnf = None
             # Convert cones/off_course to int or 0
