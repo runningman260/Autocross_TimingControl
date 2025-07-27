@@ -94,6 +94,7 @@ class Accel_TopLaps(db.Model):
     __mapper_args__ = {'primary_key': ['car_number', 'adjusted_time', 'team_name']}
     car_number: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
     team_name: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    team_abbreviation: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
     adjusted_time: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
     cones: so.Mapped[int] = so.mapped_column(sa.Integer)
     off_course: so.Mapped[int] = so.mapped_column(sa.Integer)
@@ -106,6 +107,7 @@ class Skidpad_TopLaps(db.Model):
     __mapper_args__ = {'primary_key': ['car_number', 'adjusted_time', 'team_name']}
     car_number: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
     team_name: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    team_abbreviation: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
     adjusted_time: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
     cones: so.Mapped[int] = so.mapped_column(sa.Integer)
     off_course: so.Mapped[int] = so.mapped_column(sa.Integer)
@@ -119,6 +121,7 @@ class Autocross_TopLaps(db.Model):
       
     car_number: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
     team_name: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
+    team_abbreviation: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
     adjusted_time: so.Mapped[str] = so.mapped_column(sa.String(128), index=True)
     cones: so.Mapped[int] = so.mapped_column(sa.Integer)
     off_course: so.Mapped[int] = so.mapped_column(sa.Integer)
