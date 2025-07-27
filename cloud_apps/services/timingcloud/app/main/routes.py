@@ -285,28 +285,11 @@ def accel_toplaps():
             'class_': lap.class_,
             'cones': lap.cones,
             'off_course': lap.off_course,
-            'id': lap.id
+            'id': lap.id,
+            'team_abbreviation': lap.team_abbreviation
         }
         runs.append(run)
     return render_template('accel_toplaps.html', title='Acceleration Top Laps', runs=runs)
-
-@bp.route('/skidpad_toplaps', methods=['GET', 'POST'])
-def skidpad_toplaps():
-    query = sa.select(Skidpad_TopLaps)
-    toplaps_data = db.session.scalars(query).all()
-    runs = []
-    for lap in toplaps_data:
-        run = {
-            'team_name': lap.team_name,
-            'car_number': lap.car_number,
-            'adjusted_time': lap.adjusted_time,
-            'class_': lap.class_,
-            'cones': lap.cones,
-            'off_course': lap.off_course,
-            'id': lap.id
-        }
-        runs.append(run)
-    return render_template('skidpad_toplaps.html', title='Skidpad Top Laps', runs=runs)
 
 @bp.route('/api/accel_toplaps', methods=['GET'])
 def api_accel_toplaps():
@@ -321,10 +304,30 @@ def api_accel_toplaps():
             'adjusted_time': lap.adjusted_time,
             'class_': lap.class_,
             'cones': lap.cones,
-            'off_course': lap.off_course
+            'off_course': lap.off_course,
+            'team_abbreviation': lap.team_abbreviation
         }
         runs.append(run)
     return jsonify(runs)
+
+@bp.route('/skidpad_toplaps', methods=['GET', 'POST'])
+def skidpad_toplaps():
+    query = sa.select(Skidpad_TopLaps)
+    toplaps_data = db.session.scalars(query).all()
+    runs = []
+    for lap in toplaps_data:
+        run = {
+            'team_name': lap.team_name,
+            'car_number': lap.car_number,
+            'adjusted_time': lap.adjusted_time,
+            'class_': lap.class_,
+            'cones': lap.cones,
+            'off_course': lap.off_course,
+            'id': lap.id,
+            'team_abbreviation': lap.team_abbreviation
+        }
+        runs.append(run)
+    return render_template('skidpad_toplaps.html', title='Skidpad Top Laps', runs=runs)
 
 @bp.route('/api/skidpad_toplaps', methods=['GET'])
 def api_skidpad_toplaps():
@@ -339,7 +342,8 @@ def api_skidpad_toplaps():
             'adjusted_time': lap.adjusted_time,
             'class_': lap.class_,
             'cones': lap.cones,
-            'off_course': lap.off_course
+            'off_course': lap.off_course,
+            'team_abbreviation': lap.team_abbreviation
         }
         runs.append(run)
     return jsonify(runs)
@@ -433,7 +437,8 @@ def autocross_toplaps():
             'class_': lap.class_,
             'cones': lap.cones,
             'off_course': lap.off_course,
-            'id': lap.id
+            'id': lap.id,
+            'team_abbreviation': lap.team_abbreviation
         }
         runs.append(run)
     return render_template('autocross_toplaps.html', title='Autocross Top Laps', runs=runs)
@@ -451,7 +456,8 @@ def api_autocross_toplaps():
             'adjusted_time': lap.adjusted_time,
             'class_': lap.class_,
             'cones': lap.cones,
-            'off_course': lap.off_course
+            'off_course': lap.off_course,
+            'team_abbreviation': lap.team_abbreviation
         }
         runs.append(run)
     return jsonify(runs)
