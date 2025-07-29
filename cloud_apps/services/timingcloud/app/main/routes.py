@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 import os
 from flask import render_template, flash, redirect, send_from_directory, url_for, request, g, current_app, jsonify
 from flask_babel import _, get_locale
@@ -350,19 +351,31 @@ def api_skidpad_toplaps():
 
 @bp.route('/accel_pointsLeaderboard', methods=['GET', 'POST'])
 def accel_pointsLeaderboard():
-    query = sa.select(Accel_PointsLeaderboardIC)
-    ICruns = db.session.scalars(query).all()
-    query = sa.select(Accel_PointsLeaderboardEV)
-    EVruns = db.session.scalars(query).all()
-    return render_template('accel_pointsLeaderboard.html', title='Acceleration Points Leaderboard', ICruns=ICruns, EVruns=EVruns)
+    target_timezone = ZoneInfo("America/New_York")
+    # Show this page at 5:30 PM on August 1st 2025
+    reveal_time = datetime(2025, 8, 1, 17, 30, 0, tzinfo=target_timezone)
+    if((reveal_time-datetime.now(target_timezone)).total_seconds() > 0):
+        return render_template('accel_pointsLeaderboard_placeholder.html', title='Acceleration Points Leaderboard')
+    else:
+        query = sa.select(Accel_PointsLeaderboardIC)
+        ICruns = db.session.scalars(query).all()
+        query = sa.select(Accel_PointsLeaderboardEV)
+        EVruns = db.session.scalars(query).all()
+        return render_template('accel_pointsLeaderboard.html', title='Acceleration Points Leaderboard', ICruns=ICruns, EVruns=EVruns)
 
 @bp.route('/skidpad_pointsLeaderboard', methods=['GET', 'POST'])
 def skidpad_pointsLeaderboard():
-    query = sa.select(Skidpad_PointsLeaderboardIC)
-    ICruns = db.session.scalars(query).all()
-    query = sa.select(Skidpad_PointsLeaderboardEV)
-    EVruns = db.session.scalars(query).all()
-    return render_template('skidpad_pointsLeaderboard.html', title='Skidpad Points Leaderboard', ICruns=ICruns, EVruns=EVruns)
+    target_timezone = ZoneInfo("America/New_York")
+    # Show this page at 5:30 PM on August 1st 2025
+    reveal_time = datetime(2025, 8, 1, 17, 30, 0, tzinfo=target_timezone)
+    if((reveal_time-datetime.now(target_timezone)).total_seconds() > 0):
+        return render_template('skidpad_pointsLeaderboard_placeholder.html', title='Skidpad Points Leaderboard')
+    else:
+        query = sa.select(Skidpad_PointsLeaderboardIC)
+        ICruns = db.session.scalars(query).all()
+        query = sa.select(Skidpad_PointsLeaderboardEV)
+        EVruns = db.session.scalars(query).all()
+        return render_template('skidpad_pointsLeaderboard.html', title='Skidpad Points Leaderboard', ICruns=ICruns, EVruns=EVruns)
 
 @bp.route('/api/accel_points_leaderboard', methods=['GET'])
 def api_accel_points_leaderboard():
@@ -464,11 +477,17 @@ def api_autocross_toplaps():
 
 @bp.route('/autocross_pointsLeaderboard', methods=['GET', 'POST'])
 def autocross_pointsLeaderboard():
-    query = sa.select(Autocross_PointsLeaderboardIC)
-    ICruns = db.session.scalars(query).all()
-    query = sa.select(Autocross_PointsLeaderboardEV)
-    EVruns = db.session.scalars(query).all()
-    return render_template('autocross_pointsLeaderboard.html', title='Autocross Points Leaderboard', ICruns=ICruns, EVruns=EVruns)
+    target_timezone = ZoneInfo("America/New_York")
+    # Show this page at 6:30 PM on August 2nd 2025
+    reveal_time = datetime(2025, 8, 2, 18, 30, 0, tzinfo=target_timezone)
+    if((reveal_time-datetime.now(target_timezone)).total_seconds() > 0):
+        return render_template('autocross_pointsLeaderboard_placeholder.html', title='Autocross Points Leaderboard')
+    else:
+        query = sa.select(Autocross_PointsLeaderboardIC)
+        ICruns = db.session.scalars(query).all()
+        query = sa.select(Autocross_PointsLeaderboardEV)
+        EVruns = db.session.scalars(query).all()
+        return render_template('autocross_pointsLeaderboard.html', title='Autocross Points Leaderboard', ICruns=ICruns, EVruns=EVruns)
 
 @bp.route('/api/autocross_points_leaderboard', methods=['GET'])
 def api_autocross_points_leaderboard():
@@ -502,11 +521,17 @@ def api_autocross_points_leaderboard():
 
 @bp.route('/overall_pointsLeaderboard', methods=['GET', 'POST'])
 def overall_pointsLeaderboard():
-    query = sa.select(Overall_PointsLeaderboardIC)
-    ICruns = db.session.scalars(query).all()
-    query = sa.select(Overall_PointsLeaderboardEV)
-    EVruns = db.session.scalars(query).all()
-    return render_template('overall_pointsLeaderboard.html', title='Overall Points Leaderboard', ICruns=ICruns, EVruns=EVruns)
+    target_timezone = ZoneInfo("America/New_York")
+    # Show this page at 6:30 PM on August 2nd 2025
+    reveal_time = datetime(2025, 8, 2, 18, 30, 0, tzinfo=target_timezone)
+    if((reveal_time-datetime.now(target_timezone)).total_seconds() > 0):
+        return render_template('overall_pointsLeaderboard_placeholder.html', title='Overall Points Leaderboard')
+    else:
+        query = sa.select(Overall_PointsLeaderboardIC)
+        ICruns = db.session.scalars(query).all()
+        query = sa.select(Overall_PointsLeaderboardEV)
+        EVruns = db.session.scalars(query).all()
+        return render_template('overall_pointsLeaderboard.html', title='Overall Points Leaderboard', ICruns=ICruns, EVruns=EVruns)
 
 @bp.route('/api/overall_pointsLeaderboard', methods=['GET'])
 def api_overall_pointsLeaderboard():
