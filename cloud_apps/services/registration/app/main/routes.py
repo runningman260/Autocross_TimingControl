@@ -400,6 +400,7 @@ def api_autocross_points_leaderboard():
     }
     return jsonify(runs_data)
 
+@bp.route('leaderboard', methods=['GET', 'POST'])
 @bp.route('/overall_pointsLeaderboard', methods=['GET', 'POST'])
 def overall_pointsLeaderboard():
     if not session.get('authenticated'):
