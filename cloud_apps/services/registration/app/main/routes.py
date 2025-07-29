@@ -4,7 +4,7 @@ from flask import  request, jsonify, render_template, redirect, url_for, flash, 
 from flask_babel import _
 import sqlalchemy as sa
 from app import db
-from app.models import RunOrder, CarReg, Team, Accel_RunOrder, Skidpad_RunOrder
+from app.models import RunOrder, CarReg, Team, Accel_RunOrder, Skidpad_RunOrder, ConesLeaderboard, Accel_PointsLeaderboardIC, Accel_PointsLeaderboardEV, Skidpad_PointsLeaderboardIC, Skidpad_PointsLeaderboardEV, Autocross_PointsLeaderboardIC, Autocross_PointsLeaderboardEV, Overall_PointsLeaderboardIC, Overall_PointsLeaderboardEV
 from app.main import bp
 from app.main.forms import CarRegistrationForm
 from sqlalchemy.exc import IntegrityError
@@ -241,3 +241,208 @@ def delete_car(car_id):
     else:
         flash("Car not found.", "danger")
     return redirect(url_for('main.register_car'))
+
+##Leaderboard Routes
+@bp.route('/conesLeaderboard', methods=['GET', 'POST'])
+def conesLeaderboard():
+        if not session.get('authenticated'):
+            return redirect(url_for('main.login', next=request.url))
+        query = sa.select(ConesLeaderboard)
+        runs = db.session.scalars(query).all()
+        page = request.args.get('page', 1, type=int)
+        
+        return render_template('conesLeaderboard.html', title='Cones Leaderboard', runs=runs)
+
+
+@bp.route('/api/cones_leaderboard', methods=['GET'])
+def api_cones_leaderboard():
+    if not session.get('authenticated'):
+        return redirect(url_for('main.login', next=request.url))
+    query = sa.select(ConesLeaderboard)
+    runs = db.session.scalars(query).all()
+    runs_data = [
+        {
+            'team_name': run.team_name,
+            'car_number': run.car_number,
+            'autocross_cones': run.autocross_cones,
+            'accel_cones': run.accel_cones,
+            'skidpad_cones': run.skidpad_cones,
+            'cones': run.total_cones
+        }
+        for run in runs
+    ]
+    return jsonify(runs_data)
+
+
+@bp.route('/accel_pointsLeaderboard', methods=['GET', 'POST'])
+def accel_pointsLeaderboard():
+    if not session.get('authenticated'):
+        return redirect(url_for('main.login', next=request.url))
+    query = sa.select(Accel_PointsLeaderboardIC)
+    ICruns = db.session.scalars(query).all()
+    query = sa.select(Accel_PointsLeaderboardEV)
+    EVruns = db.session.scalars(query).all()
+    return render_template('accel_pointsLeaderboard.html', title='Acceleration Points Leaderboard', ICruns=ICruns, EVruns=EVruns)
+
+@bp.route('/skidpad_pointsLeaderboard', methods=['GET', 'POST'])
+def skidpad_pointsLeaderboard():
+    if not session.get('authenticated'):
+        return redirect(url_for('main.login', next=request.url))
+    query = sa.select(Skidpad_PointsLeaderboardIC)
+    ICruns = db.session.scalars(query).all()
+    query = sa.select(Skidpad_PointsLeaderboardEV)
+    EVruns = db.session.scalars(query).all()
+    return render_template('skidpad_pointsLeaderboard.html', title='Skidpad Points Leaderboard', ICruns=ICruns, EVruns=EVruns)
+
+@bp.route('/api/accel_points_leaderboard', methods=['GET'])
+def api_accel_points_leaderboard():
+    if not session.get('authenticated'):
+        return redirect(url_for('main.login', next=request.url))
+    query = sa.select(Accel_PointsLeaderboardIC)
+    ICruns = db.session.scalars(query).all()
+    query = sa.select(Accel_PointsLeaderboardEV)
+    EVruns = db.session.scalars(query).all()
+    ic_runs_data = [
+        {
+            'team_name': run.team_name,
+            'car_number': run.car_number,
+            'adjusted_time': run.adjusted_time,
+            'points': run.points
+        }
+        for run in ICruns
+    ]
+    ev_runs_data = [
+        {
+            'team_name': run.team_name,
+            'car_number': run.car_number,
+            'adjusted_time': run.adjusted_time,
+            'points': run.points
+        }
+        for run in EVruns
+    ]
+    runs_data = {
+        'IC_runs': ic_runs_data,
+        'EV_runs': ev_runs_data
+    }
+    return jsonify(runs_data)
+
+@bp.route('/api/skidpad_points_leaderboard', methods=['GET'])
+def api_skidpad_points_leaderboard():
+    if not session.get('authenticated'):
+        return redirect(url_for('main.login', next=request.url))
+    query = sa.select(Skidpad_PointsLeaderboardIC)
+    ICruns = db.session.scalars(query).all()
+    query = sa.select(Skidpad_PointsLeaderboardEV)
+    EVruns = db.session.scalars(query).all()
+    ic_runs_data = [
+        {
+            'team_name': run.team_name,
+            'car_number': run.car_number,
+            'adjusted_time': run.adjusted_time,
+            'points': run.points
+        }
+        for run in ICruns
+    ]
+    ev_runs_data = [
+        {
+            'team_name': run.team_name,
+            'car_number': run.car_number,
+            'adjusted_time': run.adjusted_time,
+            'points': run.points
+        }
+        for run in EVruns
+    ]
+    runs_data = {
+        'IC_runs': ic_runs_data,
+        'EV_runs': ev_runs_data
+    }
+    return jsonify(runs_data)
+
+@bp.route('/autocross_pointsLeaderboard', methods=['GET', 'POST'])
+def autocross_pointsLeaderboard():
+    if not session.get('authenticated'):
+        return redirect(url_for('main.login', next=request.url))
+    query = sa.select(Autocross_PointsLeaderboardIC)
+    ICruns = db.session.scalars(query).all()
+    query = sa.select(Autocross_PointsLeaderboardEV)
+    EVruns = db.session.scalars(query).all()
+    return render_template('autocross_pointsLeaderboard.html', title='Autocross Points Leaderboard', ICruns=ICruns, EVruns=EVruns)
+
+@bp.route('/api/autocross_points_leaderboard', methods=['GET'])
+def api_autocross_points_leaderboard():
+    if not session.get('authenticated'):
+        return redirect(url_for('main.login', next=request.url))
+    query = sa.select(Autocross_PointsLeaderboardIC)
+    ICruns = db.session.scalars(query).all()
+    query = sa.select(Autocross_PointsLeaderboardEV)
+    EVruns = db.session.scalars(query).all()
+    ic_runs_data = [
+        {
+            'team_name': run.team_name,
+            'car_number': run.car_number,
+            'adjusted_time': run.adjusted_time,
+            'points': run.points
+        }
+        for run in ICruns
+    ]
+    ev_runs_data = [
+        {
+            'team_name': run.team_name,
+            'car_number': run.car_number,
+            'adjusted_time': run.adjusted_time,
+            'points': run.points
+        }
+        for run in EVruns
+    ]
+    runs_data = {
+        'IC_runs': ic_runs_data,
+        'EV_runs': ev_runs_data
+    }
+    return jsonify(runs_data)
+
+@bp.route('/overall_pointsLeaderboard', methods=['GET', 'POST'])
+def overall_pointsLeaderboard():
+    if not session.get('authenticated'):
+        return redirect(url_for('main.login', next=request.url))
+    query = sa.select(Overall_PointsLeaderboardIC)
+    ICruns = db.session.scalars(query).all()
+    query = sa.select(Overall_PointsLeaderboardEV)
+    EVruns = db.session.scalars(query).all()
+    return render_template('overall_pointsLeaderboard.html', title='Overall Points Leaderboard', ICruns=ICruns, EVruns=EVruns)
+
+@bp.route('/api/overall_pointsLeaderboard', methods=['GET'])
+def api_overall_pointsLeaderboard():
+    if not session.get('authenticated'):
+        return redirect(url_for('main.login', next=request.url))
+    query = sa.select(Overall_PointsLeaderboardIC)
+    ICruns = db.session.scalars(query).all()
+    query = sa.select(Overall_PointsLeaderboardEV)
+    EVruns = db.session.scalars(query).all()
+    IC_points_totals_data = [
+        {
+            'team_name': team.team_name,
+            'car_number': team.car_number,
+            'autocross_points' : team.autocross_points,
+            'accel_points': team.accel_points,
+            'skidpad_points': team.skidpad_points,
+            'total_points': team.total_points
+        }
+        for team in ICruns
+    ]
+    EV_points_totals_data = [
+        {
+            'team_name': team.team_name,
+            'car_number': team.car_number,
+            'autocross_points' : team.autocross_points,
+            'accel_points': team.accel_points,
+            'skidpad_points': team.skidpad_points,
+            'total_points': team.total_points
+        }
+        for team in EVruns
+    ]
+    points_totals_data = {
+        'IC_points_totals': IC_points_totals_data,
+        'EV_points_totals': EV_points_totals_data
+    }
+    return jsonify(points_totals_data)
+
