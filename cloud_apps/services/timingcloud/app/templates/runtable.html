@@ -146,15 +146,9 @@
                 row.innerHTML = `
                     <td>${run.id}</td>
                     <td>
-                        ${run.car_number}
-                        ${(run.team_name || run.team_abbreviation) ? `
-                            –
-                            <span class="team-abbr custom-break">${run.team_abbreviation ? run.team_abbreviation : ''}</span>
-                            <span class="team-name custom-break">${run.team_name ? run.team_name : ''}</span>
-                            <span class="d-none d-lg-inline">
-                                <span class="team-name">${run.team_name ? run.team_name : ''}</span> (<span class="team-abbr">${run.team_abbreviation ? run.team_abbreviation : ''}</span>)
-                            </span>
-                        ` : ''}
+                        ${run.car_number} –
+                        <span class="team-abbr custom-break">${run.team_abbreviation ? run.team_abbreviation : ''}</span>
+                        <span class="team-name custom-break">${run.team_name ? run.team_name : ''}</span>
                     </td>
                     <td class="text-center">${run.raw_time !== undefined && run.raw_time !== null ? run.raw_time : 'None'}</td>
                     <td class="text-center">${run.cones || ''} + ${run.off_course || ''}</td>
