@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 import os
-from flask import render_template, flash, redirect, send_from_directory, url_for, request, g, current_app, jsonify
+from flask import render_template, flash, redirect, send_from_directory, url_for, request, g, current_app, jsonify, session
 from flask_babel import _, get_locale
 import sqlalchemy as sa
 from app import db
@@ -566,6 +566,135 @@ def api_overall_pointsLeaderboard():
         'EV_points_totals': EV_points_totals_data
     }
     return jsonify(points_totals_data)
+
+def get_teams():
+    """Get all teams for dropdown"""
+    return db.session.scalars(sa.select(Team).order_by(Team.name)).all()
+
+def get_team_cars(team_id):
+    """Get car numbers for a specific team"""
+    return db.session.scalars(sa.select(CarReg.car_number).where(CarReg.team_id == team_id)).all()
+
+@bp.route('/team/autocross', methods=['GET', 'POST'])
+def team_autocross():
+    teams = get_teams()
+    selected_team_id = request.form.get('team_id') or session.get('selected_team_id')
+    
+    if selected_team_id:
+        session['selected_team_id'] = selected_team_id
+        car_numbers = get_team_cars(selected_team_id)
+        query = (
+            sa.select(RunOrder, Team.name, Team.abbreviation)
+            .join(CarReg, RunOrder.car_number == CarReg.car_number)
+            .join(Team, CarReg.team_id == Team.id)
+            .where(Team.id == selected_team_id)
+            .order_by(-RunOrder.id)
+        )
+        results = db.session.execute(query).all()
+        runs = []
+        for run, team_name, team_abbr in results:
+            setattr(run, 'team_name', team_name)
+            setattr(run, 'team_abbreviation', team_abbr)
+            runs.append(run)
+    else:
+        runs = []
+    
+    return render_template('team_autocross.html', title='My Team - Autocross', teams=teams, runs=runs, selected_team_id=selected_team_id)
+
+@bp.route('/team/acceleration', methods=['GET', 'POST'])
+def team_acceleration():
+    teams = get_teams()
+    selected_team_id = request.form.get('team_id') or session.get('selected_team_id')
+    
+    if selected_team_id:
+        session['selected_team_id'] = selected_team_id
+        query = (
+            sa.select(Accel_RunOrder, Team.name, Team.abbreviation)
+            .join(CarReg, Accel_RunOrder.car_number == CarReg.car_number)
+            .join(Team, CarReg.team_id == Team.id)
+            .where(Team.id == selected_team_id)
+            .order_by(-Accel_RunOrder.id)
+        )
+        results = db.session.execute(query).all()
+        runs = []
+        for run, team_name, team_abbr in results:
+            setattr(run, 'team_name', team_name)
+            setattr(run, 'team_abbreviation', team_abbr)
+            runs.append(run)
+    else:
+        runs = []
+    
+    return render_template('team_acceleration.html', title='My Team - Acceleration', teams=teams, runs=runs, selected_team_id=selected_team_id)
+
+@bp.route('/team/skidpad', methods=['GET', 'POST'])
+def team_skidpad():
+    teams = get_teams()
+    selected_team_id = request.form.get('team_id') or session.get('selected_team_id')
+    
+    if selected_team_id:
+        session['selected_team_id'] = selected_team_id
+        query = (
+            sa.select(Skidpad_RunOrder, Team.name, Team.abbreviation)
+            .join(CarReg, Skidpad_RunOrder.car_number == CarReg.car_number)
+            .join(Team, CarReg.team_id == Team.id)
+            .where(Team.id == selected_team_id)
+            .order_by(-Skidpad_RunOrder.id)
+        )
+        results = db.session.execute(query).all()
+        runs = []
+        for run, team_name, team_abbr in results:
+            setattr(run, 'team_name', team_name)
+            setattr(run, 'team_abbreviation', team_abbr)
+            runs.append(run)
+    else:
+        runs = []
+    
+    return render_template('team_skidpad.html', title='My Team - Skidpad', teams=teams, runs=runs, selected_team_id=selected_team_id)
+
+@bp.route('/team/points', methods=['GET', 'POST'])
+def team_points():
+    teams = get_teams()
+    selected_team_id = request.form.get('team_id') or session.get('selected_team_id')
+    
+    if selected_team_id:
+        session['selected_team_id'] = selected_team_id
+        car_numbers = get_team_cars(selected_team_id)
+        
+        # Get points from all leaderboards for this team's cars with team abbreviations
+        team = db.session.get(Team, selected_team_id)
+        team_abbr = team.abbreviation if team else ''
+        
+        autocross_ic = db.session.scalars(sa.select(Autocross_PointsLeaderboardIC).where(Autocross_PointsLeaderboardIC.car_number.in_(car_numbers))).all()
+        autocross_ev = db.session.scalars(sa.select(Autocross_PointsLeaderboardEV).where(Autocross_PointsLeaderboardEV.car_number.in_(car_numbers))).all()
+        accel_ic = db.session.scalars(sa.select(Accel_PointsLeaderboardIC).where(Accel_PointsLeaderboardIC.car_number.in_(car_numbers))).all()
+        accel_ev = db.session.scalars(sa.select(Accel_PointsLeaderboardEV).where(Accel_PointsLeaderboardEV.car_number.in_(car_numbers))).all()
+        skidpad_ic = db.session.scalars(sa.select(Skidpad_PointsLeaderboardIC).where(Skidpad_PointsLeaderboardIC.car_number.in_(car_numbers))).all()
+        skidpad_ev = db.session.scalars(sa.select(Skidpad_PointsLeaderboardEV).where(Skidpad_PointsLeaderboardEV.car_number.in_(car_numbers))).all()
+        overall_ic = db.session.scalars(sa.select(Overall_PointsLeaderboardIC).where(Overall_PointsLeaderboardIC.car_number.in_(car_numbers))).all()
+        overall_ev = db.session.scalars(sa.select(Overall_PointsLeaderboardEV).where(Overall_PointsLeaderboardEV.car_number.in_(car_numbers))).all()
+        
+        # Add team abbreviation to all entries
+        for entry in autocross_ic + autocross_ev + accel_ic + accel_ev + skidpad_ic + skidpad_ev + overall_ic + overall_ev:
+            setattr(entry, 'team_abbreviation', team_abbr)
+        cones_data = db.session.scalars(sa.select(ConesLeaderboard).where(ConesLeaderboard.car_number.in_(car_numbers))).all()
+        for entry in cones_data:
+            setattr(entry, 'team_abbreviation', team_abbr)
+        
+        points_data = {
+            'autocross_ic': autocross_ic,
+            'autocross_ev': autocross_ev,
+            'accel_ic': accel_ic,
+            'accel_ev': accel_ev,
+            'skidpad_ic': skidpad_ic,
+            'skidpad_ev': skidpad_ev,
+            'overall_ic': overall_ic,
+            'overall_ev': overall_ev,
+            'cones': cones_data
+        }
+    else:
+        points_data = {}
+    
+    return render_template('team_points.html', title='My Team - Points', teams=teams, points_data=points_data, selected_team_id=selected_team_id)
 
 
 

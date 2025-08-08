@@ -159,6 +159,18 @@
             <li class="nav-item">
               <a class="nav-link" href="{{ url_for('main.carreg') }}">Registered Cars</a>
             </li>
+            <!-- My Team Dropdown -->
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="myTeamDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                My Team
+              </a>
+              <ul class="dropdown-menu" aria-labelledby="myTeamDropdown">
+                <li><a class="dropdown-item" href="{{ url_for('main.team_autocross') }}">Autocross</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('main.team_acceleration') }}">Acceleration</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('main.team_skidpad') }}">Skidpad</a></li>
+                <li><a class="dropdown-item" href="{{ url_for('main.team_points') }}">Points</a></li>
+              </ul>
+            </li>
           </ul>
          
         </div>

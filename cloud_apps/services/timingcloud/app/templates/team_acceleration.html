@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center">
+  <h2 class="mb-0">Acceleration Results</h2>
+  <div id="last-refresh-timestamp">Last Refresh: Never</div>
+</div>
+<div class="row">
+  <div class="col-md-4 mb-3">
+    <form method="POST">
+      <div class="mb-3">
+        <label for="team_id" class="form-label">Select Team:</label>
+        <select name="team_id" id="team_id" class="form-select" onchange="this.form.submit()">
+          <option value="">Choose a team...</option>
+          {% for team in teams %}
+            <option value="{{ team.id }}" {% if selected_team_id and selected_team_id|string == team.id|string %}selected{% endif %}>
+              {{ team.name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% if runs %}
+<div class="table-responsive">
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th onclick="sortTable(0)">Run # <i class="bi sort-icon"></i></th>
+        <th onclick="sortTable(1)">Car # <i class="bi sort-icon"></i></th>
+        <th onclick="sortTable(2)">Team <i class="bi sort-icon"></i></th>
+        <th onclick="sortTable(3)">Cones <i class="bi sort-icon"></i></th>
+        <th onclick="sortTable(4)">Off Course <i class="bi sort-icon"></i></th>
+        <th onclick="sortTable(5)">DNF <i class="bi sort-icon"></i></th>
+        <th onclick="sortTable(6)">Raw Time <i class="bi sort-icon"></i></th>
+        <th onclick="sortTable(7)">Adjusted Time <i class="bi sort-icon"></i></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for run in runs %}
+      <tr>
+        <td>{{ run.id }}</td>
+        <td>{{ run.car_number }}</td>
+        <td>
+          <span class="team-name custom-break">{{ run.team_name }}</span>
+          <span class="team-abbr custom-break">{{ run.team_abbreviation }}</span>
+        </td>
+        <td>{{ run.cones or 0 }}</td>
+        <td>{{ run.off_course or 0 }}</td>
+        <td>{{ run.dnf }}</td>
+        <td>{{ run.raw_time }}</td>
+        <td>{{ run.adjusted_time }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% elif selected_team_id %}
+<p>No acceleration runs found for this team.</p>
+{% else %}
+<p>Please select a team to view their acceleration runs.</p>
+{% endif %}
+
+<script>
+let currentSort = {column: -1, direction: 'asc'};
+
+function sortTable(n) {
+  var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+  table = document.querySelector(".table");
+  switching = true;
+  dir = (currentSort.column === n && currentSort.direction === 'asc') ? 'desc' : 'asc';
+  currentSort = {column: n, direction: dir};
+  updateSortIcons(n, dir);
+  while (switching) {
+    switching = false;
+    rows = table.rows;
+    for (i = 1; i < (rows.length - 1); i++) {
+      shouldSwitch = false;
+      x = rows[i].getElementsByTagName("TD")[n];
+      y = rows[i + 1].getElementsByTagName("TD")[n];
+      var xContent = x.innerHTML.toLowerCase();
+      var yContent = y.innerHTML.toLowerCase();
+      if (!isNaN(xContent) && !isNaN(yContent)) {
+        xContent = parseFloat(xContent);
+        yContent = parseFloat(yContent);
+      }
+      if (dir == "asc") {
+        if (xContent > yContent) {
+          shouldSwitch = true;
+          break;
+        }
+      } else if (dir == "desc") {
+        if (xContent < yContent) {
+          shouldSwitch = true;
+          break;
+        }
+      }
+    }
+    if (shouldSwitch) {
+      rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+      switching = true;
+      switchcount++;
+    } else {
+      if (switchcount == 0 && dir == "asc") {
+        dir = "desc";
+        switching = true;
+      }
+    }
+  }
+}
+
+function refreshTeamAcceleration() {
+  if (!document.querySelector('.table tbody')) return;
+  const teamId = document.querySelector('select[name="team_id"]').value;
+  if (!teamId) return;
+  
+  fetch('/team/acceleration', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body: 'team_id=' + teamId
+  })
+  .then(response => response.text())
+  .then(html => {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    const newTbody = doc.querySelector('.table tbody');
+    if (newTbody) {
+      document.querySelector('.table tbody').innerHTML = newTbody.innerHTML;
+      if (currentSort.column >= 0) {
+        applySortWithoutToggle(currentSort.column, currentSort.direction);
+        updateSortIcons(currentSort.column, currentSort.direction);
+      }
+      document.getElementById('last-refresh-timestamp').textContent = `Last Refresh: ${new Date().toLocaleTimeString()}`;
+    }
+  })
+  .catch(error => console.error('Error refreshing data:', error));
+}
+
+function applySortWithoutToggle(n, dir) {
+  var table, rows, switching, i, x, y, shouldSwitch;
+  table = document.querySelector(".table");
+  switching = true;
+  while (switching) {
+    switching = false;
+    rows = table.rows;
+    for (i = 1; i < (rows.length - 1); i++) {
+      shouldSwitch = false;
+      x = rows[i].getElementsByTagName("TD")[n];
+      y = rows[i + 1].getElementsByTagName("TD")[n];
+      var xContent = x.innerHTML.toLowerCase();
+      var yContent = y.innerHTML.toLowerCase();
+      if (!isNaN(xContent) && !isNaN(yContent)) {
+        xContent = parseFloat(xContent);
+        yContent = parseFloat(yContent);
+      }
+      if (dir == "asc") {
+        if (xContent > yContent) {
+          shouldSwitch = true;
+          break;
+        }
+      } else if (dir == "desc") {
+        if (xContent < yContent) {
+          shouldSwitch = true;
+          break;
+        }
+      }
+    }
+    if (shouldSwitch) {
+      rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+      switching = true;
+    }
+  }
+}
+
+function updateSortIcons(activeColumn, direction) {
+  document.querySelectorAll('.sort-icon').forEach((icon, index) => {
+    if (index === activeColumn) {
+      icon.className = direction === 'asc' ? 'bi bi-caret-up-fill sort-icon' : 'bi bi-caret-down-fill sort-icon';
+    } else {
+      icon.className = 'bi sort-icon';
+    }
+  });
+}
+
+setInterval(refreshTeamAcceleration, 10000);
+</script>
+{% endblock %}
