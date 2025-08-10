@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    {% if title %}
+    <title>{{ title }} - Pittsburgh Shootout Timing</title>
+    {% else %}
+    <title>{{ _('Pittsburgh Shootout Autocross Timing') }}</title>
+    {% endif %}
+
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
+
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.13.1/font/bootstrap-icons.min.css" crossorigin="anonymous">
+        <style>
+          .bottom-fixed {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: white; /* Optional: for better visibility */
+            text-align: center; /* Center the contents. Adjust as needed */
+            padding: 10px 0; /* Add padding to avoid content overlap */
+            z-index: 1030;
+          }
+          .content-container {
+            padding-bottom: 160px; /* Increased to ensure table is not hidden by footer */
+          }
+          .cone { background-color: #ff8800; } /* Put any color you want */
+
+          .cell-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    
+        .edit-icon {
+            display: none;
+            cursor: pointer;
+        }
+    
+        tr[name="run_row"]:hover .edit-icon {
+            display: inline;
+        }
+        @media (min-width: 700px) {
+          .team-abbr.custom-break { display: none !important; }
+          .team-name.custom-break { display: inline !important; }
+        }
+        /* Hide team name below 700px, show abbr */
+        @media (max-width: 699.98px) {
+          .team-abbr.custom-break { display: inline !important; }
+          .team-name.custom-break { display: none !important; }
+        }
+        </style>
+  <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+      </head>
+  <body>
+    <script>
+      // Apply theme immediately to prevent flicker
+      const savedTheme = localStorage.getItem('theme') || 'light';
+      document.body.setAttribute('data-bs-theme', savedTheme);
+    </script>
+    <nav class="navbar navbar-expand-lg bg-body-tertiary">
+      <div class="container ">
+        <a href="{{ url_for('main.results') }}" class="navbar-brand">
+          <img src="{{ url_for('static', filename='shootout.png') }}" alt="Pittsburgh Shootout" height="40">
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <!-- Nav Bar List -->
+          <!-- Left Side of Page -->
+          <!--
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <li class="nav-item">
+              <a class="nav-link" aria-current="page" href=""</a>
+            </li>
+          </ul>
+          -->
+          <!-- Right side of Page
+        -->
+           <ul class="navbar-nav mb-2 mb-lg-0">
+            <li class="nav-item">
+              <form method="POST" class="d-flex align-items-center">
+                {{ form.hidden_tag() if form }}
+                <select name="database" class="form-select me-2" onchange="this.form.submit()" style="width: auto;">
+                  <option value="">Select Database...</option>
+                  {% if form %}
+                    {% for value, label in form.database.choices %}
+                      <option value="{{ value }}" {% if form.database.data == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                  {% endif %}
+                </select>
+                <select name="team_id" class="form-select me-2" onchange="this.form.submit()" style="width: auto;">
+                  <option value="">All Teams</option>
+                  {% if teams %}
+                    {% for team in teams %}
+                      <option value="{{ team.id }}" {% if selected_team_id and selected_team_id|string == team.id|string %}selected{% endif %}>{{ team.name }}</option>
+                    {% endfor %}
+                  {% endif %}
+                </select>
+              </form>
+            </li>
+            <li class="nav-item">
+              <button class="btn btn-outline-secondary" id="darkModeToggle" type="button">
+                <i class="bi bi-moon-fill" id="darkModeIcon"></i>
+              </button>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+    <div class="container-fluid content-container">
+      <!-- This is where the target page is loaded (example, runtable)-->
+      {% block content %}
+      {% endblock %}
+    </div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.30.1/moment-with-locales.min.js"></script>
+    <script>
+
+    
+      function set_message_count(n) {
+        const count = document.getElementById('message_count');
+        count.innerText = n;
+        count.style.visibility = n ? 'visible' : 'hidden';
+      }
+
+
+      function handleAlertTimeout(alert) {
+        var bsAlert = new bootstrap.Alert(alert);
+        setTimeout(function() {
+          bsAlert.close();
+        }, 5000); // 10000 milliseconds = 10 seconds
+      }
+    
+      // Initialize MutationObserver to detect new alerts
+      document.addEventListener('DOMContentLoaded', function() {
+        var alertContainer = document.getElementById('alert-div');
+        if (alertContainer) {
+          var observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+              mutation.addedNodes.forEach(function(node) {
+                if (node.classList && node.classList.contains('alert-success')) {
+                  handleAlertTimeout(node);
+                }
+              });
+            });
+          });
+    
+          observer.observe(alertContainer, { childList: true });
+    
+          // Check for existing alert on page load
+          var existingAlert = document.getElementById('alert-success');
+          if (existingAlert) {
+            handleAlertTimeout(existingAlert);
+          }
+        }
+      });
+      
+      // Dark mode functionality
+      const darkModeToggle = document.getElementById('darkModeToggle');
+      const darkModeIcon = document.getElementById('darkModeIcon');
+      const body = document.body;
+      
+      // Theme is already applied, just update the icon
+      const currentTheme = body.getAttribute('data-bs-theme') || 'light';
+      updateIcon(currentTheme);
+      
+      darkModeToggle.addEventListener('click', function() {
+        const currentTheme = body.getAttribute('data-bs-theme');
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        
+        body.setAttribute('data-bs-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        updateIcon(newTheme);
+      });
+      
+      function updateIcon(theme) {
+        if (theme === 'dark') {
+          darkModeIcon.className = 'bi bi-sun-fill';
+        } else {
+          darkModeIcon.className = 'bi bi-moon-fill';
+        }
+      }
+    </script>
+  </body>
+</html>

@@ -11,20 +11,36 @@ networks:
 services:
 
   postgres:
-    container_name: postgres
+    container_name: postgres-live
     image: postgres
     restart: unless-stopped
     environment:
       - TZ=${TZ:-Etc/UTC}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_DB=${POSTGRES_LIVE_DB}
     #remove this port so the database isn't exposed to the internet
     ports:
       - "5432:5432"
     volumes:
-      - ./volumes/postgres/data:/var/lib/postgresql/data
-      - ./volumes/postgres/db_backup:/backup
+      - ./volumes/postgres-live/data:/var/lib/postgresql/data
+      - ./volumes/postgres-live/db_backup:/backup
+    
+  postgres-historical:
+    container_name: postgres-historical
+    image: postgres
+    restart: unless-stopped
+    environment:
+      - TZ=${TZ:-Etc/UTC}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_HISTORICAL_DB}
+    #remove this port so the database isn't exposed to the internet
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./volumes/postgres-historical/data:/var/lib/postgresql/data
+      - ./volumes/postgres-historical/db_backup:/backup
 
   nginx-proxy:
     image: jwilder/nginx-proxy
@@ -122,6 +138,49 @@ services:
     networks:
       - webproxy
       - default
+  
+  landingpage:
+    container_name: landingpage
+    build: ./services/landingpage/.
+    env_file:
+      - ./.env
+    restart: unless-stopped
+    environment:
+      - TZ=Etc/UTC
+      - IOTSTACK_UID=1000
+      - IOTSTACK_GID=1000
+      - DOCKER_HOST_IP=172.17.0.1
+      - VIRTUAL_HOST=${LANDINGPAGE_HOST}
+      - VIRTUAL_PORT=5000
+      - LETSENCRYPT_HOST=${LANDINGPAGE_HOST}
+      - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
+    expose:
+      - "5000"
+    networks:
+      - webproxy
+      - default
+
+  results:
+    container_name: results
+    build: ./services/results/.
+    env_file:
+      - ./.env
+    restart: unless-stopped
+    environment:
+      - TZ=Etc/UTC
+      - IOTSTACK_UID=1000
+      - IOTSTACK_GID=1000
+      - DOCKER_HOST_IP=172.17.0.1
+      - VIRTUAL_HOST=${RESULTS_HOST}
+      - VIRTUAL_PORT=5000
+      - LETSENCRYPT_HOST=${RESULTS_HOST}
+      - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
+    expose:
+      - "5000"
+    networks:
+      - webproxy
+      - default
+
 
 
   # Copy and Uncomment below for an additional python container
