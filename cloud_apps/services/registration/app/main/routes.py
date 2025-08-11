@@ -455,7 +455,7 @@ def api_overall_pointsLeaderboard():
 def team_status():
     if not session.get('authenticated'):
         return redirect(url_for('main.login', next=request.url))
-    teams = db.session.scalars(sa.select(Team)).all()
+    teams = db.session.scalars(sa.select(Team).order_by(Team.name)).all()
     selected_team_id = request.form.get('team_id') if request.method == 'POST' else None
     cars = []
     
