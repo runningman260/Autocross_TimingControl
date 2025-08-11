@@ -17,22 +17,37 @@
       </div>
     </form>
   </div>
+  {% if car_numbers and car_numbers|length > 1 %}
+  <div class="col-md-4 mb-3">
+    <form method="POST">
+      <input type="hidden" name="team_id" value="{{ selected_team_id }}">
+      <div class="mb-3">
+        <label for="car_number" class="form-label">Select Car:</label>
+        <select name="car_number" id="car_number" class="form-select" onchange="this.form.submit()">
+          <option value="all" {% if not selected_car_number or selected_car_number == 'all' %}selected{% endif %}>All Cars</option>
+          {% for car_number in car_numbers %}
+            <option value="{{ car_number }}" {% if selected_car_number == car_number %}selected{% endif %}>Car #{{ car_number }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </form>
+  </div>
+  {% endif %}
 </div>
 
 {% if points_data and selected_team_id %}
-  {% if points_data.overall_ic or points_data.overall_ev %}
+  {% if points_data.overall %}
   <h3>Overall Points</h3>
   <div class="table-responsive">
-    {% if points_data.overall_ic %}
-    <h4>IC Class</h4>
     <table class="table table-striped">
       <thead>
-        <tr><th>Car #</th><th>Team</th><th>Autocross</th><th>Accel</th><th>Skidpad</th><th>Total</th></tr>
+        <tr><th>Car #</th><th>Class</th><th>Team</th><th>Autocross</th><th>Accel</th><th>Skidpad</th><th>Total</th></tr>
       </thead>
       <tbody>
-        {% for entry in points_data.overall_ic %}
+        {% for entry in points_data.overall %}
         <tr>
           <td>{{ entry.car_number }}</td>
+          <td>{{ entry.class_ }}</td>
           <td>
             <span class="team-name custom-break">{{ entry.team_name }}</span>
             <span class="team-abbr custom-break">{{ entry.team_abbreviation }}</span>
@@ -45,46 +60,21 @@
         {% endfor %}
       </tbody>
     </table>
-    {% endif %}
-    {% if points_data.overall_ev %}
-    <h4>EV Class</h4>
-    <table class="table table-striped">
-      <thead>
-        <tr><th>Car #</th><th>Team</th><th>Autocross</th><th>Accel</th><th>Skidpad</th><th>Total</th></tr>
-      </thead>
-      <tbody>
-        {% for entry in points_data.overall_ev %}
-        <tr>
-          <td>{{ entry.car_number }}</td>
-          <td>
-            <span class="team-name custom-break">{{ entry.team_name }}</span>
-            <span class="team-abbr custom-break">{{ entry.team_abbreviation }}</span>
-          </td>
-          <td>{{ entry.autocross_points }}</td>
-          <td>{{ entry.accel_points }}</td>
-          <td>{{ entry.skidpad_points }}</td>
-          <td>{{ entry.total_points }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    {% endif %}
   </div>
   {% endif %}
 
-  {% if points_data.autocross_ic or points_data.autocross_ev %}
+  {% if points_data.autocross %}
   <h3>Autocross Points</h3>
   <div class="table-responsive">
-    {% if points_data.autocross_ic %}
-    <h4>IC Class</h4>
     <table class="table table-striped">
       <thead>
-        <tr><th>Car #</th><th>Team</th><th>Time</th><th>Points</th></tr>
+        <tr><th>Car #</th><th>Class</th><th>Team</th><th>Time</th><th>Points</th></tr>
       </thead>
       <tbody>
-        {% for entry in points_data.autocross_ic %}
+        {% for entry in points_data.autocross %}
         <tr>
           <td>{{ entry.car_number }}</td>
+          <td>{{ entry.class_ }}</td>
           <td>
             <span class="team-name custom-break">{{ entry.team_name }}</span>
             <span class="team-abbr custom-break">{{ entry.team_abbreviation }}</span>
@@ -95,44 +85,21 @@
         {% endfor %}
       </tbody>
     </table>
-    {% endif %}
-    {% if points_data.autocross_ev %}
-    <h4>EV Class</h4>
-    <table class="table table-striped">
-      <thead>
-        <tr><th>Car #</th><th>Team</th><th>Time</th><th>Points</th></tr>
-      </thead>
-      <tbody>
-        {% for entry in points_data.autocross_ev %}
-        <tr>
-          <td>{{ entry.car_number }}</td>
-          <td>
-            <span class="team-name custom-break">{{ entry.team_name }}</span>
-            <span class="team-abbr custom-break">{{ entry.team_abbreviation }}</span>
-          </td>
-          <td>{{ entry.adjusted_time }}</td>
-          <td>{{ entry.points }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    {% endif %}
   </div>
   {% endif %}
 
-  {% if points_data.accel_ic or points_data.accel_ev %}
+  {% if points_data.accel %}
   <h3>Acceleration Points</h3>
   <div class="table-responsive">
-    {% if points_data.accel_ic %}
-    <h4>IC Class</h4>
     <table class="table table-striped">
       <thead>
-        <tr><th>Car #</th><th>Team</th><th>Time</th><th>Points</th></tr>
+        <tr><th>Car #</th><th>Class</th><th>Team</th><th>Time</th><th>Points</th></tr>
       </thead>
       <tbody>
-        {% for entry in points_data.accel_ic %}
+        {% for entry in points_data.accel %}
         <tr>
           <td>{{ entry.car_number }}</td>
+          <td>{{ entry.class_ }}</td>
           <td>
             <span class="team-name custom-break">{{ entry.team_name }}</span>
             <span class="team-abbr custom-break">{{ entry.team_abbreviation }}</span>
@@ -143,44 +110,21 @@
         {% endfor %}
       </tbody>
     </table>
-    {% endif %}
-    {% if points_data.accel_ev %}
-    <h4>EV Class</h4>
-    <table class="table table-striped">
-      <thead>
-        <tr><th>Car #</th><th>Team</th><th>Time</th><th>Points</th></tr>
-      </thead>
-      <tbody>
-        {% for entry in points_data.accel_ev %}
-        <tr>
-          <td>{{ entry.car_number }}</td>
-          <td>
-            <span class="team-name custom-break">{{ entry.team_name }}</span>
-            <span class="team-abbr custom-break">{{ entry.team_abbreviation }}</span>
-          </td>
-          <td>{{ entry.adjusted_time }}</td>
-          <td>{{ entry.points }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    {% endif %}
   </div>
   {% endif %}
 
-  {% if points_data.skidpad_ic or points_data.skidpad_ev %}
+  {% if points_data.skidpad %}
   <h3>Skidpad Points</h3>
   <div class="table-responsive">
-    {% if points_data.skidpad_ic %}
-    <h4>IC Class</h4>
     <table class="table table-striped">
       <thead>
-        <tr><th>Car #</th><th>Team</th><th>Time</th><th>Points</th></tr>
+        <tr><th>Car #</th><th>Class</th><th>Team</th><th>Time</th><th>Points</th></tr>
       </thead>
       <tbody>
-        {% for entry in points_data.skidpad_ic %}
+        {% for entry in points_data.skidpad %}
         <tr>
           <td>{{ entry.car_number }}</td>
+          <td>{{ entry.class_ }}</td>
           <td>
             <span class="team-name custom-break">{{ entry.team_name }}</span>
             <span class="team-abbr custom-break">{{ entry.team_abbreviation }}</span>
@@ -191,28 +135,6 @@
         {% endfor %}
       </tbody>
     </table>
-    {% endif %}
-    {% if points_data.skidpad_ev %}
-    <h4>EV Class</h4>
-    <table class="table table-striped">
-      <thead>
-        <tr><th>Car #</th><th>Team</th><th>Time</th><th>Points</th></tr>
-      </thead>
-      <tbody>
-        {% for entry in points_data.skidpad_ev %}
-        <tr>
-          <td>{{ entry.car_number }}</td>
-          <td>
-            <span class="team-name custom-break">{{ entry.team_name }}</span>
-            <span class="team-abbr custom-break">{{ entry.team_abbreviation }}</span>
-          </td>
-          <td>{{ entry.adjusted_time }}</td>
-          <td>{{ entry.points }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    {% endif %}
   </div>
   {% endif %}
 

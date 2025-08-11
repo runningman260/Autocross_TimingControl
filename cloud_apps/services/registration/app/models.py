@@ -83,6 +83,12 @@ class CarReg(db.Model):
     year: so.Mapped[str] = so.mapped_column(sa.String(4))
     created_at: so.Mapped[datetime] = so.mapped_column(sa.DateTime, nullable=False, default=datetime.now)
     updated_at: so.Mapped[datetime] = so.mapped_column(sa.DateTime, nullable=False, default=datetime.now)
+    mech_tech_status: so.Mapped[bool] = so.mapped_column(sa.Boolean, nullable=False, default=False)
+    accm_tech_status: so.Mapped[bool] = so.mapped_column(sa.Boolean, nullable=False, default=False)
+    ev_active_status: so.Mapped[bool] = so.mapped_column(sa.Boolean, nullable=False, default=False)
+    rain_test_status: so.Mapped[bool] = so.mapped_column(sa.Boolean, nullable=False, default=False)
+    brakes_test_staus: so.Mapped[bool] = so.mapped_column(sa.Boolean, nullable=False, default=False)
+    edgr_status: so.Mapped[bool] = so.mapped_column(sa.Boolean, nullable=False, default=False)
     
 ##Leaderboards   
 class PointsLeaderboardIC(db.Model):

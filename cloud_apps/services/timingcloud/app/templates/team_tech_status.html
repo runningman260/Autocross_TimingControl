@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center">
+  <h2 class="mb-0">Tech Status</h2>
+  <div id="last-refresh-timestamp">Last Refresh: Never</div>
+</div>
+<div class="row">
+  <div class="col-md-4 mb-3">
+    <form method="POST">
+      <div class="mb-3">
+        <label for="team_id" class="form-label">Select Team:</label>
+        <select name="team_id" id="team_id" class="form-select" onchange="this.form.submit()">
+          <option value="">Choose a team...</option>
+          {% for team in teams %}
+            <option value="{{ team.id }}" {% if selected_team_id and selected_team_id|string == team.id|string %}selected{% endif %}>
+              {{ team.name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+    </form>
+  </div>
+  {% if car_numbers and car_numbers|length > 1 %}
+  <div class="col-md-4 mb-3">
+    <form method="POST">
+      <input type="hidden" name="team_id" value="{{ selected_team_id }}">
+      <div class="mb-3">
+        <label for="car_number" class="form-label">Select Car:</label>
+        <select name="car_number" id="car_number" class="form-select" onchange="this.form.submit()">
+          <option value="all" {% if not selected_car_number or selected_car_number == 'all' %}selected{% endif %}>All Cars</option>
+          {% for car_number in car_numbers %}
+            <option value="{{ car_number }}" {% if selected_car_number == car_number %}selected{% endif %}>Car #{{ car_number }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </form>
+  </div>
+  {% endif %}
+</div>
+
+{% if cars %}
+  {% for car in cars %}
+  <div class="card mb-3">
+    <div class="card-header">
+      <h5 class="mb-0">Car #{{ car.car_number }}</h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-6">
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              Mech Tech
+              <span class="badge bg-{{ 'success' if car.mech_tech_status else 'danger' }}">
+                {{ 'PASSED' if car.mech_tech_status else 'NOT PASSED' }}
+              </span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              ACCM Tech
+              <span class="badge bg-{{ 'success' if car.accm_tech_status else 'danger' }}">
+                {{ 'PASSED' if car.accm_tech_status else 'NOT PASSED' }}
+              </span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              EV Active
+              <span class="badge bg-{{ 'success' if car.ev_active_status else 'danger' }}">
+                {{ 'PASSED' if car.ev_active_status else 'NOT PASSED' }}
+              </span>
+            </li>
+          </ul>
+        </div>
+        <div class="col-md-6">
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              Rain Test
+              <span class="badge bg-{{ 'success' if car.rain_test_status else 'danger' }}">
+                {{ 'PASSED' if car.rain_test_status else 'NOT PASSED' }}
+              </span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              EDGR Status
+              <span class="badge bg-{{ 'success' if car.edgr_status else 'danger' }}">
+                {{ 'PASSED' if car.edgr_status else 'NOT PASSED' }}
+              </span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              Brakes Test
+              <span class="badge bg-{{ 'success' if car.brakes_test_staus else 'danger' }}">
+                {{ 'PASSED' if car.brakes_test_staus else 'NOT PASSED' }}
+              </span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+{% elif selected_team_id %}
+<p>No cars registered for this team.</p>
+{% else %}
+<p>Please select a team to view their tech status.</p>
+{% endif %}
+
+<script>
+function refreshTechStatus() {
+  const teamId = document.querySelector('select[name="team_id"]').value;
+  if (!teamId) return;
+  
+  fetch('/team/tech_status', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body: 'team_id=' + teamId
+  })
+  .then(response => response.text())
+  .then(html => {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    const newCards = doc.querySelectorAll('.card');
+    const currentContainer = document.querySelector('.container-fluid');
+    
+    // Remove existing cards
+    document.querySelectorAll('.card').forEach(card => card.remove());
+    
+    // Add new cards
+    const teamSelectRow = document.querySelector('.row');
+    newCards.forEach(card => {
+      teamSelectRow.parentNode.insertBefore(card, teamSelectRow.nextSibling);
+    });
+    
+    document.getElementById('last-refresh-timestamp').textContent = `Last Refresh: ${new Date().toLocaleTimeString()}`;
+  })
+  .catch(error => console.error('Error refreshing data:', error));
+}
+
+setInterval(refreshTechStatus, 10000);
+</script>
+
+{% endblock %}

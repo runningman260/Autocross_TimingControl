@@ -7,7 +7,10 @@
 ####################################### Pittsburgh Shootout LLC ##
 
 import os
+from dotenv import load_dotenv
 
+basedir = os.path.abspath(os.path.dirname(__file__))
+load_dotenv(os.path.join(basedir, '../../cloud_apps/.env'))
 
 class Config:
     class MQTT:
@@ -26,7 +29,7 @@ class Config:
             HOST = os.environ.get('DOCKER_HOST_IP')
         else:
             HOST = 'localhost'
-        NAME = os.environ.get('POSTGRES_DB', 'test_scans')
-        USER = os.environ.get('POSTGRES_USER', 'nick')
-        PASS = os.environ.get('POSTGRES_PASSWORD', 'password')
-        TZ = os.environ.get('TZ', 'America/New_York')
+        NAME = os.getenv('POSTGRES_LIVE_DB')
+        USER = os.getenv('POSTGRES_USER')
+        PASS = os.getenv('POSTGRES_PASSWORD')
+        TZ = os.getenv('TZ')

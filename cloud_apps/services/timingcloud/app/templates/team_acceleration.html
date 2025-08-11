@@ -21,6 +21,22 @@
       </div>
     </form>
   </div>
+  {% if car_numbers and car_numbers|length > 1 %}
+  <div class="col-md-4 mb-3">
+    <form method="POST">
+      <input type="hidden" name="team_id" value="{{ selected_team_id }}">
+      <div class="mb-3">
+        <label for="car_number" class="form-label">Select Car:</label>
+        <select name="car_number" id="car_number" class="form-select" onchange="this.form.submit()">
+          <option value="all" {% if not selected_car_number or selected_car_number == 'all' %}selected{% endif %}>All Cars</option>
+          {% for car_number in car_numbers %}
+            <option value="{{ car_number }}" {% if selected_car_number == car_number %}selected{% endif %}>Car #{{ car_number }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </form>
+  </div>
+  {% endif %}
 </div>
 
 {% if runs %}

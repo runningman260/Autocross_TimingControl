@@ -579,17 +579,25 @@ def get_team_cars(team_id):
 def team_autocross():
     teams = get_teams()
     selected_team_id = request.form.get('team_id') or session.get('selected_team_id')
+    selected_car_number = request.form.get('car_number') or session.get('selected_car_number')
     
     if selected_team_id:
         session['selected_team_id'] = selected_team_id
+        if selected_car_number:
+            session['selected_car_number'] = selected_car_number
         car_numbers = get_team_cars(selected_team_id)
+        
         query = (
             sa.select(RunOrder, Team.name, Team.abbreviation)
             .join(CarReg, RunOrder.car_number == CarReg.car_number)
             .join(Team, CarReg.team_id == Team.id)
             .where(Team.id == selected_team_id)
-            .order_by(-RunOrder.id)
         )
+        
+        if selected_car_number and selected_car_number != 'all':
+            query = query.where(RunOrder.car_number == selected_car_number)
+            
+        query = query.order_by(-RunOrder.id)
         results = db.session.execute(query).all()
         runs = []
         for run, team_name, team_abbr in results:
@@ -598,23 +606,33 @@ def team_autocross():
             runs.append(run)
     else:
         runs = []
+        car_numbers = []
     
-    return render_template('team_autocross.html', title='My Team - Autocross', teams=teams, runs=runs, selected_team_id=selected_team_id)
+    return render_template('team_autocross.html', title='My Team - Autocross', teams=teams, runs=runs, selected_team_id=selected_team_id, car_numbers=car_numbers, selected_car_number=selected_car_number)
 
 @bp.route('/team/acceleration', methods=['GET', 'POST'])
 def team_acceleration():
     teams = get_teams()
     selected_team_id = request.form.get('team_id') or session.get('selected_team_id')
+    selected_car_number = request.form.get('car_number') or session.get('selected_car_number')
     
     if selected_team_id:
         session['selected_team_id'] = selected_team_id
+        if selected_car_number:
+            session['selected_car_number'] = selected_car_number
+        car_numbers = get_team_cars(selected_team_id)
+        
         query = (
             sa.select(Accel_RunOrder, Team.name, Team.abbreviation)
             .join(CarReg, Accel_RunOrder.car_number == CarReg.car_number)
             .join(Team, CarReg.team_id == Team.id)
             .where(Team.id == selected_team_id)
-            .order_by(-Accel_RunOrder.id)
         )
+        
+        if selected_car_number and selected_car_number != 'all':
+            query = query.where(Accel_RunOrder.car_number == selected_car_number)
+            
+        query = query.order_by(-Accel_RunOrder.id)
         results = db.session.execute(query).all()
         runs = []
         for run, team_name, team_abbr in results:
@@ -623,23 +641,33 @@ def team_acceleration():
             runs.append(run)
     else:
         runs = []
+        car_numbers = []
     
-    return render_template('team_acceleration.html', title='My Team - Acceleration', teams=teams, runs=runs, selected_team_id=selected_team_id)
+    return render_template('team_acceleration.html', title='My Team - Acceleration', teams=teams, runs=runs, selected_team_id=selected_team_id, car_numbers=car_numbers, selected_car_number=selected_car_number)
 
 @bp.route('/team/skidpad', methods=['GET', 'POST'])
 def team_skidpad():
     teams = get_teams()
     selected_team_id = request.form.get('team_id') or session.get('selected_team_id')
+    selected_car_number = request.form.get('car_number') or session.get('selected_car_number')
     
     if selected_team_id:
         session['selected_team_id'] = selected_team_id
+        if selected_car_number:
+            session['selected_car_number'] = selected_car_number
+        car_numbers = get_team_cars(selected_team_id)
+        
         query = (
             sa.select(Skidpad_RunOrder, Team.name, Team.abbreviation)
             .join(CarReg, Skidpad_RunOrder.car_number == CarReg.car_number)
             .join(Team, CarReg.team_id == Team.id)
             .where(Team.id == selected_team_id)
-            .order_by(-Skidpad_RunOrder.id)
         )
+        
+        if selected_car_number and selected_car_number != 'all':
+            query = query.where(Skidpad_RunOrder.car_number == selected_car_number)
+            
+        query = query.order_by(-Skidpad_RunOrder.id)
         results = db.session.execute(query).all()
         runs = []
         for run, team_name, team_abbr in results:
@@ -648,17 +676,25 @@ def team_skidpad():
             runs.append(run)
     else:
         runs = []
+        car_numbers = []
     
-    return render_template('team_skidpad.html', title='My Team - Skidpad', teams=teams, runs=runs, selected_team_id=selected_team_id)
+    return render_template('team_skidpad.html', title='My Team - Skidpad', teams=teams, runs=runs, selected_team_id=selected_team_id, car_numbers=car_numbers, selected_car_number=selected_car_number)
 
 @bp.route('/team/points', methods=['GET', 'POST'])
 def team_points():
     teams = get_teams()
     selected_team_id = request.form.get('team_id') or session.get('selected_team_id')
+    selected_car_number = request.form.get('car_number') or session.get('selected_car_number')
     
     if selected_team_id:
         session['selected_team_id'] = selected_team_id
+        if selected_car_number:
+            session['selected_car_number'] = selected_car_number
         car_numbers = get_team_cars(selected_team_id)
+        
+        # Filter car numbers if specific car selected
+        if selected_car_number and selected_car_number != 'all':
+            car_numbers = [selected_car_number]
         
         # Get points from all leaderboards for this team's cars with team abbreviations
         team = db.session.get(Team, selected_team_id)
@@ -673,28 +709,55 @@ def team_points():
         overall_ic = db.session.scalars(sa.select(Overall_PointsLeaderboardIC).where(Overall_PointsLeaderboardIC.car_number.in_(car_numbers))).all()
         overall_ev = db.session.scalars(sa.select(Overall_PointsLeaderboardEV).where(Overall_PointsLeaderboardEV.car_number.in_(car_numbers))).all()
         
-        # Add team abbreviation to all entries
-        for entry in autocross_ic + autocross_ev + accel_ic + accel_ev + skidpad_ic + skidpad_ev + overall_ic + overall_ev:
+        # Add team abbreviation and class to all entries
+        for entry in autocross_ic + accel_ic + skidpad_ic + overall_ic:
             setattr(entry, 'team_abbreviation', team_abbr)
+            setattr(entry, 'class_', 'IC')
+        for entry in autocross_ev + accel_ev + skidpad_ev + overall_ev:
+            setattr(entry, 'team_abbreviation', team_abbr)
+            setattr(entry, 'class_', 'EV')
         cones_data = db.session.scalars(sa.select(ConesLeaderboard).where(ConesLeaderboard.car_number.in_(car_numbers))).all()
         for entry in cones_data:
             setattr(entry, 'team_abbreviation', team_abbr)
         
         points_data = {
-            'autocross_ic': autocross_ic,
-            'autocross_ev': autocross_ev,
-            'accel_ic': accel_ic,
-            'accel_ev': accel_ev,
-            'skidpad_ic': skidpad_ic,
-            'skidpad_ev': skidpad_ev,
-            'overall_ic': overall_ic,
-            'overall_ev': overall_ev,
+            'autocross': autocross_ic + autocross_ev,
+            'accel': accel_ic + accel_ev,
+            'skidpad': skidpad_ic + skidpad_ev,
+            'overall': overall_ic + overall_ev,
             'cones': cones_data
         }
+        
+        # Get all car numbers for dropdown
+        all_car_numbers = get_team_cars(selected_team_id)
     else:
         points_data = {}
+        all_car_numbers = []
     
-    return render_template('team_points.html', title='My Team - Points', teams=teams, points_data=points_data, selected_team_id=selected_team_id)
+    return render_template('team_points.html', title='My Team - Points', teams=teams, points_data=points_data, selected_team_id=selected_team_id, car_numbers=all_car_numbers, selected_car_number=selected_car_number)
+
+@bp.route('/team/tech_status', methods=['GET', 'POST'])
+def team_tech_status():
+    teams = get_teams()
+    selected_team_id = request.form.get('team_id') or session.get('selected_team_id')
+    selected_car_number = request.form.get('car_number') or session.get('selected_car_number')
+    
+    if selected_team_id:
+        session['selected_team_id'] = selected_team_id
+        if selected_car_number:
+            session['selected_car_number'] = selected_car_number
+        car_numbers = get_team_cars(selected_team_id)
+        
+        query = sa.select(CarReg).where(CarReg.team_id == selected_team_id)
+        if selected_car_number and selected_car_number != 'all':
+            query = query.where(CarReg.car_number == selected_car_number)
+            
+        cars = db.session.scalars(query).all()
+    else:
+        cars = []
+        car_numbers = []
+    
+    return render_template('team_tech_status.html', title='My Team - Tech Status', teams=teams, cars=cars, selected_team_id=selected_team_id, car_numbers=car_numbers, selected_car_number=selected_car_number)
 
 
 

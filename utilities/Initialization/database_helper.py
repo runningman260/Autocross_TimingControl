@@ -852,6 +852,12 @@ def clear_and_create_schema():
 				year VARCHAR(4),
 				created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 				updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+				mech_tech_status BOOLEAN NOT NULL DEFAULT FALSE,
+				accm_tech_status BOOLEAN NOT NULL DEFAULT FALSE,
+				ev_active_status BOOLEAN NOT NULL DEFAULT FALSE,
+				rain_test_status BOOLEAN NOT NULL DEFAULT FALSE,
+				brakes_test_staus BOOLEAN NOT NULL DEFAULT FALSE,
+				edgr_status  BOOLEAN NOT NULL DEFAULT FALSE,
 				UNIQUE (car_number)
 			);""",
 		"startlinescan":
@@ -932,24 +938,23 @@ def clear_and_create_schema():
 	function_name = "_set_timestamp"
 
 	## Drop table and functions
-	delete_table("carreg")
-	delete_table("startlinescan")
-	delete_table("finishlinescan")
-	delete_table("runtable")
-	delete_table("laptimeraw")
-	delete_table("leaderboard")
-	delete_table("team")
-	delete_function("startlinescan_set_timestamp")
-	delete_function("finishlinescan_set_timestamp")
-	delete_function("runtable_set_timestamp")
-	delete_function("laptimeraw_set_timestamp")
-	delete_function("leaderboard_set_timestamp")
-	delete_view("leaderboard")
-	delete_table("points_leaderboard")
-	delete_view("cones_leaderboard")
-
-	delete_table("accel_runtable")
-	delete_table("skidpad_runtable")
+	#delete_table("carreg")
+	#delete_table("startlinescan")
+	#delete_table("finishlinescan")
+	#delete_table("runtable")
+	#delete_table("laptimeraw")
+	#delete_table("leaderboard")
+	#delete_table("team")
+	#delete_function("startlinescan_set_timestamp")
+	#delete_function("finishlinescan_set_timestamp")
+	#delete_function("runtable_set_timestamp")
+	#delete_function("laptimeraw_set_timestamp")
+	#delete_function("leaderboard_set_timestamp")
+	#delete_view("leaderboard")
+	#delete_table("points_leaderboard")
+	#delete_view("cones_leaderboard")
+	#delete_table("accel_runtable")
+	#delete_table("skidpad_runtable")
 
 	for table_name in database_tables:
 		delete_if_exists = False
