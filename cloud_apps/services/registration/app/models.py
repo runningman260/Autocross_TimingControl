@@ -89,6 +89,7 @@ class CarReg(db.Model):
     rain_test_status: so.Mapped[bool] = so.mapped_column(sa.Boolean, nullable=False, default=False)
     brakes_test_staus: so.Mapped[bool] = so.mapped_column(sa.Boolean, nullable=False, default=False)
     edgr_status: so.Mapped[bool] = so.mapped_column(sa.Boolean, nullable=False, default=False)
+    sound_test_status: so.Mapped[bool] = so.mapped_column(sa.Boolean, nullable=False, default=False)
     
 ##Leaderboards   
 class PointsLeaderboardIC(db.Model):

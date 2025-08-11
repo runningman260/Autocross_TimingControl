@@ -858,6 +858,7 @@ def clear_and_create_schema():
 				rain_test_status BOOLEAN NOT NULL DEFAULT FALSE,
 				brakes_test_staus BOOLEAN NOT NULL DEFAULT FALSE,
 				edgr_status  BOOLEAN NOT NULL DEFAULT FALSE,
+				sound_test_status BOOLEAN NOT NULL DEFAULT FALSE,
 				UNIQUE (car_number)
 			);""",
 		"startlinescan":

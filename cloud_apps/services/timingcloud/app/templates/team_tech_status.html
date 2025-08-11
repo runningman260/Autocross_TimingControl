@@ -56,6 +56,12 @@
               </span>
             </li>
             <li class="list-group-item d-flex justify-content-between align-items-center">
+              EDGR Status
+              <span class="badge bg-{{ 'success' if car.edgr_status else 'danger' }}">
+                {{ 'PASSED' if car.edgr_status else 'NOT PASSED' }}
+              </span>
+            </li>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
               ACCM Tech
               <span class="badge bg-{{ 'secondary' if car.class_ == 'IC' else ('success' if car.accm_tech_status else 'danger') }}">
                 {{ 'NOT APPLICABLE' if car.class_ == 'IC' else ('PASSED' if car.accm_tech_status else 'NOT PASSED') }}
@@ -78,9 +84,9 @@
               </span>
             </li>
             <li class="list-group-item d-flex justify-content-between align-items-center">
-              EDGR Status
-              <span class="badge bg-{{ 'success' if car.edgr_status else 'danger' }}">
-                {{ 'PASSED' if car.edgr_status else 'NOT PASSED' }}
+              Sound Test
+              <span class="badge bg-secondary">
+                NOT APPLICABLE
               </span>
             </li>
             <li class="list-group-item d-flex justify-content-between align-items-center">

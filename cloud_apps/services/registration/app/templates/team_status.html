@@ -32,7 +32,7 @@
       <select id="selected_car" class="form-select" onchange="updateTechStatus(); updateRfidCar();">
         <option value="">Choose a car...</option>
         {% for car in cars %}
-          <option value="{{ car.id }}" data-mech="{{ car.mech_tech_status }}" data-accm="{{ car.accm_tech_status }}" data-ev="{{ car.ev_active_status }}" data-rain="{{ car.rain_test_status }}" data-edgr="{{ car.edgr_status }}" data-brakes="{{ car.brakes_test_staus }}" data-class="{{ car.class_ }}" data-tag="{{ car.tag_number if car.tag_number else '' }}" data-scan="{{ car.scan_time if car.scan_time else '' }}">Car #{{ car.car_number }}</option>
+          <option value="{{ car.id }}" data-mech="{{ car.mech_tech_status }}" data-accm="{{ car.accm_tech_status }}" data-ev="{{ car.ev_active_status }}" data-rain="{{ car.rain_test_status }}" data-edgr="{{ car.edgr_status }}" data-brakes="{{ car.brakes_test_staus }}" data-sound="{{ car.sound_test_status }}" data-class="{{ car.class_ }}" data-tag="{{ car.tag_number if car.tag_number else '' }}" data-scan="{{ car.scan_time if car.scan_time else '' }}">Car #{{ car.car_number }}</option>
         {% endfor %}
       </select>
     </div>
@@ -53,6 +53,15 @@
             <label class="form-check-label" for="mech_tech">Mech Tech</label>
           </div>
           <span class="badge" id="badge_mech_tech">NOT PASSED</span>
+        </div>
+      </div>
+      <div class="col-6 mb-2">
+        <div class="form-check d-flex justify-content-between align-items-center">
+          <div>
+            <input type="checkbox" name="edgr" class="form-check-input" id="edgr" value="1" onchange="updateBadge('edgr')">
+            <label class="form-check-label" for="edgr">EDGR Status</label>
+          </div>
+          <span class="badge" id="badge_edgr">NOT PASSED</span>
         </div>
       </div>
       <div class="col-6 mb-2">
@@ -85,10 +94,10 @@
       <div class="col-6 mb-2">
         <div class="form-check d-flex justify-content-between align-items-center">
           <div>
-            <input type="checkbox" name="edgr" class="form-check-input" id="edgr" value="1" onchange="updateBadge('edgr')">
-            <label class="form-check-label" for="edgr">EDGR Status</label>
+            <input type="checkbox" name="sound_test" class="form-check-input" id="sound_test" value="1" onchange="updateBadge('sound_test')">
+            <label class="form-check-label" for="sound_test">Sound Test</label>
           </div>
-          <span class="badge" id="badge_edgr">NOT PASSED</span>
+          <span class="badge" id="badge_sound_test">NOT PASSED</span>
         </div>
       </div>
       <div class="col-6 mb-2">
@@ -276,12 +285,14 @@ function updateTechStatus() {
   document.getElementById('rain_test').checked = selectedOption.dataset.rain === 'True';
   document.getElementById('edgr').checked = selectedOption.dataset.edgr === 'True';
   document.getElementById('brakes_test').checked = selectedOption.dataset.brakes === 'True';
+  document.getElementById('sound_test').checked = selectedOption.dataset.sound === 'True';
   
-  // Disable checkboxes for IC class
+  // Disable checkboxes for both IC and EV classes (sound test not applicable)
   const isIC = carClass === 'IC';
   document.getElementById('accm_tech').disabled = isIC;
   document.getElementById('ev_active').disabled = isIC;
   document.getElementById('rain_test').disabled = isIC;
+  document.getElementById('sound_test').disabled = true;
   
   // Update all badges after disabling checkboxes
   updateBadge('mech_tech');
@@ -290,6 +301,7 @@ function updateTechStatus() {
   updateBadge('rain_test');
   updateBadge('edgr');
   updateBadge('brakes_test');
+  updateBadge('sound_test');
 }
 
 // Update badge based on checkbox state

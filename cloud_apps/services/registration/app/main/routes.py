@@ -474,7 +474,7 @@ def team_status():
                     car = db.session.get(CarReg, car_id)
                     if car:
                         old_values = (car.mech_tech_status, car.accm_tech_status, car.ev_active_status, 
-                                    car.rain_test_status, car.brakes_test_staus, car.edgr_status)
+                                    car.rain_test_status, car.brakes_test_staus, car.edgr_status, car.sound_test_status)
                         
                         car.mech_tech_status = 'mech_tech' in request.form
                         car.accm_tech_status = 'accm_tech' in request.form
@@ -482,9 +482,10 @@ def team_status():
                         car.rain_test_status = 'rain_test' in request.form
                         car.brakes_test_staus = 'brakes_test' in request.form
                         car.edgr_status = 'edgr' in request.form
+                        car.sound_test_status = 'sound_test' in request.form
                         
                         new_values = (car.mech_tech_status, car.accm_tech_status, car.ev_active_status, 
-                                    car.rain_test_status, car.brakes_test_staus, car.edgr_status)
+                                    car.rain_test_status, car.brakes_test_staus, car.edgr_status, car.sound_test_status)
                         
                         if old_values != new_values:
                             db.session.commit()
