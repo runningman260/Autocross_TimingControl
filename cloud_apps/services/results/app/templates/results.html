@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% import "bootstrap_wtf.html" as wtf %}
+
+{% block content %}
+  <h2>Event Results</h2>
+  
+  {% if selected_database %}
+    <p class="lead">Showing results for database: <strong>{{ selected_database }}</strong></p>
+    
+    <h3>Autocross Results</h3>
+    <div class="table-responsive mb-4">
+      <table class="table table-striped" id="autocross-table">
+        <thead>
+          <tr><th onclick="sortTable(0, 'autocross')">Run # <i class="bi sort-icon"></i></th><th onclick="sortTable(1, 'autocross')">Car # <i class="bi sort-icon"></i></th><th onclick="sortTable(2, 'autocross')">Team <i class="bi sort-icon"></i></th><th onclick="sortTable(3, 'autocross')">Cones <i class="bi sort-icon"></i></th><th onclick="sortTable(4, 'autocross')">Off Course <i class="bi sort-icon"></i></th><th onclick="sortTable(5, 'autocross')">DNF <i class="bi sort-icon"></i></th><th onclick="sortTable(6, 'autocross')">Raw Time <i class="bi sort-icon"></i></th><th onclick="sortTable(7, 'autocross')">Adjusted Time <i class="bi sort-icon"></i></th></tr>
+        </thead>
+        <tbody>
+          {% for run in autocross_runs %}
+          <tr>
+            <td>{{ run.id }}</td>
+            <td>{{ run.car_number }}</td>
+            <td>
+              <span class="team-name custom-break">{{ run.team_name or 'Unknown' }}</span>
+              <span class="team-abbr custom-break">{{ run.team_abbreviation or 'UNK' }}</span>
+            </td>
+            <td>{{ run.cones or 0 }}</td>
+            <td>{{ run.off_course or 0 }}</td>
+            <td>{{ run.dnf }}</td>
+            <td>{{ run.raw_time }}</td>
+            <td>{{ run.adjusted_time }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <nav>
+      <ul class="pagination pagination-sm">
+        <li class="page-item {% if autocross_page <= 1 %}disabled{% endif %}">
+          <a class="page-link" href="?autocross_page={{ autocross_page - 1 }}&accel_page={{ accel_page }}&skidpad_page={{ skidpad_page }}">Previous</a>
+        </li>
+        <li class="page-item active">
+          <span class="page-link">{{ autocross_page }}</span>
+        </li>
+        <li class="page-item">
+          <a class="page-link" href="?autocross_page={{ autocross_page + 1 }}&accel_page={{ accel_page }}&skidpad_page={{ skidpad_page }}">Next</a>
+        </li>
+        {% if selected_team_id %}
+        <li class="page-item ms-3">
+          <a class="page-link" href="{{ url_for('main.export_csv', table='autocross') }}"><i class="bi bi-download"></i> Export CSV</a>
+        </li>
+        {% endif %}
+      </ul>
+    </nav>
+    
+    <h3 class="mt-5">Acceleration Results</h3>
+    <div class="table-responsive mb-4">
+      <table class="table table-striped" id="accel-table">
+        <thead>
+          <tr><th onclick="sortTable(0, 'accel')">Run # <i class="bi sort-icon"></i></th><th onclick="sortTable(1, 'accel')">Car # <i class="bi sort-icon"></i></th><th onclick="sortTable(2, 'accel')">Team <i class="bi sort-icon"></i></th><th onclick="sortTable(3, 'accel')">Cones <i class="bi sort-icon"></i></th><th onclick="sortTable(4, 'accel')">Off Course <i class="bi sort-icon"></i></th><th onclick="sortTable(5, 'accel')">DNF <i class="bi sort-icon"></i></th><th onclick="sortTable(6, 'accel')">Raw Time <i class="bi sort-icon"></i></th><th onclick="sortTable(7, 'accel')">Adjusted Time <i class="bi sort-icon"></i></th></tr>
+        </thead>
+        <tbody>
+          {% for run in accel_runs %}
+          <tr>
+            <td>{{ run.id }}</td>
+            <td>{{ run.car_number }}</td>
+            <td>
+              <span class="team-name custom-break">{{ run.team_name or 'Unknown' }}</span>
+              <span class="team-abbr custom-break">{{ run.team_abbreviation or 'UNK' }}</span>
+            </td>
+            <td>{{ run.cones or 0 }}</td>
+            <td>{{ run.off_course or 0 }}</td>
+            <td>{{ run.dnf }}</td>
+            <td>{{ run.raw_time }}</td>
+            <td>{{ run.adjusted_time }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <nav>
+      <ul class="pagination pagination-sm">
+        <li class="page-item {% if accel_page <= 1 %}disabled{% endif %}">
+          <a class="page-link" href="?autocross_page={{ autocross_page }}&accel_page={{ accel_page - 1 }}&skidpad_page={{ skidpad_page }}">Previous</a>
+        </li>
+        <li class="page-item active">
+          <span class="page-link">{{ accel_page }}</span>
+        </li>
+        <li class="page-item">
+          <a class="page-link" href="?autocross_page={{ autocross_page }}&accel_page={{ accel_page + 1 }}&skidpad_page={{ skidpad_page }}">Next</a>
+        </li>
+        {% if selected_team_id %}
+        <li class="page-item ms-3">
+          <a class="page-link" href="{{ url_for('main.export_csv', table='acceleration') }}"><i class="bi bi-download"></i> Export CSV</a>
+        </li>
+        {% endif %}
+      </ul>
+    </nav>
+    
+    <h3 class="mt-5">Skidpad Results</h3>
+    <div class="table-responsive mb-4">
+      <table class="table table-striped" id="skidpad-table">
+        <thead>
+          <tr><th onclick="sortTable(0, 'skidpad')">Run # <i class="bi sort-icon"></i></th><th onclick="sortTable(1, 'skidpad')">Car # <i class="bi sort-icon"></i></th><th onclick="sortTable(2, 'skidpad')">Team <i class="bi sort-icon"></i></th><th onclick="sortTable(3, 'skidpad')">Cones <i class="bi sort-icon"></i></th><th onclick="sortTable(4, 'skidpad')">Off Course <i class="bi sort-icon"></i></th><th onclick="sortTable(5, 'skidpad')">DNF <i class="bi sort-icon"></i></th><th onclick="sortTable(6, 'skidpad')">Raw Time Left <i class="bi sort-icon"></i></th><th onclick="sortTable(7, 'skidpad')">Raw Time Right <i class="bi sort-icon"></i></th><th onclick="sortTable(8, 'skidpad')">Adjusted Time <i class="bi sort-icon"></i></th></tr>
+        </thead>
+        <tbody>
+          {% for run in skidpad_runs %}
+          <tr>
+            <td>{{ run.id }}</td>
+            <td>{{ run.car_number }}</td>
+            <td>
+              <span class="team-name custom-break">{{ run.team_name or 'Unknown' }}</span>
+              <span class="team-abbr custom-break">{{ run.team_abbreviation or 'UNK' }}</span>
+            </td>
+            <td>{{ run.cones or 0 }}</td>
+            <td>{{ run.off_course or 0 }}</td>
+            <td>{{ run.dnf }}</td>
+            <td>{{ run.raw_time_left }}</td>
+            <td>{{ run.raw_time_right }}</td>
+            <td>{{ run.adjusted_time }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <nav>
+      <ul class="pagination pagination-sm">
+        <li class="page-item {% if skidpad_page <= 1 %}disabled{% endif %}">
+          <a class="page-link" href="?autocross_page={{ autocross_page }}&accel_page={{ accel_page }}&skidpad_page={{ skidpad_page - 1 }}">Previous</a>
+        </li>
+        <li class="page-item active">
+          <span class="page-link">{{ skidpad_page }}</span>
+        </li>
+        <li class="page-item">
+          <a class="page-link" href="?autocross_page={{ autocross_page }}&accel_page={{ accel_page }}&skidpad_page={{ skidpad_page + 1 }}">Next</a>
+        </li>
+        {% if selected_team_id %}
+        <li class="page-item ms-3">
+          <a class="page-link" href="{{ url_for('main.export_csv', table='skidpad') }}"><i class="bi bi-download"></i> Export CSV</a>
+        </li>
+        {% endif %}
+      </ul>
+    </nav>
+  {% else %}
+    <p>Please select a database from the dropdown in the navigation bar to view results.</p>
+  {% endif %}
+
+<script>
+let currentSort = {autocross: {column: -1, direction: 'asc'}, accel: {column: -1, direction: 'asc'}, skidpad: {column: -1, direction: 'asc'}};
+
+function sortTable(n, tableType) {
+  var table = document.getElementById(tableType + '-table');
+  var rows, switching, i, x, y, shouldSwitch, dir;
+  switching = true;
+  dir = (currentSort[tableType].column === n && currentSort[tableType].direction === 'asc') ? 'desc' : 'asc';
+  currentSort[tableType] = {column: n, direction: dir};
+  updateSortIcons(n, dir, tableType);
+  
+  while (switching) {
+    switching = false;
+    rows = table.rows;
+    for (i = 1; i < (rows.length - 1); i++) {
+      shouldSwitch = false;
+      x = rows[i].getElementsByTagName("TD")[n];
+      y = rows[i + 1].getElementsByTagName("TD")[n];
+      var xContent = x.innerHTML.toLowerCase();
+      var yContent = y.innerHTML.toLowerCase();
+      if (!isNaN(xContent) && !isNaN(yContent)) {
+        xContent = parseFloat(xContent);
+        yContent = parseFloat(yContent);
+      }
+      if (dir == "asc") {
+        if (xContent > yContent) {
+          shouldSwitch = true;
+          break;
+        }
+      } else if (dir == "desc") {
+        if (xContent < yContent) {
+          shouldSwitch = true;
+          break;
+        }
+      }
+    }
+    if (shouldSwitch) {
+      rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+      switching = true;
+    }
+  }
+}
+
+function updateSortIcons(activeColumn, direction, tableType) {
+  var table = document.getElementById(tableType + '-table');
+  table.querySelectorAll('.sort-icon').forEach((icon, index) => {
+    if (index === activeColumn) {
+      icon.className = direction === 'asc' ? 'bi bi-caret-up-fill sort-icon' : 'bi bi-caret-down-fill sort-icon';
+    } else {
+      icon.className = 'bi sort-icon';
+    }
+  });
+}
+</script>
+{% endblock %}

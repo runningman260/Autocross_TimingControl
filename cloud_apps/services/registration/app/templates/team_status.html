@@ -1,0 +1,355 @@
+{% extends "base.html" %}
+{% import "bootstrap_wtf.html" as wtf %}
+
+{% block content %}
+<h2>Team Status Management</h2>
+
+<form method="POST">
+  <div class="row mb-3">
+    <div class="col-md-6">
+      <label for="team_id" class="form-label">Select Team:</label>
+      <select name="team_id" id="team_id" class="form-select" onchange="this.form.submit()">
+        <option value="">Choose a team...</option>
+        {% for team in teams %}
+          <option value="{{ team.id }}" {% if selected_team_id and selected_team_id == team.id %}selected{% endif %}>
+            {{ team.name }} ({{ team.abbreviation }})
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+</form>
+
+{% if cars %}
+
+<form method="POST" action="{{ url_for('main.team_status') }}" onsubmit="debugFormSubmission(event)">
+  <input type="hidden" name="team_id" value="{{ selected_team_id }}">
+  <input type="hidden" name="update_status" value="1">
+  
+  <div class="row mb-3">
+    <div class="col-md-6">
+      <label for="selected_car" class="form-label">Select Car:</label>
+      <select id="selected_car" class="form-select" onchange="updateTechStatus(); updateRfidCar();">
+        <option value="">Choose a car...</option>
+        {% for car in cars %}
+          <option value="{{ car.id }}" data-mech="{{ car.mech_tech_status }}" data-accm="{{ car.accm_tech_status }}" data-ev="{{ car.ev_active_status }}" data-rain="{{ car.rain_test_status }}" data-edgr="{{ car.edgr_status }}" data-brakes="{{ car.brakes_test_staus }}" data-class="{{ car.class_ }}" data-tag="{{ car.tag_number if car.tag_number else '' }}" data-scan="{{ car.scan_time if car.scan_time else '' }}">Car #{{ car.car_number }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+  
+  <div id="tech-status-form" class="border rounded p-3 mb-3" style="display: none;">
+    <input type="hidden" id="selected_car_id" name="car_id">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="mb-0" id="car-title">Car #</h5>
+      <button type="button" class="btn btn-sm btn-outline-primary" id="edit-car-btn" onclick="editSelectedCar()">Edit</button>
+    </div>
+    <div class="row">
+
+      <div class="col-6 mb-2">
+        <div class="form-check d-flex justify-content-between align-items-center">
+          <div>
+            <input type="checkbox" name="mech_tech" class="form-check-input" id="mech_tech" value="1" onchange="updateBadge('mech_tech')">
+            <label class="form-check-label" for="mech_tech">Mech Tech</label>
+          </div>
+          <span class="badge" id="badge_mech_tech">NOT PASSED</span>
+        </div>
+      </div>
+      <div class="col-6 mb-2">
+        <div class="form-check d-flex justify-content-between align-items-center">
+          <div>
+            <input type="checkbox" name="accm_tech" class="form-check-input" id="accm_tech" value="1" onchange="updateBadge('accm_tech')">
+            <label class="form-check-label" for="accm_tech">ACCM Tech</label>
+          </div>
+          <span class="badge" id="badge_accm_tech">NOT PASSED</span>
+        </div>
+      </div>
+      <div class="col-6 mb-2">
+        <div class="form-check d-flex justify-content-between align-items-center">
+          <div>
+            <input type="checkbox" name="ev_active" class="form-check-input" id="ev_active" value="1" onchange="updateBadge('ev_active')">
+            <label class="form-check-label" for="ev_active">EV Active</label>
+          </div>
+          <span class="badge" id="badge_ev_active">NOT PASSED</span>
+        </div>
+      </div>
+      <div class="col-6 mb-2">
+        <div class="form-check d-flex justify-content-between align-items-center">
+          <div>
+            <input type="checkbox" name="rain_test" class="form-check-input" id="rain_test" value="1" onchange="updateBadge('rain_test')">
+            <label class="form-check-label" for="rain_test">Rain Test</label>
+          </div>
+          <span class="badge" id="badge_rain_test">NOT PASSED</span>
+        </div>
+      </div>
+      <div class="col-6 mb-2">
+        <div class="form-check d-flex justify-content-between align-items-center">
+          <div>
+            <input type="checkbox" name="edgr" class="form-check-input" id="edgr" value="1" onchange="updateBadge('edgr')">
+            <label class="form-check-label" for="edgr">EDGR Status</label>
+          </div>
+          <span class="badge" id="badge_edgr">NOT PASSED</span>
+        </div>
+      </div>
+      <div class="col-6 mb-2">
+        <div class="form-check d-flex justify-content-between align-items-center">
+          <div>
+            <input type="checkbox" name="brakes_test" class="form-check-input" id="brakes_test" value="1" onchange="updateBadge('brakes_test')">
+            <label class="form-check-label" for="brakes_test">Brakes Test</label>
+          </div>
+          <span class="badge" id="badge_brakes_test">NOT PASSED</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <button type="submit" class="btn btn-primary">Update Tech Status</button>
+</form>
+
+<div class="mt-5">
+  <h4>RFID Tag Management</h4>
+  <p class="text-muted" id="scan-time-display" style="display: none;">Tag was scanned at: <span id="scan-time-text">Unknown</span></p>
+  <form method="POST" action="{{ url_for('main.update_rfid_tag') }}" onsubmit="return confirmRfidUpdate();">
+    <input type="hidden" name="team_id" value="{{ selected_team_id }}">
+    <input type="hidden" name="car_id" id="rfid_car_id">
+    <div class="mb-3">
+      <input type="text" name="tag_number" id="tag_input" class="form-control" placeholder="Enter RFID Tag Number">
+    </div>
+    <button type="submit" class="btn btn-primary">Update RFID Tag</button>
+  </form>
+</div>
+{% elif selected_team_id %}
+<p>No cars registered for this team.</p>
+{% else %}
+<p>Please select a team to view and manage their status.</p>
+{% endif %}
+
+<!-- Edit Car Modal -->
+<div class="modal fade" id="editCarModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Edit Car</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="editCarForm" method="POST" action="{{ url_for('main.edit_car') }}">
+        <div class="modal-body">
+          <input type="hidden" id="edit_car_id" name="car_id">
+          <div class="mb-3">
+            <label for="edit_car_number" class="form-label">Car Number</label>
+            <input type="text" class="form-control" id="edit_car_number" name="car_number" required>
+          </div>
+          <div class="mb-3">
+            <label for="edit_class" class="form-label">Class</label>
+            <select class="form-select" id="edit_class" name="class" required>
+              <option value="IC">IC</option>
+              <option value="EV">EV</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="edit_year" class="form-label">Year</label>
+            <input type="text" class="form-control" id="edit_year" name="year" maxlength="4" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom alert container -->
+<div id="bottom-alert" style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 1050; width: 90%; max-width: 500px;"></div>
+
+<script>
+// Show alert at bottom of page
+document.addEventListener('DOMContentLoaded', function() {
+  // Auto-select car if only one car exists
+  const techCarSelect = document.getElementById('selected_car');
+  if (techCarSelect && techCarSelect.options.length === 2) { // 1 default + 1 car
+    techCarSelect.selectedIndex = 1;
+    updateTechStatus();
+    updateRfidCar();
+  }
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+    const alertHtml = `<div class="alert alert-{{ 'success' if category == 'success' else 'danger' if category == 'danger' else 'info' }} alert-dismissible fade show" role="alert">{{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>`;
+    document.getElementById('bottom-alert').innerHTML = alertHtml;
+    
+    {% if category == 'success' %}
+    setTimeout(function() {
+      const alert = document.querySelector('#bottom-alert .alert');
+      if (alert) {
+        const bsAlert = new bootstrap.Alert(alert);
+        bsAlert.close();
+      }
+    }, 3000);
+    {% endif %}
+    {% endfor %}
+  {% endif %}
+  {% endwith %}
+});
+
+// Edit car function
+function editCar(carId, carNumber, carClass, carYear) {
+  document.getElementById('edit_car_id').value = carId;
+  document.getElementById('edit_car_number').value = carNumber;
+  document.getElementById('edit_class').value = carClass;
+  document.getElementById('edit_year').value = carYear;
+  
+  const modal = new bootstrap.Modal(document.getElementById('editCarModal'));
+  modal.show();
+}
+
+// Update RFID section when car is selected
+function updateRfidCar() {
+  const carSelect = document.getElementById('selected_car');
+  const tagInput = document.getElementById('tag_input');
+  const rfidCarId = document.getElementById('rfid_car_id');
+  const scanTimeDisplay = document.getElementById('scan-time-display');
+  const scanTimeText = document.getElementById('scan-time-text');
+  
+  if (!carSelect.value) {
+    tagInput.value = '';
+    rfidCarId.value = '';
+    scanTimeDisplay.style.display = 'none';
+    return;
+  }
+  
+  const selectedOption = carSelect.options[carSelect.selectedIndex];
+  rfidCarId.value = carSelect.value;
+  
+  if (selectedOption && selectedOption.dataset.tag) {
+    tagInput.value = selectedOption.dataset.tag;
+    scanTimeDisplay.style.display = 'block';
+    scanTimeText.textContent = selectedOption.dataset.scan || 'Unknown';
+  } else {
+    tagInput.value = '';
+    scanTimeDisplay.style.display = 'none';
+  }
+}
+
+// Confirm RFID update with car number
+function confirmRfidUpdate() {
+  const carSelect = document.getElementById('selected_car');
+  const tagInput = document.getElementById('tag_input');
+  
+  if (!carSelect.value) {
+    alert('Please select a car first.');
+    return false;
+  }
+  
+  const selectedCarText = carSelect.options[carSelect.selectedIndex].text;
+  const tagNumber = tagInput.value;
+  
+  return confirm(`Are you sure you want to update the RFID tag for ${selectedCarText} to "${tagNumber}"?`);
+}
+
+// Update tech status form based on selected car
+function updateTechStatus() {
+  const carSelect = document.getElementById('selected_car');
+  const techForm = document.getElementById('tech-status-form');
+  const carTitle = document.getElementById('car-title');
+  const carIdInput = document.getElementById('selected_car_id');
+  
+  if (!carSelect.value) {
+    techForm.style.display = 'none';
+    return;
+  }
+  
+  const selectedOption = carSelect.options[carSelect.selectedIndex];
+  const carNumber = selectedOption.text;
+  const carClass = selectedOption.dataset.class;
+  
+  // Show form and update title
+  techForm.style.display = 'block';
+  carTitle.textContent = carNumber;
+  carIdInput.value = carSelect.value;
+  
+  // Update checkbox states and badges
+  document.getElementById('mech_tech').checked = selectedOption.dataset.mech === 'True';
+  document.getElementById('accm_tech').checked = selectedOption.dataset.accm === 'True';
+  document.getElementById('ev_active').checked = selectedOption.dataset.ev === 'True';
+  document.getElementById('rain_test').checked = selectedOption.dataset.rain === 'True';
+  document.getElementById('edgr').checked = selectedOption.dataset.edgr === 'True';
+  document.getElementById('brakes_test').checked = selectedOption.dataset.brakes === 'True';
+  
+  // Update all badges
+  updateBadge('mech_tech');
+  updateBadge('accm_tech');
+  updateBadge('ev_active');
+  updateBadge('rain_test');
+  updateBadge('edgr');
+  updateBadge('brakes_test');
+  
+  // Disable checkboxes for IC class
+  const isIC = carClass === 'IC';
+  document.getElementById('accm_tech').disabled = isIC;
+  document.getElementById('ev_active').disabled = isIC;
+  document.getElementById('rain_test').disabled = isIC;
+}
+
+// Update badge based on checkbox state
+function updateBadge(fieldName) {
+  const checkbox = document.getElementById(fieldName);
+  const badge = document.getElementById('badge_' + fieldName);
+  
+  if (checkbox && badge) {
+    if (checkbox.checked) {
+      badge.textContent = 'PASSED';
+      badge.className = 'badge bg-success';
+    } else {
+      badge.textContent = 'NOT PASSED';
+      badge.className = 'badge bg-danger';
+    }
+  }
+}
+
+// Edit selected car
+function editSelectedCar() {
+  const carSelect = document.getElementById('selected_car');
+  if (!carSelect.value) return;
+  
+  const selectedOption = carSelect.options[carSelect.selectedIndex];
+  const carNumber = selectedOption.text.replace('Car #', '');
+  const carClass = selectedOption.dataset.class;
+  
+  // Find the car data from the original cars array
+  {% for car in cars %}
+  if ('{{ car.id }}' === carSelect.value) {
+    editCar({{ car.id }}, '{{ car.car_number }}', '{{ car.class_ }}', '{{ car.year }}');
+    return;
+  }
+  {% endfor %}
+}
+
+// Debug form submission
+function debugFormSubmission(event) {
+  const techForm = document.getElementById('tech-status-form');
+  const carIdInput = document.getElementById('selected_car_id');
+  
+  // Check if a car is selected
+  if (!carIdInput.value) {
+    alert('Please select a car first.');
+    event.preventDefault();
+    return false;
+  }
+  
+  // Ensure form is visible for submission
+  if (techForm.style.display === 'none') {
+    techForm.style.display = 'block';
+  }
+  
+  const formData = new FormData(event.target);
+  console.log('Form data being submitted:');
+  for (let [key, value] of formData.entries()) {
+    console.log(key + ': ' + value);
+  }
+  return true;
+}
+</script>
+
+{% endblock %}

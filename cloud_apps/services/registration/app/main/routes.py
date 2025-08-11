@@ -37,25 +37,29 @@ def register_car():
     form = CarRegistrationForm()
     form.team_id.choices = team_choices
     form.team_id.default = -1
-    if form.validate_on_submit():
-        car = CarReg(
-            car_number=form.car_number.data,
-            tag_number=form.tag_number.data,
-            team_id=form.team_id.data,
-            class_=form.class_.data,
-            year=form.year.data,
-            scan_time=datetime.utcnow()
-        )
-        db.session.add(car)
-        try:
-            db.session.commit()
-            team = db.session.query(Team).filter_by(id=form.team_id.data).first()
-            flash(f'Car {car.car_number} for team {team.name} registered successfully!', 'success')
-        except IntegrityError as e:
-            db.session.rollback()
-            print(f"IntegrityError: {e}")
-            flash(f'Error: Car number {car.car_number} is already registered. Please choose a different number.', 'danger')
-        return redirect(url_for('main.register_car'))
+    if request.method == 'POST':
+        if form.validate_on_submit():
+            car = CarReg(
+                car_number=form.car_number.data,
+                team_id=form.team_id.data,
+                class_=form.class_.data,
+                year=form.year.data
+            )
+            db.session.add(car)
+            try:
+                db.session.commit()
+                team = db.session.query(Team).filter_by(id=form.team_id.data).first()
+                flash(f'Car {car.car_number} for team {team.name} registered successfully!', 'success')
+            except IntegrityError as e:
+                db.session.rollback()
+                print(f"IntegrityError: {e}")
+                flash(f'Error: Car number {car.car_number} is already registered. Please choose a different number.', 'danger')
+            return redirect(url_for('main.register_car'))
+        else:
+            # Handle validation errors
+            for field, errors in form.errors.items():
+                for error in errors:
+                    flash(f'{getattr(form, field).label.text}: {error}', 'danger')
     return render_template('register_car.html', form=form)
 
 def car_sort_key(car):
@@ -446,4 +450,112 @@ def api_overall_pointsLeaderboard():
         'EV_points_totals': EV_points_totals_data
     }
     return jsonify(points_totals_data)
+
+@bp.route('/team_status', methods=['GET', 'POST'])
+def team_status():
+    if not session.get('authenticated'):
+        return redirect(url_for('main.login', next=request.url))
+    teams = db.session.scalars(sa.select(Team)).all()
+    selected_team_id = request.form.get('team_id') if request.method == 'POST' else None
+    cars = []
+    
+    if selected_team_id:
+        # Convert to int for database query
+        selected_team_id = int(selected_team_id)
+        cars = db.session.scalars(sa.select(CarReg).where(CarReg.team_id == selected_team_id)).all()
+        
+        # Handle checkbox updates
+        if 'update_status' in request.form:
+            print(f"DEBUG: Form data received: {dict(request.form)}")
+            car_id = request.form.get('car_id')
+            print(f"DEBUG: Car ID: {car_id}")
+            if car_id:
+                try:
+                    car = db.session.get(CarReg, car_id)
+                    if car:
+                        old_values = (car.mech_tech_status, car.accm_tech_status, car.ev_active_status, 
+                                    car.rain_test_status, car.brakes_test_staus, car.edgr_status)
+                        
+                        car.mech_tech_status = 'mech_tech' in request.form
+                        car.accm_tech_status = 'accm_tech' in request.form
+                        car.ev_active_status = 'ev_active' in request.form
+                        car.rain_test_status = 'rain_test' in request.form
+                        car.brakes_test_staus = 'brakes_test' in request.form
+                        car.edgr_status = 'edgr' in request.form
+                        
+                        new_values = (car.mech_tech_status, car.accm_tech_status, car.ev_active_status, 
+                                    car.rain_test_status, car.brakes_test_staus, car.edgr_status)
+                        
+                        if old_values != new_values:
+                            db.session.commit()
+                            flash(f'Tech status updated successfully for Car #{car.car_number}!', 'success')
+                        else:
+                            flash('No changes were made.', 'info')
+                    else:
+                        flash('Car not found!', 'danger')
+                except Exception as e:
+                    db.session.rollback()
+                    flash(f'Error updating status: {str(e)}', 'danger')
+            else:
+                flash('Please select a car first.', 'danger')
+            return redirect(url_for('main.team_status') + f'?team_id={selected_team_id}')
+    
+    # Handle GET request with team_id parameter
+    if not selected_team_id and request.args.get('team_id'):
+        selected_team_id = int(request.args.get('team_id'))
+        cars = db.session.scalars(sa.select(CarReg).where(CarReg.team_id == selected_team_id)).all()
+    
+    return render_template('team_status.html', title='Team Status', teams=teams, cars=cars, selected_team_id=selected_team_id)
+
+@bp.route('/edit_car', methods=['POST'])
+def edit_car():
+    if not session.get('authenticated'):
+        return redirect(url_for('main.login', next=request.url))
+    
+    car_id = request.form.get('car_id')
+    car_number = request.form.get('car_number')
+    car_class = request.form.get('class')
+    car_year = request.form.get('year')
+    
+    try:
+        car = db.session.get(CarReg, car_id)
+        if car:
+            car.car_number = car_number
+            car.class_ = car_class
+            car.year = car_year
+            db.session.commit()
+            flash('Car updated successfully!', 'success')
+        else:
+            flash('Car not found!', 'danger')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error updating car: {str(e)}', 'danger')
+    
+    return redirect(url_for('main.team_status') + f'?team_id={car.team_id}' if car else url_for('main.team_status'))
+
+@bp.route('/update_rfid_tag', methods=['POST'])
+def update_rfid_tag():
+    if not session.get('authenticated'):
+        return redirect(url_for('main.login', next=request.url))
+    
+    team_id = request.form.get('team_id')
+    car_id = request.form.get('car_id')
+    tag_number = request.form.get('tag_number')
+    
+    try:
+        # Update specific car with the new tag number
+        car = db.session.get(CarReg, car_id)
+        if car:
+            from datetime import datetime
+            car.tag_number = tag_number
+            car.scan_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            db.session.commit()
+            flash(f'RFID tag updated successfully for Car #{car.car_number}!', 'success')
+        else:
+            flash('Car not found!', 'danger')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error updating RFID tag: {str(e)}', 'danger')
+    
+    return redirect(url_for('main.team_status') + f'?team_id={team_id}')
 

@@ -48,3 +48,7 @@ hosted_apps/volumes/
 */.env
 services/*/.env
 volumes/*/.env
+acme
+certs
+nginx_conf
+volumes
