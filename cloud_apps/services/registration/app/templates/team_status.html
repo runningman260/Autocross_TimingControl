@@ -269,7 +269,7 @@ function updateTechStatus() {
   carTitle.textContent = carNumber;
   carIdInput.value = carSelect.value;
   
-  // Update checkbox states and badges
+  // Update checkbox states
   document.getElementById('mech_tech').checked = selectedOption.dataset.mech === 'True';
   document.getElementById('accm_tech').checked = selectedOption.dataset.accm === 'True';
   document.getElementById('ev_active').checked = selectedOption.dataset.ev === 'True';
@@ -277,19 +277,19 @@ function updateTechStatus() {
   document.getElementById('edgr').checked = selectedOption.dataset.edgr === 'True';
   document.getElementById('brakes_test').checked = selectedOption.dataset.brakes === 'True';
   
-  // Update all badges
+  // Disable checkboxes for IC class
+  const isIC = carClass === 'IC';
+  document.getElementById('accm_tech').disabled = isIC;
+  document.getElementById('ev_active').disabled = isIC;
+  document.getElementById('rain_test').disabled = isIC;
+  
+  // Update all badges after disabling checkboxes
   updateBadge('mech_tech');
   updateBadge('accm_tech');
   updateBadge('ev_active');
   updateBadge('rain_test');
   updateBadge('edgr');
   updateBadge('brakes_test');
-  
-  // Disable checkboxes for IC class
-  const isIC = carClass === 'IC';
-  document.getElementById('accm_tech').disabled = isIC;
-  document.getElementById('ev_active').disabled = isIC;
-  document.getElementById('rain_test').disabled = isIC;
 }
 
 // Update badge based on checkbox state
@@ -298,7 +298,10 @@ function updateBadge(fieldName) {
   const badge = document.getElementById('badge_' + fieldName);
   
   if (checkbox && badge) {
-    if (checkbox.checked) {
+    if (checkbox.disabled) {
+      badge.textContent = 'NOT APPLICABLE';
+      badge.className = 'badge bg-secondary';
+    } else if (checkbox.checked) {
       badge.textContent = 'PASSED';
       badge.className = 'badge bg-success';
     } else {
