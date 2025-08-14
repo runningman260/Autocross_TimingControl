@@ -55,6 +55,11 @@
   <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
       </head>
   <body>
+    <script>
+      // Apply theme immediately to prevent flicker
+      const savedTheme = localStorage.getItem('theme') || 'light';
+      document.body.setAttribute('data-bs-theme', savedTheme);
+    </script>
     <nav class="navbar navbar-expand-lg bg-body-tertiary">
       <div class="container ">
         <a href="{{ url_for('main.register_car') }}" class="navbar-brand">
@@ -83,6 +88,9 @@
               <a class="nav-link" aria-current="page" href="{{ url_for('main.carreg') }}">Cars</a>
             </li>
             <li class="nav-item">
+              <a class="nav-link" aria-current="page" href="{{ url_for('main.upload_autox') }}">Upload AutoX</a>
+            </li>
+            <li class="nav-item">
               <a class="nav-link" aria-current="page" href="{{ url_for('main.upload_accel') }}">Upload Accel</a>
             </li>
             <li class="nav-item">
@@ -99,6 +107,11 @@
                 <li><a class="dropdown-item" href="{{ url_for('main.skidpad_pointsLeaderboard') }}">Skidpad</a></li>
                 <li><a class="dropdown-item" href="{{ url_for('main.conesLeaderboard') }}">Conekillers</a></li>
               </ul>
+            </li>
+            <li class="nav-item">
+              <button class="btn btn-outline-secondary" id="darkModeToggle" type="button">
+                <i class="bi bi-moon-fill" id="darkModeIcon"></i>
+              </button>
             </li>
 
           </ul>
@@ -152,6 +165,32 @@
           }
         }
       });
+      
+      // Dark mode functionality
+      const darkModeToggle = document.getElementById('darkModeToggle');
+      const darkModeIcon = document.getElementById('darkModeIcon');
+      const body = document.body;
+      
+      // Theme is already applied, just update the icon
+      const currentTheme = body.getAttribute('data-bs-theme') || 'light';
+      updateIcon(currentTheme);
+      
+      darkModeToggle.addEventListener('click', function() {
+        const currentTheme = body.getAttribute('data-bs-theme');
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        
+        body.setAttribute('data-bs-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        updateIcon(newTheme);
+      });
+      
+      function updateIcon(theme) {
+        if (theme === 'dark') {
+          darkModeIcon.className = 'bi bi-sun-fill';
+        } else {
+          darkModeIcon.className = 'bi bi-moon-fill';
+        }
+      }
     </script>
   </body>
 </html>

@@ -1,27 +1,75 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Registered Cars Table</h2>
+<style>
+.separator {
+  margin: 0 8px;
+  color: #6c757d;
+  font-weight: bold;
+}
+.desktop-only {
+  display: table-cell;
+}
+.mobile-only {
+  display: none;
+}
+@media (max-width: 768px) {
+  .desktop-only {
+    display: none;
+  }
+  .mobile-only {
+    display: table-cell;
+  }
+  .stack-mobile {
+    line-height: 1.2;
+  }
+  .stack-mobile div {
+    margin-bottom: 2px;
+  }
+  .stack-mobile .secondary {
+    font-size: 0.85em;
+    color: #6c757d;
+  }
+  .stack-mobile .separator {
+    display: none;
+  }
+}
+</style>
+<h2>Registered Cars</h2>
 <div class="table-responsive">
   <table class="table table-sm table-striped table-hover">
     <thead>
       <tr>
         <th>Car Number</th>
         <th>Team Name</th>
-        <th>Class</th>
-        <th>Year</th>
-        <th>Tag Number</th>
-        <th>Scan Time</th>
+        <th class="desktop-only">Class / Year</th>
+        <th class="desktop-only">Tag / Scan Time</th>
+        <th class="mobile-only">Class/Year/Tag/Scan Time</th>
       </tr>
     </thead>
     <tbody>
       {% for car in cars %}
       <tr>
         <td>{{ car.car_number }}</td>
-        <td>{{ car.team_name }}{% if car.team_abbreviation %} ({{ car.team_abbreviation }}){% endif %}</td>
-        <td>{{ car.class_ }}</td>
-        <td>{{ car.year }}</td>
-        <td>{{ car.tag_number }}</td>
-        <td>{{ car.scan_time }}</td>
+        <td>
+          <span class="team-name custom-break">{{ car.team_name }}</span>
+          <span class="team-abbr custom-break">{{ car.team_abbreviation }}</span>
+        </td>
+        <td class="stack-mobile desktop-only">
+          <span>{{ car.class_ }}</span>
+          <span class="separator">•</span>
+          <span class="secondary">{{ car.year }}</span>
+        </td>
+        <td class="stack-mobile desktop-only">
+          <span>{{ car.tag_number if car.tag_number else 'No Tag' }}</span>
+          <span class="separator">•</span>
+          <span class="secondary">{{ car.scan_time if car.scan_time else 'Not Scanned' }}</span>
+        </td>
+        <td class="stack-mobile mobile-only">
+          <div>{{ car.class_ }}</div>
+          <div>{{ car.year }}</div>
+          <div>{{ car.tag_number if car.tag_number else 'No Tag' }}</div>
+          <div class="secondary">{{ car.scan_time if car.scan_time else 'Not Scanned' }}</div>
+        </td>
       </tr>
       {% endfor %}
     </tbody>

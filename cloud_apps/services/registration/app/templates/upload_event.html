@@ -30,6 +30,12 @@ Timestamp,Run Number,Car Number,Raw Time or DNF,CONE Count,OFF COURSE Count,Adju
 7/22/2025 21:19:13,2,56,2,,1,DNF,,,,,
 ,,,,,,0,,,,,
 ...
+{% elif event_name == "Autocross" %}
+Timestamp,Run Number,Car Number,Raw Time or DNF,CONE Count,OFF COURSE Count,Adjusted Time,,CONE =,2,OFF COURSE =,DNF
+7/22/2025 21:19:13,1,45,3.234,1,,5.234,,,,,
+7/22/2025 21:19:13,2,56,2,,1,DNF,,,,,
+,,,,,,0,,,,,
+...
 {% else %}
 car_number,raw_time_right,raw_time_left,cones,off_course
 101,52.123,52.123,0,0

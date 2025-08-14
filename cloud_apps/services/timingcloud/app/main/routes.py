@@ -582,6 +582,11 @@ def team_autocross():
     selected_car_number = request.form.get('car_number') or session.get('selected_car_number')
     
     if selected_team_id:
+        selected_team_id = int(selected_team_id)
+        # Clear car selection if team changed
+        if session.get('selected_team_id') != selected_team_id:
+            session.pop('selected_car_number', None)
+            selected_car_number = None
         session['selected_team_id'] = selected_team_id
         if selected_car_number:
             session['selected_car_number'] = selected_car_number
@@ -617,6 +622,11 @@ def team_acceleration():
     selected_car_number = request.form.get('car_number') or session.get('selected_car_number')
     
     if selected_team_id:
+        selected_team_id = int(selected_team_id)
+        # Clear car selection if team changed
+        if session.get('selected_team_id') != selected_team_id:
+            session.pop('selected_car_number', None)
+            selected_car_number = None
         session['selected_team_id'] = selected_team_id
         if selected_car_number:
             session['selected_car_number'] = selected_car_number
@@ -652,6 +662,11 @@ def team_skidpad():
     selected_car_number = request.form.get('car_number') or session.get('selected_car_number')
     
     if selected_team_id:
+        selected_team_id = int(selected_team_id)
+        # Clear car selection if team changed
+        if session.get('selected_team_id') != selected_team_id:
+            session.pop('selected_car_number', None)
+            selected_car_number = None
         session['selected_team_id'] = selected_team_id
         if selected_car_number:
             session['selected_car_number'] = selected_car_number
@@ -687,6 +702,11 @@ def team_points():
     selected_car_number = request.form.get('car_number') or session.get('selected_car_number')
     
     if selected_team_id:
+        selected_team_id = int(selected_team_id)
+        # Clear car selection if team changed
+        if session.get('selected_team_id') != selected_team_id:
+            session.pop('selected_car_number', None)
+            selected_car_number = None
         session['selected_team_id'] = selected_team_id
         if selected_car_number:
             session['selected_car_number'] = selected_car_number
@@ -695,6 +715,8 @@ def team_points():
         # Filter car numbers if specific car selected
         if selected_car_number and selected_car_number != 'all':
             car_numbers = [selected_car_number]
+        elif not selected_car_number:
+            selected_car_number = 'all'
         
         # Get points from all leaderboards for this team's cars with team abbreviations
         team = db.session.get(Team, selected_team_id)
@@ -743,6 +765,11 @@ def team_tech_status():
     selected_car_number = request.form.get('car_number') or session.get('selected_car_number')
     
     if selected_team_id:
+        selected_team_id = int(selected_team_id)
+        # Clear car selection if team changed
+        if session.get('selected_team_id') != selected_team_id:
+            session.pop('selected_car_number', None)
+            selected_car_number = None
         session['selected_team_id'] = selected_team_id
         if selected_car_number:
             session['selected_car_number'] = selected_car_number

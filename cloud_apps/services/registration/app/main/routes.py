@@ -167,6 +167,71 @@ def upload_accel():
         message = f"{count} acceleration runs uploaded."
     return render_template('upload_event.html', event_name='Acceleration', message=message)
 
+@bp.route('/upload_autox', methods=['GET', 'POST'])
+def upload_autox():
+    if not session.get('authenticated'):
+        return redirect(url_for('main.login', next=request.url))
+    message = None
+    if request.method == 'POST':
+        csv_data = request.form.get('csv_data', '')
+        file = request.files.get('csv_file')
+        if file and file.filename:
+            csv_text = file.read().decode('utf-8')
+        else:
+            csv_text = csv_data
+        reader = csv.DictReader(StringIO(csv_text))
+        count = 0
+        for row in reader:
+            # Flexible header mapping for accel
+            run_number = row.get('Run Number') or row.get('run_number')
+            car_number = row.get('Car Number') or row.get('car_number')
+            cones = row.get('CONE Count') or row.get('cones') or 0
+            off_course = row.get('OFF COURSE Count') or row.get('off_course') or 0
+            # Accept both standard and user-facing headers for raw time
+            raw_time = row.get('Raw Time or DNF') or row.get('raw_time')
+            # No longer convert DNF to None; keep as DNF if present
+            dnf = None
+            # Convert cones/off_course to int or 0
+            try:
+                cones = int(cones) if cones not in (None, '', ' ') else 0
+            except ValueError:
+                cones = 0
+            try:
+                off_course = int(off_course) if off_course not in (None, '', ' ') else 0
+            except ValueError:
+                off_course = 0
+            # Skip empty, calculated, or summary rows
+            if not (run_number or car_number or raw_time or cones or off_course):
+                continue
+            if str(run_number).strip() == '' and str(car_number).strip() == '' and (raw_time is None or str(raw_time).strip() == ''):
+                continue
+            if 'WINNING RUN' in str(row.values()):
+                continue
+            # Overwrite if run with same ID exists
+            existing = db.session.query(RunOrder).filter_by(id=run_number).first()
+            if existing:
+                existing.car_number = car_number
+                existing.raw_time = raw_time
+                existing.cones = cones
+                existing.off_course = off_course
+                existing.dnf = dnf
+                existing.adjusted_time = None
+            else:
+                run = RunOrder(
+                    id=run_number,  # If your model uses id as run number
+                    car_number=car_number,
+                    raw_time=raw_time,
+                    cones=cones,
+                    off_course=off_course,
+                    dnf=dnf,  # Let DB logic handle DNF if not present
+                    adjusted_time=None  # Let DB logic calculate
+                )
+                db.session.add(run)
+            count += 1
+        db.session.commit()
+        message = f"{count} autocross runs uploaded."
+    return render_template('upload_event.html', event_name='Autocross', message=message)
+
 @bp.route('/upload_skidpad', methods=['GET', 'POST'])
 def upload_skidpad():
     if not session.get('authenticated'):
