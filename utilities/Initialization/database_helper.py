@@ -840,6 +840,15 @@ def clear_and_create_schema():
 				name VARCHAR(255) NOT NULL,
 				abbreviation VARCHAR(32) UNIQUE NOT NULL
 			);""",
+		"news":
+		"""
+			CREATE TABLE news(
+				id SERIAL PRIMARY KEY,
+				title VARCHAR(255),
+				text  VARCHAR(255),
+				created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+				updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+			);""",
 		"carreg":
 		"""
 			CREATE TABLE carreg(

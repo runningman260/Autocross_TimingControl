@@ -4,7 +4,7 @@ from flask import  request, jsonify, render_template, redirect, url_for, flash, 
 from flask_babel import _
 import sqlalchemy as sa
 from app import db
-from app.models import RunOrder, CarReg, Team, Accel_RunOrder, Skidpad_RunOrder, ConesLeaderboard, Accel_PointsLeaderboardIC, Accel_PointsLeaderboardEV, Skidpad_PointsLeaderboardIC, Skidpad_PointsLeaderboardEV, Autocross_PointsLeaderboardIC, Autocross_PointsLeaderboardEV, Overall_PointsLeaderboardIC, Overall_PointsLeaderboardEV
+from app.models import RunOrder, CarReg, Team, Accel_RunOrder, Skidpad_RunOrder, ConesLeaderboard, Accel_PointsLeaderboardIC, Accel_PointsLeaderboardEV, Skidpad_PointsLeaderboardIC, Skidpad_PointsLeaderboardEV, Autocross_PointsLeaderboardIC, Autocross_PointsLeaderboardEV, Overall_PointsLeaderboardIC, Overall_PointsLeaderboardEV, News
 from app.main import bp
 from app.main.forms import CarRegistrationForm
 from sqlalchemy.exc import IntegrityError
@@ -623,4 +623,59 @@ def update_rfid_tag():
         flash(f'Error updating RFID tag: {str(e)}', 'danger')
     
     return redirect(url_for('main.team_status') + f'?team_id={team_id}')
+
+@bp.route('/manage_news', methods=['GET', 'POST'])
+def manage_news():
+    if not session.get('authenticated'):
+        return redirect(url_for('main.login', next=request.url))
+    
+    if request.method == 'POST':
+        if 'delete_news' in request.form:
+            news_id = request.form.get('news_id')
+            if news_id:
+                news_item = db.session.get(News, news_id)
+                if news_item:
+                    db.session.delete(news_item)
+                    db.session.commit()
+                    flash('News item deleted successfully!', 'success')
+                else:
+                    flash('News item not found!', 'danger')
+        elif 'edit_news' in request.form:
+            news_id = request.form.get('news_id')
+            title = request.form.get('title', '').strip()
+            text = request.form.get('text', '').strip()
+            
+            if not title or not text:
+                flash('Both title and text are required!', 'danger')
+            elif len(title) > 200:
+                flash('Title must be 200 characters or less!', 'danger')
+            elif len(text) > 254:
+                flash('Text must be 254 characters or less!', 'danger')
+            else:
+                news_item = db.session.get(News, news_id)
+                if news_item:
+                    news_item.title = title
+                    news_item.text = text
+                    db.session.commit()
+                    flash('News item updated successfully!', 'success')
+                else:
+                    flash('News item not found!', 'danger')
+        else:
+            title = request.form.get('title', '').strip()
+            text = request.form.get('text', '').strip()
+            
+            if not title or not text:
+                flash('Both title and text are required!', 'danger')
+            elif len(title) > 200:
+                flash('Title must be 200 characters or less!', 'danger')
+            elif len(text) > 254:
+                flash('Text must be 254 characters or less!', 'danger')
+            else:
+                news_item = News(title=title, text=text)
+                db.session.add(news_item)
+                db.session.commit()
+                flash('News item created successfully!', 'success')
+    
+    news_items = db.session.scalars(sa.select(News).order_by(News.created_at.desc())).all()
+    return render_template('manage_news.html', title='Manage News', news_items=news_items)
 

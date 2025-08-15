@@ -89,6 +89,17 @@ class CarReg(db.Model):
     rain_test_status: so.Mapped[bool] = so.mapped_column(sa.Boolean, nullable=False, default=False)
     brakes_test_staus: so.Mapped[bool] = so.mapped_column(sa.Boolean, nullable=False, default=False)
     edgr_status: so.Mapped[bool] = so.mapped_column(sa.Boolean, nullable=False, default=False)
+    sound_test_status: so.Mapped[bool] = so.mapped_column(sa.Boolean, nullable=False, default=False)
+
+class News(db.Model):
+    __tablename__ = 'news'
+    id: so.Mapped[int] = so.mapped_column(primary_key=True, autoincrement=True)
+    title: so.Mapped[str] = so.mapped_column(sa.String(200), nullable=False)
+    text: so.Mapped[str] = so.mapped_column(sa.String(254), nullable=False)
+    created_at: so.Mapped[datetime] = so.mapped_column(sa.DateTime, nullable=False, default=datetime.now)
+    
+    def __repr__(self):
+        return f'<News {self.id}: {self.title}>'
     
 ##Leaderboards   
 class PointsLeaderboardIC(db.Model):
