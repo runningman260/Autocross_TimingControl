@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">News & Announcements</h2>
+    <div id="last-refresh-timestamp">Last Refresh: Never</div>
+  </div>
+  
+  <div class="row justify-content-center" id="news-container">
+    <div class="col-md-8">
+      {% if news_items %}
+        {% for news_item in news_items %}
+        <div class="card mb-4">
+          <div class="card-header bg-primary text-white">
+            <h5 class="card-title mb-0">{{ news_item.title }}</h5>
+          </div>
+          <div class="card-body">
+            <p class="card-text">{{ news_item.text }}</p>
+            <small class="text-muted">Posted on {{ news_item.created_at.replace(tzinfo=timezone.utc).astimezone(timezone(timedelta(hours=-5))).strftime('%B %d, %Y at %I:%M %p EST') }}</small>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="text-center mt-5">
+          <h4 class="text-muted">No News at This Time!</h4>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+function refreshNews() {
+  fetch('/news', {
+    method: 'GET',
+    headers: {'Content-Type': 'application/json'}
+  })
+  .then(response => response.text())
+  .then(html => {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    const newContainer = doc.querySelector('#news-container');
+    if (newContainer) {
+      document.querySelector('#news-container').innerHTML = newContainer.innerHTML;
+      document.getElementById('last-refresh-timestamp').textContent = `Last Refresh: ${new Date().toLocaleTimeString()}`;
+    }
+  })
+  .catch(error => console.error('Error refreshing news:', error));
+}
+
+setInterval(refreshNews, 300000); // 5 minutes = 300000 milliseconds
+</script>
+{% endblock %}

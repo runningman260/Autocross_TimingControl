@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Manage News</h2>
+
+<div class="card mb-4">
+  <div class="card-header">
+    <h5>Add New News Item</h5>
+  </div>
+  <div class="card-body">
+    <form method="POST">
+      <div class="mb-3">
+        <label for="title" class="form-label">Title</label>
+        <input type="text" class="form-control" id="title" name="title" maxlength="200" required>
+        <div class="form-text">
+          <span id="title-count">0</span>/200 characters
+        </div>
+      </div>
+      <div class="mb-3">
+        <label for="text" class="form-label">Text</label>
+        <textarea class="form-control" id="text" name="text" rows="3" maxlength="200" required></textarea>
+        <div class="form-text">
+          <span id="text-count">0</span>/200 characters
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary">Add News Item</button>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h5>Existing News Items</h5>
+  </div>
+  <div class="card-body">
+    {% if news_items %}
+      <div class="table-responsive">
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Text</th>
+              <th>Created</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for news_item in news_items %}
+            <tr>
+              <td>{{ news_item.title }}</td>
+              <td>{{ news_item.text }}</td>
+              <td>{{ news_item.created_at.strftime('%B %d, %Y at %I:%M %p') }}</td>
+              <td>
+                <form method="POST" style="display:inline;">
+                  <input type="hidden" name="delete_news" value="1">
+                  <input type="hidden" name="news_id" value="{{ news_item.id }}">
+                  <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete this news item?');">Delete</button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="text-muted">No news items found.</p>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+// Character counters
+document.getElementById('title').addEventListener('input', function() {
+  document.getElementById('title-count').textContent = this.value.length;
+});
+
+document.getElementById('text').addEventListener('input', function() {
+  document.getElementById('text-count').textContent = this.value.length;
+});
+</script>
+{% endblock %}

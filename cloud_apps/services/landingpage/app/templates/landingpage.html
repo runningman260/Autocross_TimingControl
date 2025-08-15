@@ -2,5 +2,63 @@
 {% import "bootstrap_wtf.html" as wtf %}
 
 {% block content %}
-  <h2>Welcome to FormulaTiming.org!</h2>
+<div class="container mt-4">
+  <!-- Latest Announcement Section -->
+  <div class="mb-5">
+    <h3>Latest Announcement</h3>
+    {% if latest_news %}
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <h5 class="card-title mb-0">{{ latest_news.title }}</h5>
+        </div>
+        <div class="card-body">
+          <p class="card-text">{{ latest_news.text }}</p>
+          <small class="text-muted">Posted on {{ latest_news.created_at.replace(tzinfo=timezone.utc).astimezone(timezone(timedelta(hours=-5))).strftime('%B %d, %Y at %I:%M %p EST') }}</small>
+        </div>
+      </div>
+    {% else %}
+      <div class="card">
+        <div class="card-body">
+          <p class="text-muted">No announcements at this time.</p>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Site Map Section -->
+  <div>
+    <h3>Site Map</h3>
+    <div class="row">
+      <div class="col-md-6">
+        <div class="list-group">
+          <a href="https://live.formulatiming.org" class="list-group-item list-group-item-action" target="_blank">
+            <div class="d-flex w-100 justify-content-between">
+              <h5 class="mb-1">Active Event Live Timing</h5>
+            </div>
+            <p class="mb-1">Real-time timing data for the current event</p>
+            <small>live.formulatiming.org</small>
+          </a>
+          <a href="https://results.formulatiming.org" class="list-group-item list-group-item-action" target="_blank">
+            <div class="d-flex w-100 justify-content-between">
+              <h5 class="mb-1">Past Event Results</h5>
+            </div>
+            <p class="mb-1">Historical timing data from previous events</p>
+            <small>results.formulatiming.org</small>
+          </a>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="list-group">
+          <a href="{{ url_for('main.news') }}" class="list-group-item list-group-item-action">
+            <div class="d-flex w-100 justify-content-between">
+              <h5 class="mb-1">News & Announcements</h5>
+            </div>
+            <p class="mb-1">Latest news and updates</p>
+            <small>Current Site</small>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}

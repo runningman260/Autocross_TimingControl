@@ -48,7 +48,7 @@ hosted_apps/volumes/
 */.env
 services/*/.env
 volumes/*/.env
-acme
+acme/
 certs
 nginx_conf
 volumes
