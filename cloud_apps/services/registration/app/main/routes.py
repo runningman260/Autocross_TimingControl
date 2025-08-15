@@ -640,6 +640,26 @@ def manage_news():
                     flash('News item deleted successfully!', 'success')
                 else:
                     flash('News item not found!', 'danger')
+        elif 'edit_news' in request.form:
+            news_id = request.form.get('news_id')
+            title = request.form.get('title', '').strip()
+            text = request.form.get('text', '').strip()
+            
+            if not title or not text:
+                flash('Both title and text are required!', 'danger')
+            elif len(title) > 200:
+                flash('Title must be 200 characters or less!', 'danger')
+            elif len(text) > 254:
+                flash('Text must be 254 characters or less!', 'danger')
+            else:
+                news_item = db.session.get(News, news_id)
+                if news_item:
+                    news_item.title = title
+                    news_item.text = text
+                    db.session.commit()
+                    flash('News item updated successfully!', 'success')
+                else:
+                    flash('News item not found!', 'danger')
         else:
             title = request.form.get('title', '').strip()
             text = request.form.get('text', '').strip()
@@ -648,8 +668,8 @@ def manage_news():
                 flash('Both title and text are required!', 'danger')
             elif len(title) > 200:
                 flash('Title must be 200 characters or less!', 'danger')
-            elif len(text) > 200:
-                flash('Text must be 200 characters or less!', 'danger')
+            elif len(text) > 254:
+                flash('Text must be 254 characters or less!', 'danger')
             else:
                 news_item = News(title=title, text=text)
                 db.session.add(news_item)

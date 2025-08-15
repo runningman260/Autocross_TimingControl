@@ -17,9 +17,9 @@
       </div>
       <div class="mb-3">
         <label for="text" class="form-label">Text</label>
-        <textarea class="form-control" id="text" name="text" rows="3" maxlength="200" required></textarea>
+        <textarea class="form-control" id="text" name="text" rows="3" maxlength="254" required></textarea>
         <div class="form-text">
-          <span id="text-count">0</span>/200 characters
+          <span id="text-count">0</span>/254 characters
         </div>
       </div>
       <button type="submit" class="btn btn-primary">Add News Item</button>
@@ -50,11 +50,19 @@
               <td>{{ news_item.text }}</td>
               <td>{{ news_item.created_at.strftime('%B %d, %Y at %I:%M %p') }}</td>
               <td>
+                <button type="button" class="btn btn-primary btn-sm me-1 edit-btn" onclick="editNews({{ news_item.id }})">Edit</button>
                 <form method="POST" style="display:inline;">
                   <input type="hidden" name="delete_news" value="1">
                   <input type="hidden" name="news_id" value="{{ news_item.id }}">
                   <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Delete this news item?');">Delete</button>
                 </form>
+                <script>
+                  window.newsData = window.newsData || {};
+                  window.newsData[{{ news_item.id }}] = {
+                    title: {{ news_item.title|tojson }},
+                    text: {{ news_item.text|tojson }}
+                  };
+                </script>
               </td>
             </tr>
             {% endfor %}
@@ -76,5 +84,50 @@ document.getElementById('title').addEventListener('input', function() {
 document.getElementById('text').addEventListener('input', function() {
   document.getElementById('text-count').textContent = this.value.length;
 });
+
+// Edit functionality
+function editNews(id) {
+  const newsItem = window.newsData[id];
+  if (!newsItem) return;
+  
+  // Disable all edit buttons
+  document.querySelectorAll('.edit-btn').forEach(btn => btn.disabled = true);
+  
+  // Change form to edit mode first
+  const form = document.querySelector('form');
+  form.innerHTML += '<input type="hidden" name="edit_news" value="1"><input type="hidden" name="news_id" value="' + id + '">';
+  form.querySelector('button[type="submit"]').textContent = 'Update News Item';
+  
+  // Add cancel button
+  const cancelBtn = document.createElement('button');
+  cancelBtn.type = 'button';
+  cancelBtn.className = 'btn btn-secondary ms-2';
+  cancelBtn.textContent = 'Cancel';
+  cancelBtn.onclick = function() { location.reload(); };
+  form.querySelector('button[type="submit"]').parentNode.appendChild(cancelBtn);
+  
+  // Set values after form modifications with fresh field references
+  setTimeout(function() {
+    const freshTitleField = document.getElementById('title');
+    const freshTextField = document.getElementById('text');
+    
+    if (freshTitleField) {
+      freshTitleField.value = newsItem.title;
+      freshTitleField.focus();
+      freshTitleField.blur();
+    }
+    if (freshTextField) {
+      freshTextField.value = newsItem.text;
+      freshTextField.focus();
+      freshTextField.blur();
+    }
+    
+    document.getElementById('title-count').textContent = newsItem.title.length;
+    document.getElementById('text-count').textContent = newsItem.text.length;
+  }, 50);
+  
+  // Scroll to form
+  form.scrollIntoView({ behavior: 'smooth' });
+}
 </script>
 {% endblock %}
