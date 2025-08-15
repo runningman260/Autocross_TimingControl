@@ -3,6 +3,46 @@
 
 {% block content %}
 <div class="container mt-4">
+  <!-- Weather Section -->
+  {% if weather %}
+  <div class="mb-4">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">Weather</h5>
+        
+        {% if weather.current %}
+        <h6 class="card-subtitle mb-2 text-muted">Current Conditions</h6>
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <p class="mb-1"><strong>Temperature:</strong> {{ weather.current.temperature }}°F</p>
+            <p class="mb-1"><strong>Conditions:</strong> {{ weather.current.description }}</p>
+          </div>
+          <div class="col-md-6">
+            {% if weather.current.humidity %}<p class="mb-1"><strong>Humidity:</strong> {{ weather.current.humidity|round }}%</p>{% endif %}
+            {% if weather.current.wind_speed %}<p class="mb-1"><strong>Wind:</strong> {{ weather.current.wind_speed|round }} mph</p>{% endif %}
+          </div>
+        </div>
+        {% endif %}
+        
+        {% if weather.forecast_3h %}
+        <h6 class="card-subtitle mb-2 text-muted">Next 3 Hours</h6>
+        <div class="row">
+          {% for hour in weather.forecast_3h %}
+          <div class="col-md-4">
+            <div class="border rounded p-2 mb-2">
+              <small class="text-muted">{{ hour.hour }}</small>
+              <p class="mb-1"><strong>{{ hour.temperature }}°F</strong></p>
+              <p class="mb-0 small">{{ hour.description }}</p>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
   <!-- Latest Announcement Section -->
   <div class="mb-5">
     <h3>Latest Announcement</h3>
